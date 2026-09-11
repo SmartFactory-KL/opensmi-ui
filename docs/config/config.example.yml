@@ -1,5 +1,3 @@
-# Created at: 2026-09-11T17:55:40.963191+00:00
-
 # Version to be shown in frontend. Should be set by some pipeline
 # Type: str
 # Is Secret: False

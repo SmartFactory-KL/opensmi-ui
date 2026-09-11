@@ -18,7 +18,7 @@ def normalize(content: str) -> str:
 
 def main() -> None:
     tracked_files = [
-        Path("docs/config/config.yml.example"),
+        Path("docs/config/config.example.yml"),
         Path("docs/config/DefaultConfiguration.md"),
     ]
 
@@ -51,7 +51,7 @@ def main() -> None:
                 print(f"Configuration documentation is outdated: {tracked_file}")
                 print()
                 print("Run:")
-                print("  python -m script.update")
+                print("  uv run python3 -m script.update_config_docs")
                 print()
                 print("to regenerate the documentation.")
 

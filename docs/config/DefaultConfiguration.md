@@ -1,7 +1,5 @@
 # Application Configuration
 
-Created at: 2026-09-11T17:55:40.963598+00:00
-
 ## Configuration
 
 | ENV | Variable | Type | Default | Is Secret | Description |

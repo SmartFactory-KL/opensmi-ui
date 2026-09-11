@@ -23,4 +23,4 @@ jobs:
         run: uv sync --locked
 
       - name: Check configuration documentation
-        run: uv run python -m script.check_config_documentation
+        run: uv run python -m script.check_config_docs
