@@ -1,0 +1,67 @@
+# Created at: 2026-09-11T17:55:40.963191+00:00
+
+# Version to be shown in frontend. Should be set by some pipeline
+# Type: str
+# Is Secret: False
+app_version: "25.06-dev-local"
+ 
+# If this flag is set, only the OPC_UA_DEFAULT_xxx data will be used for connecting. Other user data is simply ignored.
+# Type: bool
+# Is Secret: False
+server_only_allow_default_connection_data: False
+ 
+# If this flag is set, the server will automatically try to connect on startup using the provided OPC_UA_DEFAULT_xxx data
+# Type: bool
+# Is Secret: False
+server_enable_auto_connect: False
+ 
+# URL of the OPC UA to connect to
+# Type: str
+# Is Secret: False
+opc_ua_default_server_url: "opc.tcp://localhost:4843"
+ 
+# Default username for OPC UA (might be overwritten by localStorage in client)
+# Type: str
+# Is Secret: False
+opc_ua_default_server_username: "operator"
+ 
+# Default password for OPC UA (might be overwritten by localStorage in client)
+# Type: str
+# Is Secret: True
+opc_ua_default_server_password: "operator"
+ 
+# Default timeout in seconds used for connection request of pyuaadapter connect method
+# Type: int
+# Is Secret: False
+opc_ua_connect_request_timeout_seconds: 5
+ 
+# If set, lock actions (toggle, break) will be usable. Only disable for read-only applications. To protect against unintended usage, please use PIN_GUARD.
+# Type: bool
+# Is Secret: False
+locking_enabled: True
+ 
+# If set, locking will only be simulated on the backend, no actual lock requests are sent to the OPC UA server. Intended for OPC UA servers, that do not support locking while still having the nodes for it.
+# Type: bool
+# Is Secret: False
+locking_simulation_enabled: False
+ 
+# Timeout for the automated freeing of a machine after any action has occured.
+# Type: int
+# Is Secret: False
+locking_autofree_delay_seconds: 180
+ 
+# If set to true, all write actions are only allowed after the PIN_GUARD_PIN has been entered. Will auto-lock after PIN_GUARD_AUTOLOCK_DELAY_SECONDS has passed.
+# Type: bool
+# Is Secret: False
+pin_guard_enabled: False
+ 
+# Amount of seconds with no action, after which the PIN_GUARD will be automatically locked.
+# Type: int
+# Is Secret: False
+pin_guard_autolock_delay_seconds: 180
+ 
+# Digit-based PIN (usually 6 digits) to unlock the Locking feature. Only needed, if SERVER_LOCKING_MODE is set to UI_PIN. Empty PINs are not allowed (have at least 1 digit).
+# Type: int
+# Is Secret: True
+pin_guard_pin: 123321
+ 

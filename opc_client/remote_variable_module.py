@@ -1,9 +1,10 @@
 import asyncio
 import logging
-from typing import Any, List
 import uuid
-from pyuaadapter.client.remote_variable import RemoteVariable
 
+from asyncua import Node
+from asyncua.common.subscription import DataChangeNotif
+from pyuaadapter.client.remote_variable import RemoteVariable
 from pyuaadapter.common.subscription_manager import SubscriptionManager
 
 from messages.message_funnel import MessageFunnel
@@ -12,9 +13,6 @@ from model.node_types import RemoteVariableDto
 from opc_client.reference_store import NodeEntityStore, ReferenceStore
 from util.determine_type import determine_type_and_annotations
 from util.serialize import serialize_data_value
-
-from asyncua.common.subscription import DataChangeNotif
-from asyncua import Node
 
 logger = logging.getLogger("uvicorn")
 
@@ -27,7 +25,7 @@ class RemoteVariableModule:
     entity_id: uuid.UUID
     parent_entity_id: uuid.UUID | None
 
-    children: List["RemoteVariableModule"]
+    children: list["RemoteVariableModule"]
 
     reference_store: ReferenceStore
     node_entity_store: NodeEntityStore

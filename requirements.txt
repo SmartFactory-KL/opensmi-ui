@@ -1,9 +1,2 @@
-fastapi[standard]==0.113.0
-pydantic==2.11.0
-
-# mostly used only for typing - not sure how that could be done differently?
-asyncua==1.1.6
-
-# internals
---index-url https://gitlab+deploy-token-63:gldt-aFhvDWEzJsciFxex-gzz@ifs.dfki.de/api/v4/groups/2107/-/packages/pypi/simple
-pyuaadapter==4.3.0a9
+fastapi[standard]==0.141.1
+pydantic==2.13.5

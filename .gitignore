@@ -1,6 +1,8 @@
 # prevent accidentaly adding predefined config again
 config.yml
 config.yaml
+config/config.yml
+config/config.yaml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -1,0 +1,3 @@
+# comes from test.pypi as long as it is not public yet
+--extra-index-url https://test.pypi.org/simple
+opensmi-client
