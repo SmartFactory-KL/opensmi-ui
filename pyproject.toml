@@ -1,0 +1,31 @@
+[project]
+name = "opensmi-ui"
+version = "0.1.0"
+description = "Simple UI to go with OpenSMI"
+readme = "README.md"
+authors = [
+    { name = "k_zoltner", email = "kuno.zoltner@smartfactory.de" }
+]
+requires-python = ">=3.12, <3.13"
+dependencies = [
+    "fastapi[standard]>=0.141.1",
+    "pydantic>=2.13.5",
+    "opensmi-client",
+    "opensmi-core",
+]
+
+[[tool.uv.index]]
+name = "testpypi"
+url = "https://test.pypi.org/simple"
+explicit = true
+
+[tool.uv.sources]
+opensmi-client = { index = "testpypi" }
+opensmi-core = { index = "testpypi" }
+
+[project.scripts]
+opensmi-ui = "opensmi_ui:main"
+
+[build-system]
+requires = ["uv_build>=0.12.13,<0.13.0"]
+build-backend = "uv_build"

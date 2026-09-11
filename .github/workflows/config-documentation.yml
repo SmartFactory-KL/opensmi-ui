@@ -11,13 +11,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
         with:
-          python-version: "3.13"
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install
 
       - name: Install dependencies
-        run: |
-          pip install -e .
+        run: uv sync --locked
 
       - name: Check configuration documentation
-        run: python -m script.check_config_documentation
+        run: uv run python -m script.check_config_documentation
