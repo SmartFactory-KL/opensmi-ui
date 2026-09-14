@@ -57,7 +57,7 @@ class MessageBroadcaster:
 
                 try:
                     await connection_to_remove.close()
-                except Exception:
+                except ValueError as _:
                     # Exception is ignored as the connection might have been gone already
                     # which would be raised as value error
                     pass
@@ -79,7 +79,7 @@ class MessageBroadcaster:
         for connection in list(self.active_connections):
             try:
                 await connection.send_text(payload)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 Disabled as all exceptions would result in the removal of the connection
                 logger.warning(f"Failed to broadcast Payload! Cause: {e}")
                 # Payload might be huge batch, would overflow log/console
                 # logger.warning(payload)

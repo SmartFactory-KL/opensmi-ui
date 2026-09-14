@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Response
 
-from static.image_provider import provider_get_image
-
+from opensmi_ui.static.image_provider import provider_get_image
 
 router = APIRouter(prefix="/api/static", tags=["static"])
 

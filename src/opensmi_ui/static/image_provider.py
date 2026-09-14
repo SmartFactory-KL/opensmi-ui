@@ -1,9 +1,8 @@
 import os
-from typing import Dict
 
 IMAGE_FOLDER = "./static/images/"
 
-image_dict: Dict[str, bytes] = {}
+image_dict: dict[str, bytes] = {}
 
 
 def provider_load_images():

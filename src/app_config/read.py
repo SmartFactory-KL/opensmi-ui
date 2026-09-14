@@ -1,19 +1,18 @@
 import os
 import warnings
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass, fields, replace
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Annotated, get_args, get_origin, get_type_hints
+from typing import Annotated, cast, get_args, get_origin, get_type_hints
 
 import yaml
-
-from app_config.app_config import AppConfig, AppConfigEntry
 
 
 class AppConfigSource(Enum):
     ENV = "env"
     YAML = "yaml"
+    TOML = "toml"
 
 
 class AppConfigError(Exception):
@@ -22,6 +21,12 @@ class AppConfigError(Exception):
 
 class AppConfigWarning(UserWarning):
     """Warning raised for uncommon use of configuration"""
+
+
+@dataclass
+class AppConfigEntry:
+    description: str
+    is_secret: bool = False
 
 
 AppConfigVisitor = Callable[[str, str], None]
@@ -38,10 +43,11 @@ class AppConfigOptions:
     """Mapping to overwrite any existing values. Mostly useful for testing, not intended for production use"""
 
 
-def read_configuration(
+def read_configuration[T](
+    config: type[T] | T,
     sources: AppConfigSource | Sequence[AppConfigSource],
     options: AppConfigOptions | None = None,
-) -> AppConfig:
+) -> T:
     """Read application configuration from at least one source
 
     Sources are read in the provided order, with later values overwriting previos ones.
@@ -62,7 +68,12 @@ def read_configuration(
     if isinstance(sources, AppConfigSource):
         sources = [sources]
 
-    config = AppConfig()
+    if isinstance(config, type):
+        cfg_type = config
+        cfg = config()
+    else:
+        cfg_type = type(config)
+        cfg = config
 
     if not sources:
         warnings.warn(
@@ -73,37 +84,36 @@ def read_configuration(
 
     for source in sources:
         if source == AppConfigSource.ENV:
-            config = _read_env(config, options)
+            cfg = _read_env(cfg, cfg_type, options)
         elif source == AppConfigSource.YAML:
-            config = _read_yaml(config, options)
+            cfg = _read_yaml(cfg, cfg_type, options)
         else:
             raise AppConfigError(f"Unsupported source: {source}")
 
     if options is not None and options.overwrite is not None:
-        config = _apply_overwrite(config, options.overwrite)
+        cfg = _apply_overwrite(cfg, cfg_type, options.overwrite)
 
-    return config
+    return cast(T, cfg)
 
 
-def visit_config_entries(config: AppConfig, visitor: AppConfigEntryVisitor):
+def visit_config_entries[T](config: object, visitor: AppConfigEntryVisitor):
     """Runs the method once for every configuration entry without the actual value. Intended to generate documentation."""
-    type_hints = get_type_hints(AppConfig, include_extras=True)
+    type_hints = get_type_hints(type(config), include_extras=True)
 
-    for field in fields(config):
-        entry = _get_config_entry(type_hints[field.name])
+    for field_name in type_hints:
+        entry = _get_config_entry(type_hints[field_name])
         if entry is None:
             continue
-        visitor(field.name, entry)
+        visitor(field_name, entry)
 
 
-def visit_config_strings(config: AppConfig, visitor: AppConfigVisitor):
+def visit_config_strings[T](config: object, visitor: AppConfigVisitor):
     """Runs visitor once for every tuple of [key:str, value:str] for the configuration. Masks anything marked with is_secret."""
-    type_hints = get_type_hints(AppConfig, include_extras=True)
+    type_hints = get_type_hints(type(config), include_extras=True)
 
-    for field in fields(config):
-        field_name = field.name
-        field_metadata = _get_config_entry(type_hints[field.name])
-        field_value = str(getattr(config, field.name))
+    for field_name in type_hints:
+        field_metadata = _get_config_entry(type_hints[field_name])
+        field_value = str(getattr(config, field_name))
 
         if field_metadata is not None and field_metadata.is_secret:
             field_value = f"Masked[len:{len(field_value)}]"
@@ -111,32 +121,40 @@ def visit_config_strings(config: AppConfig, visitor: AppConfigVisitor):
         visitor(field_name, field_value)
 
 
-def _read_env(config: AppConfig, options: AppConfigOptions | None) -> AppConfig:
+def _read_env[T](
+    config: T, config_type: type[T], options: AppConfigOptions | None
+) -> T:
     """Reads the environment while using a possible env_prefix in UPPER_SNAKE_CASE"""
     prefix = options.env_prefix if options is not None else None
-    type_hints = get_type_hints(AppConfig, include_extras=True)
+    type_hints = get_type_hints(config_type, include_extras=True)
 
     values: dict[str, object] = {}
 
-    for field in fields(config):
-        env_name = get_env_name(prefix, field.name)
+    for field_name in type_hints:
+        env_name = get_env_name(prefix, field_name)
         val = os.environ.get(env_name, None)
 
         if val is None:
             continue
 
         try:
-            values[field.name] = _parse_value_from_string(
+            values[field_name] = _parse_value_from_string(
                 val,
-                type_hints[field.name],
+                type_hints[field_name],
             )
         except Exception as e:
             raise AppConfigError(f"Failed to parse {env_name} from ENV: {e}") from e
 
-    return replace(config, **values)
+    for field_name in type_hints:
+        if field_name not in values:
+            values[field_name] = getattr(config, field_name)
+
+    return config_type(**values)
 
 
-def _read_yaml(config: AppConfig, options: AppConfigOptions | None) -> AppConfig:
+def _read_yaml[T](
+    config: T, config_type: type[T], options: AppConfigOptions | None
+) -> T:
     """Reads configuration from a flat yaml file"""
     yaml_path = _get_yaml_path(options)
 
@@ -145,7 +163,7 @@ def _read_yaml(config: AppConfig, options: AppConfigOptions | None) -> AppConfig
 
     try:
         with yaml_path.open("r", encoding="utf-8") as file:
-            values = yaml.safe_load(file)
+            yaml_values = yaml.safe_load(file)
     except OSError as e:
         raise AppConfigError(
             f"Failed to read YAML configuration from {yaml_path}: {e}"
@@ -155,53 +173,63 @@ def _read_yaml(config: AppConfig, options: AppConfigOptions | None) -> AppConfig
             f"Failed to parse YAML configuration from {yaml_path}: {e}"
         ) from e
 
-    if values is None:
+    if yaml_values is None:
         return config
 
-    if not isinstance(values, Mapping):
+    if not isinstance(yaml_values, Mapping):
         raise AppConfigError(
-            f"Expected YAML configuration to contain a mapping, but got {type(values).__name__}"
+            f"Expected YAML configuration to contain a mapping, but got {type(yaml_values).__name__}"
         )
 
-    type_hints = get_type_hints(AppConfig, include_extras=True)
-    parsed_values: dict[str, object] = {}
+    type_hints = get_type_hints(config_type, include_extras=True)
+    values: dict[str, object] = {}
 
-    for field in fields(config):
+    for field_name in type_hints:
         try:
-            if field.name not in values:
+            if field_name not in yaml_values:
                 continue
 
-            value = values[field.name]
+            value = yaml_values[field_name]
             if value is None:
                 continue
 
-            parsed_values[field.name] = _parse_value(value, type_hints[field.name])
+            values[field_name] = _parse_value(yaml_values[field_name], type_hints[field_name])
         except Exception as e:
-            raise AppConfigError(f"Failed to parse {field.name} from YAML: {e}") from e
+            raise AppConfigError(f"Failed to parse {field_name} from YAML: {e}") from e
 
-    return config
+    for field_name in type_hints:
+        if field_name not in values:
+            values[field_name] = getattr(config, field_name)
+
+    return config_type(**values)
 
 
-def _apply_overwrite(config: AppConfig, values: Mapping[str, str]) -> AppConfig:
+def _apply_overwrite[T](
+    config: T, config_type: type[T], overwrites: Mapping[str, str]
+) -> T:
     """Uses the string mapping as ENV to write configuration. Intended for testing."""
-    type_hints = get_type_hints(AppConfig, include_extras=True)
-    config_fields = {field.name for field in fields(config)}
+    type_hints = get_type_hints(config_type, include_extras=True)
+    config_fields = {field_name for field_name in type_hints}
 
-    parsed_values: dict[str, object] = {}
+    values: dict[str, object] = {}
 
-    for name, value in values.items():
+    for name, value in overwrites.items():
         if name not in config_fields:
             raise AppConfigError(f"Unknown configuration field in overwrite: {name}")
 
         try:
-            parsed_values[name] = _parse_value_from_string(
+            values[name] = _parse_value_from_string(
                 value,
                 type_hints[name],
             )
         except Exception as e:
             raise AppConfigError(f"Failed to parse overwrite for {name}: {e}") from e
 
-    return replace(config, **parsed_values)
+    for field_name in type_hints:
+        if field_name not in overwrites:
+            values[field_name] = getattr(config, field_name)
+
+    return config_type(**values)
 
 
 def get_env_name(prefix: str | None, field_name: str) -> str:

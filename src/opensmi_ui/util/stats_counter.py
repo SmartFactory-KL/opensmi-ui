@@ -10,8 +10,8 @@ STATS_COUNTER_LOG_DELAY_SECONDS = 60.0
 class StatsCounter:
     _self = None
 
-    message_stats = {}
-    serializer_stats = {}
+    message_stats: dict
+    serializer_stats: dict
 
     stats_task: Task | None = None
 
@@ -21,7 +21,8 @@ class StatsCounter:
         return cls._self
 
     def __init__(self):
-        pass
+        self.message_stats = {}
+        self.serializer_stats = {}
 
     def start_stats_counter_task(self):
         self.stats_task = asyncio.create_task(self.print_stats())
@@ -49,5 +50,5 @@ class StatsCounter:
                 self.serializer_stats.clear()
 
                 await asyncio.sleep(STATS_COUNTER_LOG_DELAY_SECONDS)
-        except Exception as _:
-            pass
+        except Exception:
+            logger.exception("failed to print stats")

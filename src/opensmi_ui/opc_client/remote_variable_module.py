@@ -4,15 +4,18 @@ import uuid
 
 from asyncua import Node
 from asyncua.common.subscription import DataChangeNotif
+from opc_client.reference_store import NodeEntityStore, ReferenceStore
 from pyuaadapter.client.remote_variable import RemoteVariable
 from pyuaadapter.common.subscription_manager import SubscriptionManager
 
-from messages.message_funnel import MessageFunnel
-from model.machine_types import VariableDataValueUpdate, VariableUpdateMessage
-from model.node_types import RemoteVariableDto
-from opc_client.reference_store import NodeEntityStore, ReferenceStore
-from util.determine_type import determine_type_and_annotations
-from util.serialize import serialize_data_value
+from opensmi_ui.messages.message_funnel import MessageFunnel
+from opensmi_ui.model.machine_types import (
+    VariableDataValueUpdate,
+    VariableUpdateMessage,
+)
+from opensmi_ui.model.node_types import RemoteVariableDto
+from opensmi_ui.util.determine_type import determine_type_and_annotations
+from opensmi_ui.util.serialize import serialize_data_value
 
 logger = logging.getLogger("uvicorn")
 

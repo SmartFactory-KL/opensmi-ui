@@ -4,7 +4,8 @@ import time
 
 from messages.message_broadcaster import MessageBroadcaster, WebSocketMessage
 from model.common_types import GenericUpdateMessage
-from util.stats_counter import StatsCounter
+
+from opensmi_ui.util.stats_counter import StatsCounter
 
 MESSAGE_FUNNEL_BATCH_DELAY_SECONDS = 0.05
 
@@ -158,14 +159,13 @@ class MessageFunnel:
 
                 # set delay for next batch -> actual delay might be more if
                 # sending takes too long
-        except asyncio.CancelledError as e:
+        except asyncio.CancelledError:
             logger.info("message funnel batching has been canceled")
-            raise e
-        except Exception as e:
-            logger.error(
+            raise
+        except Exception:
+            logger.exception(
                 "MessageFunnel: batching task had an exception and will be disabled now"
             )
-            logger.exception(e)
 
             # only cancel the watchdog as the batching task will return after this anyway.
             # keeps the current_task from cancelling itself.
@@ -223,9 +223,8 @@ class MessageFunnel:
                 #     self.disable_batching_task()
                 #     return
 
-        except asyncio.CancelledError as e:
+        except asyncio.CancelledError:
             logger.info("message funnel watchdog task has been canceled")
-            raise e
-        except Exception as e:
-            logger.warning("message funnel watchdog had an exception:")
-            logger.exception(e)
+            raise
+        except Exception:
+            logger.exception("message funnel watchdog had an exception:")

@@ -1,12 +1,11 @@
 from enum import Enum
 
-from model.common_types import (
+from opensmi_ui.model.common_types import (
     GenericUpdateEntityType,
     GenericUpdateMessage,
     JsonBaseModel,
     JsonOutModel,
 )
-
 
 # Generic types
 

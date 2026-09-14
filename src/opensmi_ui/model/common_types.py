@@ -1,9 +1,8 @@
-## Generic Stuff
+import uuid
 from enum import Enum
 from typing import Any
-import uuid
 
-from pydantic import BaseModel, computed_field, AliasGenerator, ConfigDict
+from pydantic import AliasGenerator, BaseModel, ConfigDict, computed_field
 from pydantic.alias_generators import to_camel
 
 

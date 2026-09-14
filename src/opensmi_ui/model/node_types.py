@@ -1,12 +1,12 @@
 # Enums
 import uuid
 from enum import Enum
-from typing import Any, List, Optional
+from typing import Any
 
 from asyncua.ua import VariantType
 from pydantic import ConfigDict
 
-from model.common_types import JsonOutModel
+from opensmi_ui.model.common_types import JsonOutModel
 
 
 class RemoteVariableValueType(str, Enum):
@@ -23,7 +23,7 @@ class RemoteVariableValueType(str, Enum):
 class VariantValueDto(JsonOutModel):
     variant_type: VariantType
     value: Any
-    dimensions: Optional[List[int]]
+    dimensions: list[int] | None
 
 
 class SimpleDataValueDto(JsonOutModel):
@@ -44,7 +44,7 @@ class RemoteVariableDto(JsonOutModel):
     timestamp: str | None = None
     is_writable: bool = False
     unit: str | None = None
-    children: List["RemoteVariableDto"] = []
+    children: list["RemoteVariableDto"]
     parent_entity_id: uuid.UUID | None
 
 
@@ -53,11 +53,11 @@ class MethodDto(JsonOutModel):
     node_id: str = ""
     entity_id: uuid.UUID
     type: str = ""
-    parameter_set: List[RemoteVariableDto] = []
-    monitoring: List[RemoteVariableDto] = []
-    final_result_data: List[RemoteVariableDto] = []
+    parameter_set: list[RemoteVariableDto]
+    monitoring: list[RemoteVariableDto]
+    final_result_data: list[RemoteVariableDto]
     parent_entity_id: uuid.UUID | None
-    parent_node_id_list: List[str]
+    parent_node_id_list: list[str]
     min_access_level: int | None = None
 
 
@@ -67,13 +67,13 @@ class SkillDto(JsonOutModel):
     entity_id: uuid.UUID
     type: str = ""
     current_state: str | None = None
-    parameter_set: List[RemoteVariableDto] = []
-    monitoring: List[RemoteVariableDto] = []
-    final_result_data: List[RemoteVariableDto] = []
-    depends_on: List[str] = []
-    dependency_of: List[str] = []
+    parameter_set: list[RemoteVariableDto]
+    monitoring: list[RemoteVariableDto]
+    final_result_data: list[RemoteVariableDto]
+    depends_on: list[str]
+    dependency_of: list[str]
     parent_entity_id: uuid.UUID | None
-    parent_node_id_list: List[str]
+    parent_node_id_list: list[str]
     is_suspendable: bool = False
     min_access_level: int | None = None
 
@@ -84,14 +84,14 @@ class ComponentDto(JsonOutModel):
     entity_id: uuid.UUID
     type: str = ""
     current_state: str | None = None
-    skill_set: List[SkillDto] = []
-    methods: List[MethodDto] = []
-    monitoring: List[RemoteVariableDto] = []
-    attributes: List[RemoteVariableDto] = []
-    parameter_set: List[RemoteVariableDto] = []
-    components: List["ComponentDto"] = []
+    skill_set: list[SkillDto]
+    methods: list[MethodDto]
+    monitoring: list[RemoteVariableDto]
+    attributes: list[RemoteVariableDto]
+    parameter_set: list[RemoteVariableDto]
+    components: list["ComponentDto"]
     parent_entity_id: uuid.UUID | None
-    parent_node_id_list: List[str]
+    parent_node_id_list: list[str]
 
 
 class LockingModuleDto(JsonOutModel):

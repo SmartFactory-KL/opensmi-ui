@@ -1,6 +1,7 @@
 import datetime
 from enum import Enum
-from model.common_types import (
+
+from opensmi_ui.model.common_types import (
     GenericActionRequest,
     GenericActionType,
     GenericUpdateEntityType,
@@ -8,7 +9,7 @@ from model.common_types import (
     JsonBaseModel,
     JsonOutModel,
 )
-from model.node_types import SimpleDataValueDto
+from opensmi_ui.model.node_types import SimpleDataValueDto
 
 
 # Genericals
