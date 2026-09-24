@@ -1,15 +1,11 @@
 from dataclasses import dataclass
 from typing import Annotated
 
-from app_config.read import AppConfigEntry, AppConfigSource, read_configuration
+from appysetty import AppConfigEntry
 
-
-class AppSettingsSimple:
-    app_version: str = ""
-    my_flag: bool = False
 
 @dataclass
-class AppSettings:
+class AppConfig:
     app_version: Annotated[
         str,
         AppConfigEntry(
@@ -134,12 +130,3 @@ class AppSettings:
             is_secret=True,
         ),
     ] = 123321
-
-
-def main():
-    cfg = read_configuration(AppSettings(), [AppConfigSource.YAML])
-    print(cfg)
-
-
-if __name__ == "__main__":
-    main()

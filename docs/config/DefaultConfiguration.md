@@ -4,12 +4,12 @@
 
 | ENV | Variable | Type | Default | Is Secret | Description |
 |---|---|---|---|---|---|
-| OPENSMI_UI_APP_VERSION | app_version | `str` | `"25.06-dev-local"` | False | Version to be shown in frontend. Should be set by some pipeline |
+| OPENSMI_UI_APP_VERSION | app_version | `str` | `25.06-dev-local` | False | Version to be shown in frontend. Should be set by some pipeline |
 | OPENSMI_UI_SERVER_ONLY_ALLOW_DEFAULT_CONNECTION_DATA | server_only_allow_default_connection_data | `bool` | `False` | False | If this flag is set, only the OPC_UA_DEFAULT_xxx data will be used for connecting. Other user data is simply ignored. |
 | OPENSMI_UI_SERVER_ENABLE_AUTO_CONNECT | server_enable_auto_connect | `bool` | `False` | False | If this flag is set, the server will automatically try to connect on startup using the provided OPC_UA_DEFAULT_xxx data |
-| OPENSMI_UI_OPC_UA_DEFAULT_SERVER_URL | opc_ua_default_server_url | `str` | `"opc.tcp://localhost:4843"` | False | URL of the OPC UA to connect to |
-| OPENSMI_UI_OPC_UA_DEFAULT_SERVER_USERNAME | opc_ua_default_server_username | `str` | `"operator"` | False | Default username for OPC UA (might be overwritten by localStorage in client) |
-| OPENSMI_UI_OPC_UA_DEFAULT_SERVER_PASSWORD | opc_ua_default_server_password | `str` | `"operator"` | True | Default password for OPC UA (might be overwritten by localStorage in client) |
+| OPENSMI_UI_OPC_UA_DEFAULT_SERVER_URL | opc_ua_default_server_url | `str` | `opc.tcp://localhost:4843` | False | URL of the OPC UA to connect to |
+| OPENSMI_UI_OPC_UA_DEFAULT_SERVER_USERNAME | opc_ua_default_server_username | `str` | `operator` | False | Default username for OPC UA (might be overwritten by localStorage in client) |
+| OPENSMI_UI_OPC_UA_DEFAULT_SERVER_PASSWORD | opc_ua_default_server_password | `str` | `operator` | True | Default password for OPC UA (might be overwritten by localStorage in client) |
 | OPENSMI_UI_OPC_UA_CONNECT_REQUEST_TIMEOUT_SECONDS | opc_ua_connect_request_timeout_seconds | `int` | `5` | False | Default timeout in seconds used for connection request of pyuaadapter connect method |
 | OPENSMI_UI_LOCKING_ENABLED | locking_enabled | `bool` | `True` | False | If set, lock actions (toggle, break) will be usable. Only disable for read-only applications. To protect against unintended usage, please use PIN_GUARD. |
 | OPENSMI_UI_LOCKING_SIMULATION_ENABLED | locking_simulation_enabled | `bool` | `False` | False | If set, locking will only be simulated on the backend, no actual lock requests are sent to the OPC UA server. Intended for OPC UA servers, that do not support locking while still having the nodes for it. |
@@ -24,12 +24,12 @@ Example environment block using the default values:
 
 ```yaml
 environment:
-  OPENSMI_UI_APP_VERSION: "25.06-dev-local"
+  OPENSMI_UI_APP_VERSION: 25.06-dev-local
   OPENSMI_UI_SERVER_ONLY_ALLOW_DEFAULT_CONNECTION_DATA: False
   OPENSMI_UI_SERVER_ENABLE_AUTO_CONNECT: False
-  OPENSMI_UI_OPC_UA_DEFAULT_SERVER_URL: "opc.tcp://localhost:4843"
-  OPENSMI_UI_OPC_UA_DEFAULT_SERVER_USERNAME: "operator"
-  OPENSMI_UI_OPC_UA_DEFAULT_SERVER_PASSWORD: "operator"
+  OPENSMI_UI_OPC_UA_DEFAULT_SERVER_URL: opc.tcp://localhost:4843
+  OPENSMI_UI_OPC_UA_DEFAULT_SERVER_USERNAME: operator
+  OPENSMI_UI_OPC_UA_DEFAULT_SERVER_PASSWORD: operator
   OPENSMI_UI_OPC_UA_CONNECT_REQUEST_TIMEOUT_SECONDS: 5
   OPENSMI_UI_LOCKING_ENABLED: True
   OPENSMI_UI_LOCKING_SIMULATION_ENABLED: False

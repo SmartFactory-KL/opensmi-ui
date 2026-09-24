@@ -1,4 +1,9 @@
-from app_config.app_config import AppConfig
-from app_config.write import write_config_documentation
+from pathlib import Path
 
-write_config_documentation(AppConfig(), env_prefix="OPENSMI_UI")
+import appysetty
+
+from opensmi_ui.app_config.config import AppConfig
+
+appysetty.write_configuration_documentation(
+    AppConfig, env_prefix="OPENSMI_UI", output_dir=Path("docs/config")
+)

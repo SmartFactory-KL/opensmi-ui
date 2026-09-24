@@ -11,17 +11,9 @@ dependencies = [
     "fastapi[standard]>=0.141.1",
     "pydantic>=2.13.5",
     "opensmi-client",
-    "opensmi-core",
+    "appysetty>=0.2.0",
 ]
 
-[[tool.uv.index]]
-name = "testpypi"
-url = "https://test.pypi.org/simple"
-explicit = true
-
-[tool.uv.sources]
-opensmi-client = { index = "testpypi" }
-opensmi-core = { index = "testpypi" }
 
 [project.scripts]
 opensmi-ui = "opensmi_ui:main"

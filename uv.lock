@@ -52,6 +52,18 @@ wheels = [
 ]
 
 [[package]]
+name = "appysetty"
+version = "0.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyyaml" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/84/45/2d20c74fc4b908c47f5cd5410cbf692d68d48ba1161a3688bddaf52f3b5f/appysetty-0.2.0.tar.gz", hash = "sha256:f3fea6238d289c23f0ea231acaa3c7a0e6fed9ec2fa10c1afa120a5e34dcdc3a", size = 7196, upload-time = "2026-09-24T09:13:23.69Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b5/c9/5de44a4f468188fa7b4cc6937693a3de9a2cb72d11cfb953bf99f81a6a09/appysetty-0.2.0-py3-none-any.whl", hash = "sha256:f1c3fe2e8299debc2df8da5da60bd10f8b499e00f8163f53bc07155412afa4cf", size = 9055, upload-time = "2026-09-24T09:13:22.582Z" },
+]
+
+[[package]]
 name = "asyncua"
 version = "2.0.1"
 source = { registry = "https://pypi.org/simple" }
@@ -397,29 +409,29 @@ wheels = [
 
 [[package]]
 name = "opensmi-client"
-version = "0.1"
-source = { registry = "https://test.pypi.org/simple" }
+version = "1.0.0rc1"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "asyncua" },
     { name = "opensmi-core" },
 ]
-sdist = { url = "https://test-files.pythonhosted.org/packages/bd/38/8540117d57697a3fe3b85730696d67f229bd1061e13ad68d5f76980e2f59/opensmi_client-0.1.tar.gz", hash = "sha256:cdcebca9c36f798685f62ce481fe6e2bbff7c55f2de45b9ff14c3290d4a69a36", size = 28579, upload-time = "2026-09-11T12:26:09.489Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/59/81/741635ef6691383aa2da6b39004a8f5226282f05516e15e8d9695e4d30c0/opensmi_client-1.0.0rc1.tar.gz", hash = "sha256:00e8e2114672eea32a1575fc07fc152f9e35ec469e66ef68b06972bef0f407ef", size = 31134, upload-time = "2026-09-15T07:19:07.793Z" }
 wheels = [
-    { url = "https://test-files.pythonhosted.org/packages/c2/8b/2f56ec16fe7e10084a047b26c0d3ba85885f25d4ea40b288e8e96e8f6171/opensmi_client-0.1-py3-none-any.whl", hash = "sha256:ea4b90db35d5f0956704354e117ff8abbfb94c2b2fe00791fd9fac3d7b9022e3", size = 33651, upload-time = "2026-09-11T12:26:08.142Z" },
+    { url = "https://files.pythonhosted.org/packages/bc/48/7781deea3b2328ee526201c5678e428b974432bd719bb4cd2ddbf4c2038f/opensmi_client-1.0.0rc1-py3-none-any.whl", hash = "sha256:acfc8b25f00a4c17c66e416633ca8c5ccb7f37df6ab527ffc6af7166619d757d", size = 35365, upload-time = "2026-09-15T07:19:06.411Z" },
 ]
 
 [[package]]
 name = "opensmi-core"
-version = "0.1.2"
-source = { registry = "https://test.pypi.org/simple" }
+version = "0.2"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "asyncua" },
     { name = "structlog" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://test-files.pythonhosted.org/packages/e9/4b/b27d187f83cc5558c86cef5f53da44fc85ec7d6e4d919fca21fd8effbb23/opensmi_core-0.1.2.tar.gz", hash = "sha256:3a8eee3a1a411e37664a404dcd49b54c1912887e08e923175ba15b0d32df9de0", size = 53745, upload-time = "2026-09-10T12:40:38.551Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c6/d4/88309f8ce6a27118fd60f6eb676225b33a3809fc1a2fd76d1e9d94114954/opensmi_core-0.2.tar.gz", hash = "sha256:5c07a560d0051cfadf26db3f040295977ced86011fffe13cf729cab92865b2c6", size = 55445, upload-time = "2026-09-23T12:30:38.889Z" }
 wheels = [
-    { url = "https://test-files.pythonhosted.org/packages/41/80/2233b40a71789400aaeec5d70d89a5d0e28efc877e956208e153c9350cd4/opensmi_core-0.1.2-py3-none-any.whl", hash = "sha256:c8685d21a70d152f89fb5d900557a2ff42cc2c14158c8dfe3a73bb32e9eb9692", size = 54340, upload-time = "2026-09-10T12:40:36.83Z" },
+    { url = "https://files.pythonhosted.org/packages/f9/24/9e957d4b1456209e26a3893044855a3afd47e08e5e78f09408f33b0141cb/opensmi_core-0.2-py3-none-any.whl", hash = "sha256:78da77845a3f1ace4f53daab87605e96b30f62181463f69db93d784d6f2c5e82", size = 55450, upload-time = "2026-09-23T12:30:37.672Z" },
 ]
 
 [[package]]
@@ -427,17 +439,17 @@ name = "opensmi-ui"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "appysetty" },
     { name = "fastapi", extra = ["standard"] },
     { name = "opensmi-client" },
-    { name = "opensmi-core" },
     { name = "pydantic" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "appysetty", specifier = ">=0.2.0" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.141.1" },
-    { name = "opensmi-client", index = "https://test.pypi.org/simple" },
-    { name = "opensmi-core", index = "https://test.pypi.org/simple" },
+    { name = "opensmi-client" },
     { name = "pydantic", specifier = ">=2.13.5" },
 ]
 

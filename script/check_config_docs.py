@@ -3,8 +3,9 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from app_config.app_config import AppConfig
-from app_config.write import write_config_documentation
+import appysetty
+
+from opensmi_ui.app_config.config import AppConfig
 
 TIMESTAMP_PATTERN = re.compile(
     r"^(?:# )?Created at: .*$",
@@ -18,15 +19,15 @@ def normalize(content: str) -> str:
 
 def main() -> None:
     tracked_files = [
-        Path("docs/config/config.example.yml"),
+        Path("docs/config/config.example.yaml"),
         Path("docs/config/DefaultConfiguration.md"),
     ]
 
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_path = Path(temp_dir)
 
-        write_config_documentation(
-            AppConfig(),
+        appysetty.write_configuration_documentation(
+            AppConfig,
             env_prefix="OPENSMI_UI",
             output_dir=temp_path,
         )
@@ -35,14 +36,10 @@ def main() -> None:
             generated_file = temp_path / tracked_file.name
 
             if not tracked_file.is_file():
-                raise SystemExit(
-                    f"Missing configuration documentation: {tracked_file}"
-                )
+                raise SystemExit(f"Missing configuration documentation: {tracked_file}")
 
             if not generated_file.is_file():
-                raise SystemExit(
-                    f"Generator did not create: {generated_file}"
-                )
+                raise SystemExit(f"Generator did not create: {generated_file}")
 
             expected = normalize(tracked_file.read_text(encoding="utf-8"))
             actual = normalize(generated_file.read_text(encoding="utf-8"))
