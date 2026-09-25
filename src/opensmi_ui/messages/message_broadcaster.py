@@ -19,20 +19,8 @@ logger = logging.getLogger("uvicorn")
 
 
 class MessageBroadcaster:
-    _self = None
-
-    def __new__(cls):
-        if cls._self is None:
-            cls._self = super().__new__(cls)
-            cls._self._initialized = False
-        return cls._self
-
     def __init__(self):
-        if self._initialized:
-            return
-
         self.active_connections: list[WebSocket] = []
-        self._initialized = True
 
     async def connect(self, websocket: WebSocket):
         """Called when a new connection is added to the list"""

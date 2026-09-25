@@ -6,6 +6,11 @@ from pydantic import AliasGenerator, BaseModel, ConfigDict, computed_field
 from pydantic.alias_generators import to_camel
 
 
+# basic error class for non-enabled stuff
+class ModuleDisabledError(RuntimeError):
+    """Raised whenever a module is simply not enabled but functionality was still used"""
+
+
 # base class for all json based models. converts snake_case_style to camelCaseStyle for JSON in both directions
 class JsonBaseModel(BaseModel):
     model_config = ConfigDict(
@@ -43,10 +48,6 @@ class GenericUpdateMessage[T](JsonOutModel):
     @property
     def update_type(self) -> str:
         return self.update_content.__class__.__name__
-
-
-class HealthResponse(JsonOutModel):
-    is_healthy: bool
 
 
 ## Actions

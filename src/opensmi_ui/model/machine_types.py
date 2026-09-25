@@ -1,7 +1,7 @@
 import datetime
 from enum import Enum
 
-from opensmi_ui.model.common_types import (
+from opensmi_ui.model.common import (
     GenericActionRequest,
     GenericActionType,
     GenericUpdateEntityType,

@@ -1,7 +1,7 @@
 import logging
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict
+from typing import Any, Dict, Mapping
 
 from pyuaadapter.client.remote_server import (
     RemoteServer,
@@ -44,7 +44,7 @@ class ServerModule(RemoteServerSubscriber):
     entity_id: uuid.UUID
 
     # maps entity ids to machines
-    server_machine_map: Dict[uuid.UUID, MachineModule] = {}
+    server_machine_map: dict[uuid.UUID, MachineModule]
 
     # reference used when a force disconnect is requested
     # should point to the (very low level) tcp transport

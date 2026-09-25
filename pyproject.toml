@@ -11,7 +11,7 @@ dependencies = [
     "fastapi[standard]>=0.141.1",
     "pydantic>=2.13.5",
     "opensmi-client",
-    "appysetty>=0.2.0",
+    "appysetty>=0.5.0",
 ]
 
 
@@ -21,3 +21,6 @@ opensmi-ui = "opensmi_ui:main"
 [build-system]
 requires = ["uv_build>=0.12.13,<0.13.0"]
 build-backend = "uv_build"
+
+[tool.fastapi]
+entrypoint = "opensmi_ui.main:app"

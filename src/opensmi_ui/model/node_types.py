@@ -6,7 +6,7 @@ from typing import Any
 from asyncua.ua import VariantType
 from pydantic import ConfigDict
 
-from opensmi_ui.model.common_types import JsonOutModel
+from opensmi_ui.model.common import JsonOutModel
 
 
 class RemoteVariableValueType(str, Enum):
