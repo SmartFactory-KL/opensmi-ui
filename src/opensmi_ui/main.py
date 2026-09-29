@@ -1,4 +1,3 @@
-import logging
 import sys
 
 import appysetty
@@ -8,8 +7,9 @@ from dotenv import load_dotenv
 from opensmi_ui.app_config.config import AppConfig
 from opensmi_ui.app_config.validate import InvalidConfigError, validate_config
 from opensmi_ui.compose.composer import Composer, ComposerInitError
+from opensmi_ui.logger import get_module_logger
 
-logger = logging.getLogger("uvicorn.opensmi_ui.main")
+logger = get_module_logger("main")
 
 # read configuration input
 try:
@@ -21,7 +21,7 @@ try:
 
     validate_config(cfg)
 
-    logger.info("-"*20)
+    logger.info("-" * 20)
     logger.info("### Configuration")
     visit_config_strings(
         cfg,
@@ -30,7 +30,7 @@ try:
         ),
     )
     logger.info("### End Configuration")
-    logger.info("-"*20)
+    logger.info("-" * 20)
 
 except appysetty.AppConfigError as e:
     print(f"failed to read configuration: {e}")

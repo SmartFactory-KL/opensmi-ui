@@ -1,9 +1,10 @@
 import asyncio
-import logging
 from asyncio import Task
 from datetime import timedelta
 
-logger = logging.getLogger("uvicorn.opensmi_ui.metrics")
+from opensmi_ui.logger import get_module_logger
+
+logger = get_module_logger("metrics")
 
 
 class Metrics:

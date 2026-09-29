@@ -1,12 +1,11 @@
-import logging
-
 from fastapi import Response, status
 from fastapi.routing import APIRouter
 
+from opensmi_ui.logger import get_module_logger
 from opensmi_ui.model.common import ModuleDisabledError
 from opensmi_ui.pin_guard.pin_guard import PinGuard, PinGuardUnlockRequest
 
-logger = logging.getLogger("uvicorn.opensmi_ui.pin_guard_api")
+logger = get_module_logger("pin_guard_api")
 
 
 def create_ping_guard_api(pin_guard: PinGuard) -> APIRouter:
@@ -36,7 +35,10 @@ def create_ping_guard_api(pin_guard: PinGuard) -> APIRouter:
 
         return Response(status_code=status.HTTP_204_NO_CONTENT)
 
-    @router.post("/unlock", summary="Request the PinGuard to be unlocked using a PinGuardUnlockRequest")
+    @router.post(
+        "/unlock",
+        summary="Request the PinGuard to be unlocked using a PinGuardUnlockRequest",
+    )
     async def post_unlock(request: PinGuardUnlockRequest, response: Response):
         # locking does not need a pin
         try:

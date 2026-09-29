@@ -1,9 +1,9 @@
 import asyncio
-import logging
 from dataclasses import dataclass
 from datetime import timedelta
 from time import monotonic
 
+from opensmi_ui.logger import get_module_logger
 from opensmi_ui.model.common import (
     GenericUpdateEntityType,
     GenericUpdateMessage,
@@ -12,7 +12,7 @@ from opensmi_ui.model.common import (
     ModuleDisabledError,
 )
 
-logger = logging.getLogger("uvicorn.opensmi_ui.pin_guard")
+logger = get_module_logger("pin_guard")
 
 
 @dataclass
@@ -64,7 +64,7 @@ class PinGuard:
         if self._autolock_task is not None and not self._autolock_task.done():
             return
 
-        logger.info("PinGuard: Starting AutoLock Task")
+        logger.info("Starting AutoLock Task")
         self.tick_auto_lock()
         self._autolock_task = asyncio.create_task(self.check_auto_lock())
 
@@ -75,7 +75,7 @@ class PinGuard:
         if self._autolock_task is None:
             return
 
-        logger.info("PinGuard: Stopping AutoLock Task")
+        logger.info("Stopping AutoLock Task")
         self._autolock_task.cancel()
 
         try:
@@ -102,7 +102,7 @@ class PinGuard:
         if self._pin == pin_input.pin:
             self._unlock()
         else:
-            raise ValueError("Pin Guard: Incorrect PIN")
+            raise ValueError("Incorrect PIN")
 
     def request_lock(self):
         if not self._is_enabled:

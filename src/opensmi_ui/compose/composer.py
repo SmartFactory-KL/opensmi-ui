@@ -10,9 +10,12 @@ from opensmi_ui.api.image_api import create_image_api
 from opensmi_ui.api.pin_guard_api import create_ping_guard_api
 from opensmi_ui.app_config.config import AppConfig
 from opensmi_ui.image.image_provider import StaticImageProvider
+from opensmi_ui.logger import get_module_logger
 from opensmi_ui.messages.message_broadcaster import MessageBroadcaster
 from opensmi_ui.metrics.metrics import Metrics
 from opensmi_ui.pin_guard.pin_guard import PinGuard, PinGuardConfig
+
+logger = get_module_logger("composer")
 
 
 class ComposerInitError(Exception):
