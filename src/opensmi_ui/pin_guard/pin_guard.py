@@ -9,6 +9,7 @@ from opensmi_ui.model.common import (
     GenericUpdateMessage,
     JsonBaseModel,
     JsonOutModel,
+    ModuleDisabledError,
 )
 
 logger = logging.getLogger("uvicorn.opensmi_ui.pin_guard")
@@ -96,7 +97,7 @@ class PinGuard:
 
     def request_unlock(self, pin_input: PinGuardUnlockRequest):
         if not self._is_enabled:
-            return
+            raise ModuleDisabledError("PinGuard is not enabled")
 
         if self._pin == pin_input.pin:
             self._unlock()
@@ -105,7 +106,7 @@ class PinGuard:
 
     def request_lock(self):
         if not self._is_enabled:
-            return
+            raise ModuleDisabledError("PinGuard is not enabled")
 
         if not self._is_locked:
             self._lock()

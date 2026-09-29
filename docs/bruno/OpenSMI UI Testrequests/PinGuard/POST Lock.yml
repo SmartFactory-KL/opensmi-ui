@@ -1,0 +1,16 @@
+info:
+  name: POST Lock
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{opensmi_ui_base_url}}/api/pin-guard/lock"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

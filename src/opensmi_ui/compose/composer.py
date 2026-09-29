@@ -2,11 +2,12 @@ from contextlib import asynccontextmanager
 from datetime import timedelta
 from typing import Protocol
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, FastAPI, WebSocket, WebSocketDisconnect
 from starlette.staticfiles import StaticFiles
 
 from opensmi_ui.api.app_info_api import create_health_api
 from opensmi_ui.api.image_api import create_image_api
+from opensmi_ui.api.pin_guard_api import create_ping_guard_api
 from opensmi_ui.app_config.config import AppConfig
 from opensmi_ui.image.image_provider import StaticImageProvider
 from opensmi_ui.messages.message_broadcaster import MessageBroadcaster
@@ -30,6 +31,8 @@ class Composer:
     def __init__(self):
         self.startables: list[Startable] = []
         self.closables: list[Closable] = []
+
+        self.apis: list[APIRouter] = []
 
     def compose_application(self, config: AppConfig) -> FastAPI:
         """this initializes and composes all modules but does not start the server yet"""
@@ -56,11 +59,16 @@ class Composer:
             self.startables.append(pin_guard)
             self.closables.append(pin_guard)
 
+            pin_guard_api = create_ping_guard_api(pin_guard=pin_guard)
+            self.apis.append(pin_guard_api)
+
             # image api
             img_api = create_image_api(img_provider)
+            self.apis.append(img_api)
 
             # health api
             health_api = create_health_api(config)
+            self.apis.append(health_api)
 
             # message broadcaster
             msg_broadcaster = MessageBroadcaster()
@@ -81,8 +89,8 @@ class Composer:
                 title="OpenSMI UI", version=config.app_version, lifespan=lifespan
             )
 
-            app.include_router(img_api)
-            app.include_router(health_api)
+            for api_to_append in self.apis:
+                app.include_router(api_to_append)
 
             @app.websocket("/socket")
             async def websocket_endpoint(websocket: WebSocket):

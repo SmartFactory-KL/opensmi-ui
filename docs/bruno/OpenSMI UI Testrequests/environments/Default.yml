@@ -1,0 +1,5 @@
+name: Default
+variables:
+  - name: opensmi_ui_base_url
+    value: http://localhost:8000
+    description: Base URL of the Moduel UI without /api

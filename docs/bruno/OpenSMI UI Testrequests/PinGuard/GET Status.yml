@@ -1,0 +1,16 @@
+info:
+  name: GET Status
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{opensmi_ui_base_url}}/api/pin-guard/"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
