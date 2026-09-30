@@ -51,14 +51,17 @@ class Metrics:
     async def print_stats(self):
         try:
             while True:
+                await asyncio.sleep(self._tick_seconds)
+
+                if len(self._message_stats) == 0 and len(self._serializer_stats) == 0:
+                    continue
+
                 logger.info(f"Update Statistics (last {self._tick_seconds} seconds):")
                 logger.info(self._message_stats)
                 logger.info(self._serializer_stats)
 
                 self._message_stats.clear()
                 self._serializer_stats.clear()
-
-                await asyncio.sleep(self._tick_seconds)
         except asyncio.CancelledError:
             raise
         except Exception:

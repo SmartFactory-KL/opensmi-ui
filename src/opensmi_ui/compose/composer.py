@@ -7,12 +7,16 @@ from starlette.staticfiles import StaticFiles
 
 from opensmi_ui.api.app_info_api import create_health_api
 from opensmi_ui.api.image_api import create_image_api
+from opensmi_ui.api.opc_model_api import create_opc_model_api
+from opensmi_ui.api.opc_session_api import create_opc_session_api
 from opensmi_ui.api.pin_guard_api import create_ping_guard_api
 from opensmi_ui.app_config.config import AppConfig
 from opensmi_ui.image.image_provider import StaticImageProvider
 from opensmi_ui.logger import get_module_logger
 from opensmi_ui.messages.message_broadcaster import MessageBroadcaster
 from opensmi_ui.metrics.metrics import Metrics
+from opensmi_ui.opc_model.model import OPCModel
+from opensmi_ui.opc_session.session import OPCSession, OPCSessionSettings
 from opensmi_ui.pin_guard.pin_guard import PinGuard, PinGuardConfig
 
 logger = get_module_logger("composer")
@@ -76,13 +80,38 @@ class Composer:
             # message broadcaster
             msg_broadcaster = MessageBroadcaster()
 
+            # session
+            opc_session = OPCSession(
+                url=config.opc_ua_default_server_url, settings=OPCSessionSettings()
+            )
+            self.startables.append(opc_session)
+            self.closables.append(opc_session)
+
+            # session api
+            opc_session_api = create_opc_session_api(opc_session=opc_session)
+            self.apis.append(opc_session_api)
+
+            # model
+            opc_model = OPCModel(opc_session=opc_session)
+
+            # model api
+            opc_model_api = create_opc_model_api(opc_model=opc_model)
+            self.apis.append(opc_model_api)
+
             # define lifecycle
             @asynccontextmanager
             async def lifespan(app: FastAPI):
                 for startable in self.startables:
                     await startable.start()
 
+                await opc_session.connect(
+                    username=config.opc_ua_default_server_username,
+                    password=config.opc_ua_default_server_password,
+                )
+
                 yield
+
+                await opc_session.disconnect()
 
                 for closable in self.closables:
                     await closable.close()
