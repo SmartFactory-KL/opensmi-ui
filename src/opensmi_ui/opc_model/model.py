@@ -39,6 +39,7 @@ class OPCModel:
             visited.add(next_node_id)
 
             opc_node = await create_opc_node(self.opc_session, next_node_id)
+            print(opc_node)
 
             children = await opc_node.ua_node().get_children()
 
