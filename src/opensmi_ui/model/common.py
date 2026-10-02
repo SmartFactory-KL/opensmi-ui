@@ -18,7 +18,7 @@ class JsonBaseModel(BaseModel):
             validation_alias=to_camel,
             serialization_alias=to_camel,
         ),
-        populate_by_name=True
+        populate_by_name=True,
     )
 
 

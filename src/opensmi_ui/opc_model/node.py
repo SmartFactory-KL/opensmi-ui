@@ -20,7 +20,8 @@ class OPCNode:
     browse_name: ua.QualifiedName
     display_name: ua.LocalizedText
 
-    _ua_node: Node
+    ua_node: Node
+
     _children: list["OPCNode"]
 
     def __init__(
@@ -32,12 +33,11 @@ class OPCNode:
         ua_node: Node,
     ) -> None:
         self.node_id = node_id
-        self._ua_node = ua_node
-
         self.node_class = node_class
         self.browse_name = browse_name
         self.display_name = display_name
 
+        self.ua_node = ua_node
         self._children = []
 
     @property
@@ -55,9 +55,6 @@ class OPCNode:
     @property
     def node_class_name(self) -> str:
         return self.node_class.name
-
-    def ua_node(self) -> Node:
-        return self._ua_node
 
     def append_child(self, opc_node: "OPCNode"):
         self._children.append(opc_node)

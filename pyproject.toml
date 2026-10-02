@@ -12,7 +12,7 @@ dependencies = [
     "pydantic>=2.13.5",
     "opensmi-client",
     "appysetty>=0.5.0",
-    "asyncua"
+    "asyncua",
 ]
 
 
@@ -25,3 +25,11 @@ build-backend = "uv_build"
 
 [tool.fastapi]
 entrypoint = "opensmi_ui.main:app"
+
+[tool.uv]
+link-mode = "copy"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.16.10",
+]

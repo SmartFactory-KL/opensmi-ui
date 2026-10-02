@@ -15,7 +15,7 @@ from opensmi_ui.image.image_provider import StaticImageProvider
 from opensmi_ui.logger import get_module_logger
 from opensmi_ui.messages.message_broadcaster import MessageBroadcaster
 from opensmi_ui.metrics.metrics import Metrics
-from opensmi_ui.opc_model.model import OPCModel
+from opensmi_ui.opc_model.browse import OPCModel
 from opensmi_ui.opc_session.session import OPCSession, OPCSessionSettings
 from opensmi_ui.pin_guard.pin_guard import PinGuard, PinGuardConfig
 

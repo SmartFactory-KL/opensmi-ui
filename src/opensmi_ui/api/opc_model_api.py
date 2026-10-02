@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from starlette import status
 
 from opensmi_ui.logger import get_module_logger
-from opensmi_ui.opc_model.model import OPCModel
+from opensmi_ui.opc_model.browse import OPCModel
 from opensmi_ui.opc_session.session import OPCSessionNotReadyError
 
 logger = get_module_logger("opc_model_api")

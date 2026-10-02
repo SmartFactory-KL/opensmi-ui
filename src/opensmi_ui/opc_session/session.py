@@ -15,6 +15,7 @@ logger = get_module_logger("opc_session")
 class OPCSessionNotReadyError(Exception):
     """can be raised when the session is not ready yet but was intended to be used"""
 
+
 class OPCSessionAlreadyConnectedError(Exception):
     """can be raised to indicate that session is already connected"""
 
@@ -55,7 +56,9 @@ class OPCSession:
             product_uri="urn:smartfactory-kl:opensmi_ui:session",
         )
 
-        self.opc_client: Client = Client(url="") # this is only a dummy client to prevent None
+        self.opc_client: Client = Client(
+            url=""
+        )  # this is only a dummy client to prevent None
         self._connection_monitor_task: asyncio.Task[None] | None = None
 
         self._namespaces: list[str] = []
