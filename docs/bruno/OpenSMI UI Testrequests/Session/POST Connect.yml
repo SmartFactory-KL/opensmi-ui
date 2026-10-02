@@ -1,0 +1,24 @@
+info:
+  name: POST Connect
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{opensmi_ui_base_url}}/api/opc-session/connect"
+  body:
+    type: json
+    data: |-
+      {
+        "url": "opc.tcp://localhost:4843",
+        "username": "operator",
+        "password": "operator"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

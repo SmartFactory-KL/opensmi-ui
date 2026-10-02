@@ -1,0 +1,19 @@
+info:
+  name: POST Disconnect
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{opensmi_ui_base_url}}/api/opc-session/disconnect"
+  body:
+    type: json
+    data: ""
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

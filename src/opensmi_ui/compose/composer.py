@@ -81,10 +81,7 @@ class Composer:
             msg_broadcaster = MessageBroadcaster()
 
             # session
-            opc_session = OPCSession(
-                url=config.opc_ua_default_server_url, settings=OPCSessionSettings()
-            )
-            self.startables.append(opc_session)
+            opc_session = OPCSession(settings=OPCSessionSettings())
             self.closables.append(opc_session)
 
             # session api
@@ -103,11 +100,6 @@ class Composer:
             async def lifespan(app: FastAPI):
                 for startable in self.startables:
                     await startable.start()
-
-                await opc_session.connect(
-                    username=config.opc_ua_default_server_username,
-                    password=config.opc_ua_default_server_password,
-                )
 
                 yield
 

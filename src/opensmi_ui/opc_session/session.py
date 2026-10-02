@@ -15,6 +15,9 @@ logger = get_module_logger("opc_session")
 class OPCSessionNotReadyError(Exception):
     """can be raised when the session is not ready yet but was intended to be used"""
 
+class OPCSessionAlreadyConnectedError(Exception):
+    """can be raised to indicate that session is already connected"""
+
 
 class OPCSessionSettings(JsonBaseModel):
     timeout: float = 30.0
@@ -31,35 +34,28 @@ class OPCSessionData(JsonOutModel):
     state: UaClientState = UaClientState.DISCONNECTED
 
     application_uri: str = ""
+    product_uri: str = ""
 
     namespaces: list[str] | None = None
 
-    session_settings: OPCSessionSettings | None = None
+    session_settings: OPCSessionSettings
 
 
 class OPCSession:
     def __init__(
         self,
-        url: str,
         settings: OPCSessionSettings | None = None,
     ):
         if settings is None:
             settings = OPCSessionSettings()
 
-        self._opc_session_settings = settings
-
-        self.opc_client = Client(
-            url=url,
-            timeout=settings.timeout,
-            auto_reconnect=settings.auto_reconnect,
-            reconnect_max_delay=settings.reconnect_max_delay,
-            reconnect_request_timeout=settings.reconnect_request_timeout,
-            watchdog_intervall=settings.watchdog_intervall,
+        self._session_data = OPCSessionData(
+            session_settings=settings,
+            application_uri=f"urn:smartfactory-kl:opensmi_ui:{uuid4()}",
+            product_uri="urn:smartfactory-kl:opensmi_ui:session",
         )
 
-        self.opc_client.application_uri = f"urn:smartfactory-kl:opensmi_ui:{uuid4()}"
-        self.opc_client.product_uri = "urn:smartfactory-kl:opensmi_ui:session"
-
+        self.opc_client: Client = Client(url="") # this is only a dummy client to prevent None
         self._connection_monitor_task: asyncio.Task[None] | None = None
 
         self._namespaces: list[str] = []
@@ -68,19 +64,18 @@ class OPCSession:
 
         self._type_defs: dict[str, type] = {}
 
-        self._info = OPCSessionData(
-            application_uri=self.opc_client.application_uri,
-            session_settings=self._opc_session_settings,
-        )
-
     async def _connection_monitor(self) -> None:
+        if self.opc_client is None:
+            logger.warning("Connection monitor cannot work while opc_client is None")
+            return
+
         async with self.opc_client.subscribe_state() as conn_state:
             while True:
                 state = await conn_state.next_change()
-                self._info.state = state
+                self._session_data.state = state
                 logger.info(f"Session now in {state}")
 
-    async def start(self) -> None:
+    def start_connection_monitor(self) -> None:
         if (
             self._connection_monitor_task is not None
             and not self._connection_monitor_task.done()
@@ -103,22 +98,42 @@ class OPCSession:
         finally:
             self._connection_monitor_task = None
 
-    async def connect(self, username: str, password: str) -> None:
-        if self.opc_client.state != UaClientState.DISCONNECTED:
-            raise ValueError(
-                f"Connection is currently in {self.opc_client.state}, please disconnect or wait for {UaClientState.DISCONNECTED} before connecting again"
+    async def connect(self, url: str, username: str, password: str) -> None:
+        if (
+            self.opc_client is not None
+            and self.opc_client.state is not UaClientState.DISCONNECTED
+        ):
+            raise OPCSessionAlreadyConnectedError(
+                f"Cannot connect: Client exists and not in state Disconnected (actual state is {self.opc_client.state})"
             )
 
-        self.opc_client.set_user(username)
-        self._info.username = username
+        settings = self._session_data.session_settings
 
+        self.opc_client = Client(
+            url=url,
+            timeout=settings.timeout,
+            auto_reconnect=settings.auto_reconnect,
+            reconnect_max_delay=settings.reconnect_max_delay,
+            reconnect_request_timeout=settings.reconnect_request_timeout,
+            watchdog_intervall=settings.watchdog_intervall,
+        )
+
+        self.start_connection_monitor()
+
+        self.opc_client.set_user(username)
         self.opc_client.set_password(password)
 
-        await self.opc_client.connect(
-            auto_reconnect=self._opc_session_settings.auto_reconnect,
-            reconnect_max_delay=self._opc_session_settings.reconnect_max_delay,
-            reconnect_request_timeout=self._opc_session_settings.reconnect_request_timeout,
-        )
+        try:
+            await self.opc_client.connect(
+                auto_reconnect=settings.auto_reconnect,
+                reconnect_max_delay=settings.reconnect_max_delay,
+                reconnect_request_timeout=settings.reconnect_request_timeout,
+            )
+        except:
+            logger.exception("Failed to connect")
+            raise
+
+        self._session_data.username = username
 
         self._namespaces = await self.opc_client.get_namespace_array()
         self._ns_idx_uri.clear()
@@ -130,12 +145,22 @@ class OPCSession:
 
         self._type_defs = await self.opc_client.load_data_type_definitions()
 
-        self._info.namespaces = self._namespaces
+        self._session_data.namespaces = self._namespaces
 
     async def disconnect(self) -> None:
-        await self.opc_client.disconnect()
+        if self.opc_client is None:
+            return
 
-        self._info.username = ""
+        try:
+            await self.opc_client.disconnect()
+            self._clear_session_data()
+        except ConnectionError:
+            logger.warning("Disconnect was called but got ConnectionError")
+            return
+        except Exception:
+            raise
+
+        self._session_data.username = ""
 
     def namespace_idx(self, uri: str) -> Int16:
         try:
@@ -149,8 +174,15 @@ class OPCSession:
         except ValueError:
             raise ValueError(f"Unknown namespace index: {idx}") from None
 
-    def get_info(self) -> OPCSessionData:
-        return self._info
+    def get_session_data(self) -> OPCSessionData:
+        return self._session_data
 
-    def is_ready(self) -> bool:
-        return self.opc_client.state is UaClientState.CONNECTED
+    def _clear_session_data(self) -> None:
+        self._session_data.username = ""
+        self._session_data.namespaces = []
+
+    def is_connected(self) -> bool:
+        return (
+            self.opc_client is not None
+            and self.opc_client.state is UaClientState.CONNECTED
+        )
