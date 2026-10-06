@@ -1,6 +1,6 @@
 import uuid
 from collections import deque
-from collections.abc import Iterable, Mapping
+from collections.abc import Awaitable, Iterable, Mapping
 from uuid import uuid4
 
 from asyncua.ua import SecurityPolicyType
@@ -12,8 +12,10 @@ from opensmi.client import (
     RemoteVariable,
 )
 from opensmi.client.browse import BrowseRule
+from opensmi.core import Signal
 
 from opensmi_ui.logger import get_module_logger
+from opensmi_ui.messages.receiver import MessageReceiver
 from opensmi_ui.model.common import JsonBaseModel
 from opensmi_ui.opc_client.reference import (
     EntityIdCallableCache,
@@ -66,7 +68,7 @@ class OPCClientSessionNotReadyError(RuntimeError):
 
 
 class OPCClient:
-    def __init__(self, settings: OPCClientSettings):
+    def __init__(self, settings: OPCClientSettings, msg_receiver: MessageReceiver):
         self._settings = settings
 
         self.client: RemoteServer | None = None
@@ -77,6 +79,8 @@ class OPCClient:
         self._component_cache = EntityIdComponentCache()
         self._variable_cache = EntityIdVariableCache()
 
+        self._signals: dict[Signal, Awaitable] = {}
+        self.receiver = msg_receiver
         self.session_data = OPCClientSessionData(
             application_uri=f"urn:smartfactory-kl:opensmi_ui:{uuid4()}",
             product_uri="urn:smartfactory-kl:opensmi_ui:session",
@@ -120,6 +124,9 @@ class OPCClient:
         self.session_data.browse_rules = request.browse_rules
         self.session_data.security_policy = request.security_policy
 
+        self.client.status_changed.connect(callback=self.receiver.receive_server_state)
+        self.client.time_updated.connect(callback=self.receiver.receive_server_time)
+
         await self.client.connect()
 
         self.add_references_from_server(self.client.machines)
@@ -132,7 +139,34 @@ class OPCClient:
             # to get the signals
             while components_to_process:
                 next_component = components_to_process.popleft()
+
+                # add component to cache
                 self._component_cache.add(uuid.uuid4(), next_component)
+
+                # add signals to message funnel
+                next_component.status_changed.connect(
+                    callback=self.receiver.receive_component_state
+                )
+
+                next_component.notification_received.connect(
+                    callback=self.receiver.receive_component_notification
+                )
+
+                if (
+                    isinstance(next_component, RemoteMachine)
+                    and next_component.lock is not None
+                ):
+                    next_component.lock.locked_changed.connect(
+                        callback=self.receiver.receive_lock_changed
+                    )
+                    next_component.lock.locking_user_changed.connect(
+                        callback=self.receiver.receive_lock_user_changed
+                    )
+
+                    for machine_user in next_component.users:
+                        machine_user.user_presence_changed.connect(
+                            callback=self.receiver.receive_user_presence_changed
+                        )
 
                 # handle callables
                 for skill_container in [
@@ -142,6 +176,8 @@ class OPCClient:
                 ]:
                     for skill in skill_container.values():
                         self._callable_cache.add(uuid.uuid4(), skill)
+
+                        skill.state_changed.connect(callback=self.receiver.receive_skill_state)
 
                         # handle skill variable trees
                         for var_container in [
@@ -182,6 +218,8 @@ class OPCClient:
         while vars_to_process:
             var_to_process = vars_to_process.popleft()
             self._variable_cache.add(uuid.uuid4(), var_to_process)
+
+            var_to_process.value_changed.connect(self.receiver.receive_value_changed)
 
             for var_child in var_to_process.children.values():
                 vars_to_process.append(var_child)

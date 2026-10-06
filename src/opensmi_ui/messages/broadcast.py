@@ -1,21 +1,9 @@
-import logging
-from typing import Any
-
 from fastapi import WebSocket
-from pydantic import BaseModel
 
+from opensmi_ui.logger import get_module_logger
+from opensmi_ui.messages.model import WebSocketMessage, WebSocketMessageBatch
 
-class WebSocketMessage(BaseModel):
-    channel: str
-    data: Any
-
-
-class WebSocketMessageBatch(BaseModel):
-    channel: str
-    data: list[WebSocketMessage]
-
-
-logger = logging.getLogger("uvicorn")
+logger = get_module_logger("messages.broadcaster")
 
 
 class MessageBroadcaster:

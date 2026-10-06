@@ -33,6 +33,10 @@ def create_opc_client_api(opc_client: OPCClient) -> APIRouter:
             )
         except OPCClientSessionNotReadyError as e:
             raise HTTPException(detail=str(e), status_code=status.HTTP_409_CONFLICT)
+        except ConnectionError as e:
+            raise HTTPException(
+                detail=str(e), status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
         return Response(status_code=status.HTTP_204_NO_CONTENT)
 

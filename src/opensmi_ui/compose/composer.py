@@ -12,7 +12,9 @@ from opensmi_ui.api.pin_guard_api import create_ping_guard_api
 from opensmi_ui.app_config.config import AppConfig
 from opensmi_ui.image.image_provider import StaticImageProvider
 from opensmi_ui.logger import get_module_logger
-from opensmi_ui.messages.message_broadcaster import MessageBroadcaster
+from opensmi_ui.messages.broadcast import MessageBroadcaster
+from opensmi_ui.messages.funnel import MessageFunnel
+from opensmi_ui.messages.receiver import MessageReceiver
 from opensmi_ui.metrics.metrics import Metrics
 from opensmi_ui.opc_client.client import OPCClient, OPCClientSettings
 from opensmi_ui.pin_guard.pin_guard import PinGuard, PinGuardConfig
@@ -75,11 +77,17 @@ class Composer:
             health_api = create_health_api(config)
             self.apis.append(health_api)
 
-            # message broadcaster
+            # message broadcaster/funnel/receiver
             msg_broadcaster = MessageBroadcaster()
+            msg_funnel = MessageFunnel(broadcaster=msg_broadcaster)
+            msg_funnel.enable_batching_task()
+
+            msg_receiver = MessageReceiver(funnel=msg_funnel)
 
             # session
-            opc_client = OPCClient(settings=OPCClientSettings())
+            opc_client = OPCClient(
+                settings=OPCClientSettings(), msg_receiver=msg_receiver
+            )
             self.closables.append(opc_client)
 
             # session api

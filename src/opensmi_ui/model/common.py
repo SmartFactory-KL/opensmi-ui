@@ -41,7 +41,7 @@ class GenericUpdateEntityType(str, Enum):
 
 
 class GenericUpdateMessage[T](JsonOutModel):
-    entity_id: uuid.UUID
+    entity_id: uuid.UUID | None
     entity_type: GenericUpdateEntityType
     update_content: T
 

@@ -15,19 +15,16 @@ export interface GenericUpdateMessage {
 
 // Server Stuff
 // ##############################################################
-export type ServerConnectionState =
-  | "open"
-  | "pending"
-  | "connected"
-  | "browsing";
+type RemoteServerStatus =
+  | "DISCONNECTED"
+  | "CONNECTING"
+  | "BROWSING"
+  | "CONNECTED"
+  | "RECONNECTING"
+  | "DISCONNECTING";
 
-export interface ServerConnectionUpdate {
-  connectionState: ServerConnectionState;
-}
-
-export interface ServerTimeUpdate {
-  newDatetime: string;
-}
+export type ServerStateUpdateMessage = RemoteServerStatus
+export type ServerTimeUpdateMessage = string
 
 export interface ServerPinGuardStateUpdate {
   newIsLocked: boolean;

@@ -4,9 +4,10 @@ import SocketClient from "../util/SocketClient";
 import { simplyGet, simplyPost } from "../util/SimplyFetch";
 import Notify from "../util/Notify";
 import {
-  ServerConnectionState,
   GenericUpdateMessage,
-  ServerConnectionUpdate,
+  RemoteServerStatus,
+  ServerStateUpdateMessage,
+  ServerTimeUpdateMessage,
 } from "../types/UpdateTypes";
 
 const LOCAL_STORAGE_SERVER_URL = "sf-module-ui-server-url";
@@ -22,7 +23,7 @@ export type ServerConnectionData = {
 export const useServerStore = defineStore("server", {
   state: () => {
     return {
-      connectionState: "" as ServerConnectionState,
+      connectionState: "" as RemoteServerStatus,
       serverTime: "",
       isInOnlyPresetMode: false,
       userInput: {
@@ -38,7 +39,7 @@ export const useServerStore = defineStore("server", {
       connectionData: {
         serverUrl: "",
         username: "",
-      }
+      },
     };
   },
   actions: {
@@ -48,39 +49,39 @@ export const useServerStore = defineStore("server", {
     },
     loadLocalData() {
       let localServerUrl = window.localStorage.getItem(
-        LOCAL_STORAGE_SERVER_URL
+        LOCAL_STORAGE_SERVER_URL,
       );
       this.userInput.serverUrl = localServerUrl ?? "";
 
       let localUser = window.localStorage.getItem(
-        LOCAL_STORAGE_SERVER_USERNAME
+        LOCAL_STORAGE_SERVER_USERNAME,
       );
       this.userInput.username = localUser ?? "";
 
       let localPassword = window.localStorage.getItem(
-        LOCAL_STORAGE_SERVER_PASSWORD
+        LOCAL_STORAGE_SERVER_PASSWORD,
       );
       this.userInput.password = localPassword ?? "";
     },
     storeUserInputLocally() {
       window.localStorage.setItem(
         LOCAL_STORAGE_SERVER_URL,
-        this.userInput.serverUrl
+        this.userInput.serverUrl,
       );
       window.localStorage.setItem(
         LOCAL_STORAGE_SERVER_USERNAME,
-        this.userInput.username
+        this.userInput.username,
       );
       window.localStorage.setItem(
         LOCAL_STORAGE_SERVER_PASSWORD,
-        this.userInput.password
+        this.userInput.password,
       );
     },
     clearLocalData() {
       window.localStorage.clear();
       Notify.notify(
         "info",
-        "Local data has been cleared. Refresh to see effect."
+        "Local data has been cleared. Refresh to see effect.",
       );
     },
     resetToDefaults() {
@@ -100,7 +101,7 @@ export const useServerStore = defineStore("server", {
         this.connectionData.username = result.username;
 
         const defaultsResult = await simplyGet(
-          "/api/server/default-connection-data"
+          "/api/server/default-connection-data",
         );
 
         this.defaultValues.serverUrl = defaultsResult.defaultServerUrl;
@@ -122,7 +123,8 @@ export const useServerStore = defineStore("server", {
       } catch (e) {
         Notify.notify(
           "error",
-          "ServerStore Error: getServerInformation() -> " + (e as Error).message
+          "ServerStore Error: getServerInformation() -> " +
+            (e as Error).message,
         );
         console.warn("error while getting server state");
         console.warn(e);
@@ -142,7 +144,7 @@ export const useServerStore = defineStore("server", {
       } catch (e) {
         Notify.notify(
           "error",
-          "ServerStore Error: requestConnect() -> " + (e as Error).message
+          "ServerStore Error: requestConnect() -> " + (e as Error).message,
         );
         console.warn("Error during connection request");
         console.warn(e);
@@ -150,19 +152,19 @@ export const useServerStore = defineStore("server", {
     },
     async requestDisconnect() {
       console.log(
-        "Requesting disconnect from " + this.connectionData.serverUrl
+        "Requesting disconnect from " + this.connectionData.serverUrl,
       );
 
       try {
         const result = await simplyPost("/api/server/disconnect", {});
         console.log(result);
-        this.connectionState = "open";
+        this.connectionState = "DISCONNECTED";
         this.connectionData.serverUrl = "";
         this.connectionData.username = "";
       } catch (e) {
         Notify.notify(
           "error",
-          "ServerStore Error: requestDisconnect() -> " + (e as Error).message
+          "ServerStore Error: requestDisconnect() -> " + (e as Error).message,
         );
         console.warn("Error during disconnect request");
         console.warn(e);
@@ -170,23 +172,23 @@ export const useServerStore = defineStore("server", {
     },
     async requestForceDisconnect() {
       console.warn(
-        "Requesting forced disconnect from " + this.connectionData.serverUrl
+        "Requesting forced disconnect from " + this.connectionData.serverUrl,
       );
 
       try {
         const result = await simplyPost(
           "/api/server/disconnect?force=true",
-          {}
+          {},
         );
         console.log(result);
-        this.connectionState = "open";
+        this.connectionState = "DISCONNECTED";
         this.connectionData.serverUrl = "";
         this.connectionData.username = "";
       } catch (e) {
         Notify.notify(
           "error",
           "ServerStore Error: requestForceDisconnect() -> " +
-            (e as Error).message
+            (e as Error).message,
         );
         console.warn("Error during forced disconnect request");
         console.warn(e);
@@ -198,13 +200,12 @@ export const useServerStore = defineStore("server", {
       }
 
       switch (update.updateType) {
-        case "ServerConnectionUpdate":
-          this.connectionState = (
-            update.updateContent as ServerConnectionUpdate
-          ).connectionState;
+        case "ServerStateUpdate":
+          this.connectionState =
+            update.updateContent as ServerStateUpdateMessage;
           break;
         case "ServerTimeUpdate":
-          this.serverTime = update.updateContent.newDatetime;
+          this.serverTime = update.updateContent as ServerTimeUpdateMessage;
           break;
         default:
           console.warn("invalid update type for server");
