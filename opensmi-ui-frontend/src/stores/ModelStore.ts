@@ -1,3 +1,4 @@
+import { simplyGetToJSON } from "@/fetch/simplyFetch";
 import type { SocketMessage } from "@/socket/SocketClient";
 import type SocketClient from "@/socket/SocketClient";
 import type { GenericUpdateMessage } from "@/types/GenericTypes";
@@ -69,6 +70,89 @@ export const useModelStore = defineStore("model", {
       socketClient.addChannelListener("Skill", this.handleSkillUpdate);
       socketClient.addChannelListener("Method", this.handleMethodUpdate);
       socketClient.addChannelListener("Variable", this.handleVariableUpdate);
+    },
+    async refreshMachineData() {
+      if (this.requestData.isPending == true || this.isWorking == true) {
+        return;
+      }
+
+      this.requestData.isPending = true;
+      this.requestData.error = null;
+      this.isWorking = true;
+
+      console.log("requesting machine data...");
+
+      this.machines.clear();
+
+      this.skillEntityMap.clear();
+      this.methodEntityMap.clear();
+      this.componentEntityMap.clear();
+      this.variableEntityMap.clear();
+
+      this.entityToParentMachineMap.clear();
+
+      try {
+        const result = (await simplyGetToJSON(
+          "/api/opc-session/model",
+        )) as MachineDto[];
+
+        for (const [index, machine] of result.entries()) {
+          console.log("Receiving machine " + index + ": " + machine.entityId);
+          // this is to prevent double machines being within the result
+          if (this.machines.has(machine.entityId)) {
+            console.error(
+              "Machine with nodeId " + machine.entityId + " already present",
+            );
+            continue;
+          }
+
+          // walk the component tree and map relevant entities within it
+          const componentsToProcess = [] as ComponentDto[];
+          for (const _component of machine.components) {
+            componentsToProcess.push(_component);
+          }
+          componentsToProcess.push(machine); // dont forget the machine itself <3
+
+          console.log(
+            "Mapping out machine entities for machine " + machine.name,
+          );
+          let count = 0;
+          while (componentsToProcess.length > 0) {
+            count++;
+            if (count > 1_000) {
+              throw new Error("Count OVF when processing components.");
+            }
+
+            const nextComponent = componentsToProcess.shift();
+            if (!nextComponent) {
+              break;
+            } // just to satisfy the typescript gods
+
+            console.log(" + Component: " + nextComponent?.name);
+            this.mapifyComponentEntities(nextComponent, machine);
+
+            for (const _childComponent of nextComponent.components) {
+              componentsToProcess.push(_childComponent);
+            }
+          }
+
+          if (index == 0) {
+            // only use the first machine as part of the document title
+            document.title = machine.name + " - Module UI";
+          }
+
+          this.machines.set(machine.entityId, machine);
+        }
+
+        console.log("machine data received!");
+        this.isWorking = false;
+      } catch (e) {
+        console.error(e);
+        this.requestData.error = `Failed to request model: ${e}`;
+      } finally {
+        this.requestData.isPending = false;
+        this.isWorking = false;
+      }
     },
     /**
      * Handle a batch of updates by proxying them to the respective method
@@ -373,6 +457,11 @@ export const useModelStore = defineStore("model", {
 
       let count = 0;
       const entityList = [] as RemoteVariableDto[];
+
+      if (!Array.isArray(rootElementList)) {
+        return;
+      }
+
       for (const entity of rootElementList) {
         entityList.push(entity);
       }
@@ -405,6 +494,10 @@ export const useModelStore = defineStore("model", {
       callableInput: SkillDto | MethodDto | ComponentDto,
     ) {
       const itemsToProcess = [] as RemoteVariableDto[];
+
+      if (!Array.isArray(callableInput.parameterSet)) {
+        return;
+      }
 
       for (const _item of callableInput.parameterSet) {
         itemsToProcess.push(_item);

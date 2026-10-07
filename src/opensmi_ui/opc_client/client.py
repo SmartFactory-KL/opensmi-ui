@@ -102,6 +102,12 @@ class OPCClient:
         self.session_data.security_policy = SecurityPolicyType.NoSecurity
         self.session_data.state = RemoteServerStatus.DISCONNECTED.name
 
+    def get_machines(self) -> list[RemoteMachine]:
+        if self.client is None:
+            return []
+
+        return self.client.machines.values()
+
     async def connect(self, request: OPCClientConnectRequest):
         if (
             self.client is not None

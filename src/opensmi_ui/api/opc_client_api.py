@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Response
+from opensmi.client.dto import RemoteMachineDTO
 from starlette import status
 
 from opensmi_ui.logger import get_module_logger
@@ -44,5 +45,16 @@ def create_opc_client_api(opc_client: OPCClient) -> APIRouter:
     async def post_disconnect():
         await opc_client.disconnect()
         return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+    @router.get("/model", summary="Get the currently browsed model")
+    async def get_model():
+        machines = opc_client.get_machines()
+
+        machine_data_list: list[RemoteMachineDTO] = []
+
+        for machine in machines:
+            machine_data_list.append(machine.dto())
+
+        return machine_data_list
 
     return router
