@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { simplyGet } from "../util/SimplyFetch";
+import { useServerStore } from "./ServerStore";
 
 const LOCAL_STORAGE_PAGE_FLAGS_KEY = "sf-module-ui-page-show-flags";
 
@@ -27,7 +28,7 @@ export const usePageStore = defineStore("page", {
     storeShowFlags() {
       localStorage.setItem(
         LOCAL_STORAGE_PAGE_FLAGS_KEY,
-        JSON.stringify(this.showFlags)
+        JSON.stringify(this.showFlags),
       );
     },
     loadShowFlags() {

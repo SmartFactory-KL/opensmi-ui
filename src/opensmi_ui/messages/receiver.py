@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from asyncua.ua import Variant
@@ -19,10 +20,14 @@ from opensmi_ui.model.common import GenericUpdateEntityType, GenericUpdateMessag
 logger = get_module_logger("messages.receiver")
 
 
-class ServerStateUpdateMessage(GenericUpdateMessage[str]): ...
+@dataclass(frozen=True)
+class ServerStateUpdate:
+    new_state: str
 
 
-class ServerTimeUpdateMessage(GenericUpdateMessage[str]): ...
+@dataclass(frozen=True)
+class ServerTimeUpdate:
+    new_time: str
 
 
 class MessageReceiver:
@@ -31,22 +36,24 @@ class MessageReceiver:
 
     # server channel
     async def receive_server_state(self, new_state: RemoteServerStatus) -> None:
-        msg = ServerStateUpdateMessage(
+        msg = GenericUpdateMessage[ServerStateUpdate](
             entity_id=None,
             entity_type=GenericUpdateEntityType.Server,
-            update_content=new_state.name,
+            update_content=ServerStateUpdate(new_state=new_state.name),
         )
 
-        self.funnel.queue_message(msg)
+        self.funnel.send_direct_message(msg)
 
     async def receive_server_time(self, new_time: datetime) -> None:
-        msg = ServerTimeUpdateMessage(
+        msg = GenericUpdateMessage[ServerTimeUpdate](
             entity_id=None,
             entity_type=GenericUpdateEntityType.Server,
-            update_content=new_time.astimezone(UTC).isoformat(),
+            update_content=ServerTimeUpdate(
+                new_time=new_time.astimezone(UTC).isoformat()
+            ),
         )
 
-        self.funnel.queue_message(msg)
+        self.funnel.send_direct_message(msg)
 
     # model channel
     async def receive_component_state(
@@ -81,4 +88,5 @@ class MessageReceiver:
     async def receive_value_changed(
         self, variable: RemoteVariable, new_value: Variant
     ) -> None:
-        logger.info(new_value)
+        # logger.info(new_value)
+        ...

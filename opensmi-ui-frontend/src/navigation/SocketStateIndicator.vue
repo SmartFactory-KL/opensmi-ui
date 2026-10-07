@@ -1,17 +1,56 @@
 <script setup lang="ts">
-import { ArrowDownIcon, MonitorCheckIcon, MonitorOffIcon } from "@lucide/vue";
+import { usePageStore } from "@/stores/PageStore";
+import {
+    ArrowDownIcon,
+    MonitorCheckIcon,
+    MonitorDotIcon,
+    MonitorOffIcon,
+} from "@lucide/vue";
+
+const WebSocketState = {
+    OPEN: WebSocket.OPEN,
+    CLOSED: WebSocket.CLOSED,
+    CONNECTING: WebSocket.CONNECTING,
+    CLOSING: WebSocket.CLOSING,
+};
+
+const pageStore = usePageStore();
 </script>
 
 <template>
     <div
-        class="flex flex-col items-center border-4 rounded-lg h-14 w-14 p-0.5 border-green-600 bg-green-100 shadow-lg"
+        class="flex flex-col items-center border-4 rounded-lg h-13 w-14 p-0.5 shadow-lg"
+        :class="
+            pageStore.isSocketConnected
+                ? ['border-green-600', 'bg-green-100']
+                : ['border-red-600', 'bg-red-100']
+        "
     >
-        <MonitorCheckIcon :size="32" class="text-green-500" />
-        <!-- <MonitorOffIcon :size="32" class="w-10 text-green-500" /> -->
+        <MonitorCheckIcon
+            v-show="pageStore.socket.state === WebSocketState.OPEN"
+            :size="32"
+            class="text-green-500"
+        />
+        <MonitorDotIcon
+            v-show="pageStore.socket.state === WebSocketState.CONNECTING"
+            :size="32"
+            class="text-amber-500"
+        />
+        <MonitorOffIcon
+            v-show="
+                pageStore.socket.state === WebSocketState.CLOSED ||
+                pageStore.socket.state === WebSocketState.CLOSING
+            "
+            :size="32"
+            class="w-10 text-red-500"
+        />
 
-        <div class="flex flex-row justify-center items-center">
+        <div class="flex flex-row justify-center items-center text-slate-800">
             <ArrowDownIcon :size="10"></ArrowDownIcon>
-            <span class="text-xs">283</span>
+            <span class="text-xs" v-if="pageStore.isSocketConnected">{{
+                pageStore.socket.receivedMessages
+            }}</span>
+            <span class="text-xs" v-else>-</span>
         </div>
     </div>
 </template>

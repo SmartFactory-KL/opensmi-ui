@@ -80,6 +80,8 @@ class SocketClient {
   handleMessage(evt: MessageEvent) {
     const data = JSON.parse(evt.data);
 
+    console.log(data)
+
     if ("channel" in data) {
       if (data["channel"] == "batch") {
         this.messageCount.in += data["data"].length ?? 1;

@@ -36,7 +36,7 @@ class OPCClientSettings(JsonBaseModel):
 
 
 class OPCClientSessionData(JsonBaseModel):
-    state: RemoteServerStatus
+    state: str
 
     application_uri: str
     product_uri: str
@@ -89,7 +89,7 @@ class OPCClient:
             url="",
             browse_rules=None,
             security_policy=SecurityPolicyType.NoSecurity,
-            state=RemoteServerStatus.DISCONNECTED,
+            state=RemoteServerStatus.DISCONNECTED.name,
         )
 
     def get_session_data(self):
@@ -100,7 +100,7 @@ class OPCClient:
         self.session_data.url = ""
         self.session_data.browse_rules = None
         self.session_data.security_policy = SecurityPolicyType.NoSecurity
-        self.session_data.state = RemoteServerStatus.DISCONNECTED
+        self.session_data.state = RemoteServerStatus.DISCONNECTED.name
 
     async def connect(self, request: OPCClientConnectRequest):
         if (
@@ -125,11 +125,16 @@ class OPCClient:
         self.session_data.security_policy = request.security_policy
 
         self.client.status_changed.connect(callback=self.receiver.receive_server_state)
+        self.client.status_changed.connect(callback=self.update_state)
+
         self.client.time_updated.connect(callback=self.receiver.receive_server_time)
 
         await self.client.connect()
 
         self.add_references_from_server(self.client.machines)
+
+    async def update_state(self, new_state: RemoteServerStatus):
+        self.session_data.state = new_state.name
 
     def add_references_from_server(self, machines: Mapping[str, RemoteMachine]):
         for machine in machines.values():
@@ -177,7 +182,9 @@ class OPCClient:
                     for skill in skill_container.values():
                         self._callable_cache.add(uuid.uuid4(), skill)
 
-                        skill.state_changed.connect(callback=self.receiver.receive_skill_state)
+                        skill.state_changed.connect(
+                            callback=self.receiver.receive_skill_state
+                        )
 
                         # handle skill variable trees
                         for var_container in [

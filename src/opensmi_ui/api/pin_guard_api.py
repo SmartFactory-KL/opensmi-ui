@@ -11,7 +11,7 @@ logger = get_module_logger("pin_guard_api")
 def create_ping_guard_api(pin_guard: PinGuard) -> APIRouter:
     router = APIRouter(prefix="/api/pin-guard", tags=["pin-guard"])
 
-    @router.get("/", summary="Get PinGuard State")
+    @router.get("/state", summary="Get PinGuard State")
     async def get_state():
         state = pin_guard.get_state()
         return state

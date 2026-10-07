@@ -46,7 +46,7 @@ def validate_config(cfg: AppConfig):
         )
 
     # AUTO_CONNECT and ONLY_ALLOW_DEFAULT need actual connection data
-    if cfg.server_only_allow_default_connection_data or cfg.server_enable_auto_connect:
+    if cfg.server_enable_auto_connect:
         # if one of these is set, the default connection data need to be valid
         fields = {
             "opc_ua_default_server_url": cfg.opc_ua_default_server_url,
@@ -62,8 +62,7 @@ def validate_config(cfg: AppConfig):
 
         if len(invalid_fields) > 0:
             raise InvalidConfigError(
-                "When using server_only_allow_default_connection_data or "
-                "server_enable_auto_connect all connection data must be set",
+                "When using server_enable_auto_connect all default connection data must be set",
                 invalid_fields,
             )
 

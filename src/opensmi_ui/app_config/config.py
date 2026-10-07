@@ -13,16 +13,6 @@ class AppConfig:
         ),
     ] = "25.06-dev-local"
 
-    server_only_allow_default_connection_data: Annotated[
-        bool,
-        AppConfigEntry(
-            description=(
-                "If this flag is set, only the OPC_UA_DEFAULT_xxx data will be "
-                "used for connecting. Other user data is simply ignored."
-            ),
-        ),
-    ] = False
-
     server_enable_auto_connect: Annotated[
         bool,
         AppConfigEntry(
@@ -129,4 +119,4 @@ class AppConfig:
             ),
             is_secret=True,
         ),
-    ] = 123321
+    ] = 1234
