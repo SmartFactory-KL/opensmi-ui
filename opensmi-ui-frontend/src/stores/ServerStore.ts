@@ -102,7 +102,6 @@ export const useServerStore = defineStore("server", {
   actions: {
     attachToSocketClient(socketClient: SocketClient) {
       socketClient.addChannelListener("Server", this.handleServerUpdate);
-      socketClient.addChannelListener("refresh", this.handleRefresh);
     },
     async requestServerStatus() {
       if (this.requestData.isPending) {
