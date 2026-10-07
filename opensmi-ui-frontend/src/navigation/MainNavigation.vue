@@ -4,15 +4,17 @@ import NavigationBrand from "./NavigationBrand.vue";
 import NotificationOverview from "./NotificationOverview.vue";
 import SocketState from "./SocketState.vue";
 import DualClocks from "./DualClocks.vue";
+import ServerSection from "./ServerSection.vue";
+
 </script>
 
 <template>
     <div
-        class="flex flex-row justify-stretch items-center bg-slate-600 h-16 gap-x-2 pr-4"
+        class="flex flex-row flex-wrap justify-stretch items-center bg-slate-600 h-16 gap-x-2 pr-4"
     >
         <NavigationBrand class="h-16 w-36"></NavigationBrand>
 
-        <div class="grow text-center">MAIN SELECTOR DROPDOWN</div>
+        <ServerSection class="grow"></ServerSection>
 
         <NotificationOverview></NotificationOverview>
 

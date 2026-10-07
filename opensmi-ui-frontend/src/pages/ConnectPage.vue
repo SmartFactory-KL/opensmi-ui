@@ -23,6 +23,7 @@ import { usePinGuardStore } from "@/stores/PinGuardStore";
 import IconButton from "@/components/IconButton.vue";
 import { useServerStore } from "@/stores/ServerStore";
 import { usePageStore } from "@/stores/PageStore";
+import ServerStateIndicator from "@/navigation/ServerStateIndicator.vue";
 
 const serverStore = useServerStore();
 const pinGuardStore = usePinGuardStore();
@@ -32,73 +33,6 @@ const showPassword = ref(false);
 const isLocked = computed(() => pinGuardStore.isLocked);
 
 const canEdit = computed(() => !isLocked.value && serverStore.isDisconnected);
-
-const stateConfig = computed(() => {
-    switch (serverStore.sessionData.state) {
-        case "CONNECTED":
-            return {
-                label: "Connected",
-                description: "Connected to the OPC UA server.",
-                icon: CheckCircle2Icon,
-                classes: "bg-emerald-50 border-emerald-200 text-emerald-700",
-                iconClasses: "text-emerald-500",
-            };
-
-        case "BROWSING":
-            return {
-                label: "Browsing",
-                description: "Connected and browsing the server.",
-                icon: ServerIcon,
-                classes: "bg-blue-50 border-blue-200 text-blue-700",
-                iconClasses: "text-blue-500",
-            };
-
-        case "CONNECTING":
-            return {
-                label: "Connecting",
-                description: "Establishing a connection to the OPC UA server.",
-                icon: LinkIcon,
-                classes: "bg-amber-50 border-amber-200 text-amber-700",
-                iconClasses: "text-amber-500",
-            };
-
-        case "RECONNECTING":
-            return {
-                label: "Reconnecting",
-                description: "Attempting to restore the server connection.",
-                icon: RotateCcwIcon,
-                classes: "bg-amber-50 border-amber-200 text-amber-700",
-                iconClasses: "text-amber-500",
-            };
-
-        case "DISCONNECTING":
-            return {
-                label: "Disconnecting",
-                description: "Closing the connection to the OPC UA server.",
-                icon: LogOutIcon,
-                classes: "bg-slate-50 border-slate-200 text-slate-600",
-                iconClasses: "text-slate-400",
-            };
-
-        case "DISCONNECTED":
-            return {
-                label: "Disconnected",
-                description: "No OPC UA server connection is active.",
-                icon: CircleOffIcon,
-                classes: "bg-slate-50 border-slate-200 text-slate-600",
-                iconClasses: "text-slate-400",
-            };
-
-        default:
-            return {
-                label: "Unknown",
-                description: "The server connection state is unknown.",
-                icon: CircleAlertIcon,
-                classes: "bg-slate-50 border-slate-200 text-slate-600",
-                iconClasses: "text-slate-400",
-            };
-    }
-});
 
 function requestConnect() {
     serverStore.requestConnect();
@@ -318,34 +252,8 @@ function requestDisconnect() {
                 <!-- Status -->
                 <aside class="space-y-4">
                     <!-- Current state -->
-                    <section
-                        class="border p-5 shadow-sm"
-                        :class="stateConfig.classes"
-                    >
-                        <div class="flex items-start gap-3">
-                            <div
-                                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/60"
-                            >
-                                <component
-                                    :is="stateConfig.icon"
-                                    :size="20"
-                                    :class="stateConfig.iconClasses"
-                                />
-                            </div>
-                            <div class="min-w-0">
-                                <p
-                                    class="text-xs font-medium uppercase tracking-wider opacity-70"
-                                >
-                                    Connection
-                                </p>
-                                <h2 class="mt-1 text-lg font-semibold">
-                                    {{ stateConfig.label }}
-                                </h2>
-                            </div>
-                        </div>
-                        <p class="mt-3 text-sm opacity-80">
-                            {{ stateConfig.description }}
-                        </p>
+                    <section class="shadow-sm">
+                        <ServerStateIndicator class="p-5"></ServerStateIndicator>
                     </section>
 
                     <!-- Local data -->
