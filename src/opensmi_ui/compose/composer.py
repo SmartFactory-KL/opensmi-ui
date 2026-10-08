@@ -80,7 +80,7 @@ class Composer:
             # message broadcaster/funnel/receiver
             msg_broadcaster = MessageBroadcaster()
             msg_funnel = MessageFunnel(broadcaster=msg_broadcaster)
-            msg_funnel.enable_batching_task()
+            self.startables.append(msg_funnel)
 
             msg_receiver = MessageReceiver(funnel=msg_funnel)
 

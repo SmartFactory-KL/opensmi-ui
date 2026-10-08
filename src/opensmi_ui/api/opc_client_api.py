@@ -1,5 +1,4 @@
 from fastapi import APIRouter, HTTPException, Response
-from opensmi.client.dto import RemoteMachineDTO
 from starlette import status
 
 from opensmi_ui.logger import get_module_logger
@@ -8,6 +7,7 @@ from opensmi_ui.opc_client.client import (
     OPCClientConnectRequest,
     OPCClientSessionNotReadyError,
 )
+from opensmi_ui.opc_client.identifiable import ComponentEntityDTO
 
 logger = get_module_logger("opc_session_api")
 
@@ -49,12 +49,6 @@ def create_opc_client_api(opc_client: OPCClient) -> APIRouter:
     @router.get("/model", summary="Get the currently browsed model")
     async def get_model():
         machines = opc_client.get_machines()
-
-        machine_data_list: list[RemoteMachineDTO] = []
-
-        for machine in machines:
-            machine_data_list.append(machine.dto())
-
-        return machine_data_list
+        return machines
 
     return router

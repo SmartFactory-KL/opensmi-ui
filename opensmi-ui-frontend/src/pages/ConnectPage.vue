@@ -231,6 +231,7 @@ function requestDisconnect() {
                             <div class="flex gap-2">
                                 <IconButton
                                     class="border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                                    :disabled="isLocked"
                                     @click="requestDisconnect"
                                 >
                                     <LogOutIcon :size="16" />
@@ -239,6 +240,7 @@ function requestDisconnect() {
 
                                 <IconButton
                                     class="bg-slate-900 hover:bg-slate-800 text-white"
+                                    :disabled="isLocked"
                                     @click="requestConnect"
                                 >
                                     <LogInIcon :size="16" />

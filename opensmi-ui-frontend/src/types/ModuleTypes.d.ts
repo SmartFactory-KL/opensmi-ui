@@ -1,4 +1,4 @@
-type RemoteVariableValueType =
+export type RemoteVariableValueType =
   | "Enum"
   | "FloatRange"
   | "Boolean"
@@ -8,19 +8,33 @@ type RemoteVariableValueType =
   | "ImageGIF"
   | "Text";
 
-type VariantValueDto = {
+export type FeatureEntityType = "RemoteMachine" | "RemoteComponent";
+
+export interface FeatureEntityDto {
+  entityId: string;
+  entityType: FeatureEntityType;
+
+  data: any;
+}
+
+export interface ComponentEntityDto extends FeatureEntityDto {
+  features: FeatureEntityDto[];
+  children: ComponentEntityDto[];
+}
+
+export interface VariantValueDto {
   variantType: string;
   value: any;
   dimensions: null | number[];
-};
+}
 
-type SimpleDataValueDto = {
+export interface SimpleDataValueDto {
   value: VariantValueDto;
   statusCode: number;
   timestamp: number;
-};
+}
 
-type RemoteVariableDto = {
+export interface RemoteVariableDto {
   name: string;
   nodeId: string;
   entityId: string;
@@ -32,9 +46,9 @@ type RemoteVariableDto = {
   isWritable: boolean;
   unit?: string | null;
   children: RemoteVariableDto[];
-};
+}
 
-type SkillDto = {
+export interface SkillDto {
   name: string;
   nodeId: string;
   entityId: string;
@@ -48,9 +62,9 @@ type SkillDto = {
   isSuspendable: boolean;
   minAccessLevel: string;
   parentNodeIdList: string[];
-};
+}
 
-type MethodDto = {
+export interface MethodDto {
   name: string;
   nodeId: string;
   entityId: string;
@@ -60,9 +74,9 @@ type MethodDto = {
   finalResultData: RemoteVariableDto[];
   minAccessLevel: string;
   parentNodeIdList: string[];
-};
+}
 
-type ComponentDto = {
+export interface ComponentDto {
   name: string;
   nodeId: string;
   entityId: string;
@@ -75,9 +89,9 @@ type ComponentDto = {
   parameterSet: RemoteVariableDto[];
   components: ComponentDto[];
   parentNodeIdList: string[];
-};
+}
 
-type LockingModuleDto = {
+export interface LockingModuleDto {
   isEnabled: boolean;
   isSimulated: boolean;
   isLocked: boolean;
@@ -85,8 +99,8 @@ type LockingModuleDto = {
   lockingUser: string;
   lockingClient: string;
   isLockPending: boolean;
-};
+}
 
-type MachineDto = ComponentDto & {
+export interface MachineDto extends ComponentDto {
   lockingModule: LockingModuleDto;
-};
+}

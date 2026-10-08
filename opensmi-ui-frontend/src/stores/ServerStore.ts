@@ -102,6 +102,8 @@ export const useServerStore = defineStore("server", {
   actions: {
     attachToSocketClient(socketClient: SocketClient) {
       socketClient.addChannelListener("Server", this.handleServerUpdate);
+
+      socketClient.addConnectionListener(this.handleSocketStateUpdate);
     },
     async requestServerStatus() {
       if (this.requestData.isPending) {
@@ -210,5 +212,10 @@ export const useServerStore = defineStore("server", {
           break;
       }
     },
+    handleSocketStateUpdate(newState: WebSocket["readyState"]) {
+      if (newState == WebSocket.OPEN) {
+        this.requestServerStatus()
+      }
+    }
   },
 });

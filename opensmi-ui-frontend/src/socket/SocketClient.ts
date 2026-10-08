@@ -1,13 +1,17 @@
-import { usePageStore } from "../stores/PageStore";
-// import Notify from "./Notify";
-// import { simplyGet } from "./SimplyFetch";
-
 export type TopicMessageHandler = (data: any) => void;
+
+export type ConnectionUpdateHandler = (
+  newState: WebSocket["readyState"],
+) => void;
+
+export type MessageCountHandler = (count: number, delta: number) => void;
 
 export type SocketMessage = {
   channel: string;
   data: any;
 };
+
+const SOCKET_CLIENT_INTERVAL_DELTA_MS = 1000;
 
 class SocketClient {
   socket!: WebSocket;
@@ -15,28 +19,27 @@ class SocketClient {
 
   lastReadyState: WebSocket["readyState"] = WebSocket.CLOSED;
   reconnectAmount: number = 0;
-
-  pageStore!: ReturnType<typeof usePageStore>;
   messageCount: number = 0;
 
   channelHandlerMap = new Map<string, TopicMessageHandler[]>();
+  connUpdateHandler: ConnectionUpdateHandler[] = [];
+  messageCountHandler: MessageCountHandler[] = [];
 
   infoLogIntervalHandle = setInterval(() => {
-    this.pageStore.updateMessageCount(this.messageCount);
+    this.notifyMessageCountHandler(
+      this.messageCount,
+      SOCKET_CLIENT_INTERVAL_DELTA_MS,
+    );
 
     if (this.socket) {
       if (this.socket.readyState != this.lastReadyState) {
         this.lastReadyState = this.socket.readyState;
-        this.pageStore.updateSocketState(this.socket.readyState);
+        this.notifyConnectionHandler(this.socket.readyState);
       }
     }
 
     this.messageCount = 0;
-  }, 1000);
-
-  constructor(pageStore: ReturnType<typeof usePageStore>) {
-    this.pageStore = pageStore;
-  }
+  }, SOCKET_CLIENT_INTERVAL_DELTA_MS);
 
   async connect() {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
@@ -62,9 +65,7 @@ class SocketClient {
       console.log("WebSocket connected");
 
       this.reconnectAmount = 0;
-
-      this.pageStore.updateSocketState(WebSocket.OPEN);
-      this.pageStore.updateMessageCount(0);
+      this.notifyConnectionHandler(this.socket.readyState);
     };
 
     this.socket.onerror = this.handleError;
@@ -85,8 +86,24 @@ class SocketClient {
 
   handleOnClose() {
     console.warn("WebSocket closed!");
-    this.pageStore.updateSocketState(WebSocket.CLOSED);
+    this.notifyConnectionHandler(this.socket.readyState);
     this.connect();
+  }
+
+  notifyConnectionHandler(newState: WebSocket["readyState"]) {
+    for (const handler of this.connUpdateHandler) {
+      if (handler) {
+        handler.call(null, newState);
+      }
+    }
+  }
+
+  notifyMessageCountHandler(count: number, delta: number) {
+    for (const handler of this.messageCountHandler) {
+      if (handler) {
+        handler.call(null, count, delta);
+      }
+    }
   }
 
   handleMessage(evt: MessageEvent) {
@@ -114,6 +131,14 @@ class SocketClient {
       this.channelHandlerMap.set(channel, []);
     }
     this.channelHandlerMap.get(channel)?.push(handler);
+  }
+
+  addConnectionListener(handler: ConnectionUpdateHandler) {
+    this.connUpdateHandler.push(handler);
+  }
+
+  addMessageCountListener(handler: MessageCountHandler) {
+    this.messageCountHandler.push(handler)
   }
 }
 

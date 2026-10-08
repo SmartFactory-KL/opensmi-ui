@@ -102,13 +102,15 @@ const stateConfig = computed(() => {
     <div
         v-if="tiny"
         :class="[
-            'flex size-9 items-center justify-center border shadow-sm rounded-full',
+            'flex size-9 items-center justify-center border shadow-sm rounded-full cursor-pointer active:scale-95',
             'transition-colors duration-100',
             stateConfig.classes,
             { 'animate-spin': stateConfig.animate },
         ]"
         :title="`${stateConfig.label}: ${stateConfig.description}`"
         :aria-label="stateConfig.label"
+
+        @click="$router.push('/connect')"
     >
         <component
             :is="stateConfig.icon"
@@ -121,10 +123,12 @@ const stateConfig = computed(() => {
     <section
         v-else
         :class="[
-            'flex items-center gap-3 border px-3 py-2.5 shadow-sm',
+            'flex items-center gap-3 border px-3 py-2.5 shadow-sm cursor-pointer active:scale-95',
             'transition-colors duration-100',
             stateConfig.classes,
         ]"
+
+        @click="$router.push('/connect')"
     >
         <div class="flex size-9 shrink-0 items-center justify-center">
             <component

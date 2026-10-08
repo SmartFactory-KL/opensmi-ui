@@ -19,20 +19,22 @@ async function compose() {
   const pageStore = usePageStore();
   await pageStore.requestPageInfo();
 
-  const socketClient = new SocketClient(pageStore);
+  const socketClient = new SocketClient();
   socketClient.connect();
+
+  pageStore.attachToSocketClient(socketClient);
 
   const pinGuardStore = usePinGuardStore();
   pinGuardStore.attachToSocketClient(socketClient);
-  pinGuardStore.requestData()
+  pinGuardStore.requestData();
 
   const serverStore = useServerStore();
-  serverStore.attachToSocketClient(socketClient)
+  serverStore.attachToSocketClient(socketClient);
 
-  pageStore.writeDefaultsToServerStore(serverStore)
+  pageStore.writeDefaultsToServerStore(serverStore);
 
-  serverStore.requestServerStatus()
+  serverStore.requestServerStatus();
 }
 
 app.mount("#app");
-compose()
+compose();

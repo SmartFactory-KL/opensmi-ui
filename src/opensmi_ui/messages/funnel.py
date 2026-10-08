@@ -74,6 +74,9 @@ class MessageFunnel:
         # clear sending buffer to be used as next receiving buffer
         del self._sending_buffer[:]
 
+    async def start(self):
+        self.enable_batching_task()
+
     def enable_batching_task(self):
         """
         Enable both the batching task and its watchdog.

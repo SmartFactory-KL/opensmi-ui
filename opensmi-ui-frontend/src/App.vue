@@ -4,8 +4,22 @@ import { WifiOffIcon } from "@lucide/vue";
 import BasicError from "./components/BasicError.vue";
 import MainNavigation from "./navigation/MainNavigation.vue";
 import { usePageStore } from "./stores/PageStore";
+import ServerDropdown from "./navigation/ServerDropdown.vue";
+import { useDropdownStore } from "./stores/DropdownStore";
+import { useRoute } from "vue-router";
+import { watch } from "vue";
 
 const pageStore = usePageStore();
+const dropdownStore = useDropdownStore();
+
+const route = useRoute();
+
+watch(
+    () => route.fullPath,
+    () => {
+        dropdownStore.closeDropdown();
+    },
+);
 </script>
 
 <template>
@@ -21,7 +35,7 @@ const pageStore = usePageStore();
             <!-- Disconnected state -->
             <div
                 v-if="!pageStore.isSocketConnected"
-                class="flex min-h-[calc(100vh-4rem)] items-center justify-center px-6"
+                class="flex min-h-[calc(100vh-4rem)] items-center justify-center px-6 z-50"
             >
                 <div class="flex max-w-md flex-col items-center text-center">
                     <div
@@ -38,16 +52,23 @@ const pageStore = usePageStore();
 
                     <p class="mt-2 text-sm leading-6 text-slate-500">
                         This page is currently unavailable because the
-                        connection to the server has been lost. Try refreshing and check if the backend is still running.
+                        connection to the server has been lost. Try refreshing
+                        and check if the backend is still running.
                     </p>
                 </div>
             </div>
 
-            <!-- Page content -->
-            <RouterView v-else :key="$route.fullPath" />
+            <div v-else>
+                <ServerDropdown
+                    class="absolute top-17 w-screen h-[calc(100vh-4.25rem)] transition"
+                ></ServerDropdown>
 
-            <!-- Always add some spacing for that funky on-screen-display on the touchscreens -->
-            <div class="on-screen-placeholder" style="height: 25vh"></div>
+                <!-- Page content -->
+                <RouterView :key="$route.fullPath" />
+
+                <!-- Always add some spacing for that funky on-screen-display on the touchscreens -->
+                <div class="on-screen-placeholder" style="height: 25vh"></div>
+            </div>
         </div>
     </main>
 </template>

@@ -2,6 +2,7 @@ import { simplyGetToJSON } from "@/fetch/simplyFetch";
 import { mergeStoredSettings } from "@/util/merge";
 import { defineStore } from "pinia";
 import type { useServerStore } from "./ServerStore";
+import type SocketClient from "@/socket/SocketClient";
 
 const LOCAL_STORAGE_PAGE_SETTINGS = "opensmi-ui-page-settings";
 const LOCAL_STORAGE_CONNECTION_DATA = "opensmi-ui-connection-data";
@@ -74,6 +75,10 @@ export const usePageStore = defineStore("page", {
     },
   },
   actions: {
+    attachToSocketClient(socketClient: SocketClient) {
+      socketClient.addConnectionListener(this.updateSocketState);
+      socketClient.addMessageCountListener(this.updateMessageCount);
+    },
     storeLocalSettings() {
       try {
         localStorage.setItem(
@@ -154,7 +159,7 @@ export const usePageStore = defineStore("page", {
           this.pageSettings.defaultServerPassword;
       }
     },
-    updateMessageCount(newAmount: number) {
+    updateMessageCount(newAmount: number, _: number) {
       this.socket.receivedMessages = newAmount;
     },
     updateSocketState(newState: WebSocket["readyState"]) {

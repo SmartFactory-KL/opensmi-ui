@@ -3,6 +3,14 @@ import type { SocketMessage } from "@/socket/SocketClient";
 import type SocketClient from "@/socket/SocketClient";
 import type { GenericUpdateMessage } from "@/types/GenericTypes";
 import type {
+  MachineDto,
+  SkillDto,
+  MethodDto,
+  ComponentDto,
+  RemoteVariableDto,
+  ComponentEntityDto,
+} from "@/types/ModuleTypes";
+import type {
   MachineStateUpdate,
   MachineLockStateUpdate,
   MachineLockUserUpdate,
@@ -23,7 +31,7 @@ export const useModelStore = defineStore("model", {
 
     isWorking: boolean;
 
-    machines: Map<string, MachineDto>;
+    machines: Map<string, ComponentEntityDto>;
 
     skillEntityMap: Map<string, SkillDto>;
     methodEntityMap: Map<string, MethodDto>;
@@ -44,7 +52,7 @@ export const useModelStore = defineStore("model", {
 
       isWorking: false,
 
-      machines: new Map<string, MachineDto>(),
+      machines: new Map<string, ComponentEntityDto>(),
 
       skillEntityMap: new Map<string, SkillDto>(),
       methodEntityMap: new Map<string, MethodDto>(),
@@ -94,57 +102,43 @@ export const useModelStore = defineStore("model", {
       try {
         const result = (await simplyGetToJSON(
           "/api/opc-session/model",
-        )) as MachineDto[];
+        )) as ComponentEntityDto[];
 
-        for (const [index, machine] of result.entries()) {
-          console.log("Receiving machine " + index + ": " + machine.entityId);
-          // this is to prevent double machines being within the result
-          if (this.machines.has(machine.entityId)) {
-            console.error(
-              "Machine with nodeId " + machine.entityId + " already present",
-            );
-            continue;
-          }
+        console.log(result);
+
+        if (!Array.isArray(result)) {
+          throw new Error(
+            `Expected Model to ba Array, got ${typeof result} instead`,
+          );
+        }
+
+        for (const rootComponent of result) {
+          console.log("Handling Machine", rootComponent.data.name);
 
           // walk the component tree and map relevant entities within it
-          const componentsToProcess = [] as ComponentDto[];
-          for (const _component of machine.components) {
-            componentsToProcess.push(_component);
-          }
-          componentsToProcess.push(machine); // dont forget the machine itself <3
+          const componentsToProcess = [rootComponent] as ComponentEntityDto[];
 
-          console.log(
-            "Mapping out machine entities for machine " + machine.name,
-          );
           let count = 0;
           while (componentsToProcess.length > 0) {
             count++;
-            if (count > 1_000) {
+            if (count > 100_000) {
               throw new Error("Count OVF when processing components.");
             }
 
-            const nextComponent = componentsToProcess.shift();
-            if (!nextComponent) {
+            const nextComponentEntity = componentsToProcess.shift();
+            if (!nextComponentEntity) {
               break;
-            } // just to satisfy the typescript gods
+            } // this only exists to prevent null checks
 
-            console.log(" + Component: " + nextComponent?.name);
-            this.mapifyComponentEntities(nextComponent, machine);
-
-            for (const _childComponent of nextComponent.components) {
-              componentsToProcess.push(_childComponent);
+            for (const child of nextComponentEntity.children) {
+              componentsToProcess.push(child);
             }
           }
 
-          if (index == 0) {
-            // only use the first machine as part of the document title
-            document.title = machine.name + " - Module UI";
-          }
-
-          this.machines.set(machine.entityId, machine);
+          this.machines.set(rootComponent.entityId, rootComponent);
         }
 
-        console.log("machine data received!");
+        console.log(`Received ${this.machines.size} root components`);
         this.isWorking = false;
       } catch (e) {
         console.error(e);
