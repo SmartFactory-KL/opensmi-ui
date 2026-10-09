@@ -175,7 +175,7 @@ export const useModelStore = defineStore("model", {
             this.handleVariableUpdate(item.data);
             break;
           default:
-            console.warn("batch containt non-ok entityType in item", item);
+            console.warn("batch contained non-ok entityType in item", item);
         }
       }
     },

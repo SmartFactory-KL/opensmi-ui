@@ -21,6 +21,7 @@ const modelStore = useModelStore();
         <div
             v-if="dropdownStore.isVisible"
             class="flex items-start px-24 pt-3 bg-stone-200/50 z-10"
+            @click.self.prevent="dropdownStore.closeDropdown()"
         >
             <div
                 class="z-20 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-300 shadow-2xl shadow-slate-900/10 backdrop-blur-sm"

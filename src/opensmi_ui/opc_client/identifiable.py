@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from dataclasses import dataclass
 from typing import Protocol, override
 from uuid import UUID, uuid4
 
@@ -21,8 +22,15 @@ class DTOEntity(Protocol):
     def dto(self) -> RemoteUaObjectDTO: ...
 
 
+@dataclass(slots=True, frozen=True, kw_only=True)
 class ComponentDataDTO(RemoteUaObjectDTO):
     current_state: str
+
+
+@dataclass(slots=True, frozen=True, kw_only=True)
+class DTOContainerEntityDTO(RemoteUaObjectDTO):
+    list_type: str
+    items: list[RemoteUaObjectDTO]
 
 
 class FeatureEntityDTO(JsonOutModel):
@@ -40,6 +48,7 @@ class FeatureEntityDTO(JsonOutModel):
         | RemoteVariableDTO
         | RemoteUserDTO
         | RemoteUaObjectDTO
+        | DTOContainerEntityDTO
     )
 
 
@@ -64,6 +73,27 @@ class FeatureEntity:
             entity_id=self.entity_id,
             entity_type=self.entity_type,
             data=self.entity.dto(),
+        )
+
+
+class DTOContainerEntity[DTOEntity]:
+    def __init__(self):
+        self.list_type = str(type(DTOEntity))
+        self.items: list[DTOEntity] = []
+
+    def add_item(self, item: DTOEntity):
+        self.items.append(item)
+
+    def dto(
+        self,
+    ) -> DTOContainerEntityDTO:
+        return DTOContainerEntityDTO(
+            name="None",
+            path="None",
+            ua_node_id="None",
+            ua_type="None",
+            list_type=self.list_type,
+            items=[item.dto() for item in self.items],
         )
 
 

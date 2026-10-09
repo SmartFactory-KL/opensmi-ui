@@ -1,13 +1,11 @@
 from collections import deque
 from dataclasses import dataclass
-from uuid import uuid4
 
 from opensmi.client import (
     BaseRemoteComponent,
     RemoteMethod,
     RemoteServer,
     RemoteSkill,
-    RemoteVariable,
 )
 from opensmi.client.remote_lock import RemoteLock
 from opensmi.client.remote_resource import RemoteResource
@@ -19,6 +17,7 @@ from opensmi_ui.messages.receiver import MessageReceiver
 from opensmi_ui.opc_client.identifiable import (
     ComponentEntity,
     ComponentEntityDTO,
+    DTOContainerEntity,
     DTOEntity,
     FeatureEntity,
 )
@@ -92,19 +91,33 @@ def create_features(entity: DTOEntity) -> list[FeatureEntity]:
 
     result: list[FeatureEntity] = []
 
-    features_to_check: list[tuple[str, type, type | None]] = [
-        ("lock", RemoteLock, None),
-        ("attributes", RemoteVariableContainer, None),
-        ("identification", RemoteVariableContainer, None),
-        ("monitoring", RemoteVariableContainer, None),
-        ("parameter_set", RemoteVariableContainer, None),
-        ("skill_set", dict, RemoteSkill),
-        ("method_set", dict, RemoteMethod),
-        ("resources", dict, RemoteResource),
-        ("users", list, RemoteUser),
+    # These are features that are directly available as a DTOEntity
+    # The tuple contains: (attribute_name, expected_type)
+    features_to_check: list[tuple[str, type]] = [
+        ("lock", RemoteLock),
+        ("attributes", RemoteVariableContainer),
+        ("identification", RemoteVariableContainer),
+        ("monitoring", RemoteVariableContainer),
+        ("parameter_set", RemoteVariableContainer),
     ]
 
-    for feat_name, feat_type, feat_detail_type in features_to_check:
+    skill_set_container = DTOContainerEntity[RemoteSkill]()
+    method_set_container = DTOContainerEntity[RemoteMethod]()
+    resources_container = DTOContainerEntity[RemoteResource]()
+    users_container = DTOContainerEntity[RemoteUser]()
+
+    # These features have no direct DTOEntity, so they must be handled in lists
+    # The tuple contains: (attribute_name, expected_type, expected_type_of_all_elements, target_dto_entity_container)
+    listable_features_to_check: list[tuple[str, type, type, DTOContainerEntity]] = [
+        ("skill_set", dict, RemoteSkill, skill_set_container),
+        ("feasibility_check_set", dict, RemoteSkill, skill_set_container),
+        ("precondition_check_set", dict, RemoteSkill, skill_set_container),
+        ("method_set", dict, RemoteMethod, method_set_container),
+        ("resources", dict, RemoteResource, resources_container),
+        ("users", list, RemoteUser, users_container),
+    ]
+
+    for feat_name, feat_type in features_to_check:
         attr = getattr(entity, feat_name, None)
 
         if attr is None:
@@ -116,46 +129,42 @@ def create_features(entity: DTOEntity) -> list[FeatureEntity]:
             )
             continue
 
-        if (feat_type is dict or feat_type is list) and feat_detail_type is not None:
-            all_ok = True
+        result.append(FeatureEntity(entity=attr))
 
-            elements = []
-            if feat_type is dict:
-                elements = list(attr.values())
-            elif feat_type is list:
-                elements = attr
+    for feat_name, list_type, feat_type, target_container in listable_features_to_check:
+        attr = getattr(entity, feat_name, None)
 
-            for val in elements:
-                if not isinstance(val, feat_detail_type):
-                    logger.info(
-                        f"type mismatch on features detail: expected {feat_type} but got {type(attr)} for {feat_name}"
-                    )
-                    all_ok = False
-                    break
-            if not all_ok:
-                continue
+        if attr is None:
+            continue
 
-        # up until here all were just checks
-        if feat_type is dict:
-            for val in attr.values():
-                result.append(FeatureEntity(entity=val))
-        elif feat_type is list:
-            for val in attr:
-                result.append(FeatureEntity(entity=val))
-        else:
-            result.append(FeatureEntity(entity=attr))
+        if not isinstance(attr, list_type):
+            logger.info(
+                f"type mismatch on listable features: expected list_type {feat_type} but got {type(attr)} for {feat_name}"
+            )
+            continue
+
+        elements = []
+        if list_type is list:
+            elements = attr
+        elif list_type is dict:
+            elements = attr.values()
+
+        all_elements_ok = True
+        for idx, val in enumerate(elements):
+            if not isinstance(val, feat_type):
+                logger.info(
+                    f"type mismatch on listable features details: expected feat_type {feat_type} but got {type(val)} for {feat_name} # {idx}"
+                )
+                all_elements_ok = False
+                break
+
+        if not all_elements_ok:
+            continue
+
+        # all checks passed
+        for val in elements:
+            target_container.add_item(val)
+
+        result.append(FeatureEntity(entity=target_container))
 
     return result
-
-
-def _add_var_container_references(self, variable: RemoteVariable):
-    vars_to_process = deque[RemoteVariable]([variable])
-
-    while vars_to_process:
-        var_to_process = vars_to_process.popleft()
-        self._variable_cache.add(uuid4(), var_to_process)
-
-        var_to_process.value_changed.connect(self.receiver.receive_value_changed)
-
-        for var_child in var_to_process.children.values():
-            vars_to_process.append(var_child)
