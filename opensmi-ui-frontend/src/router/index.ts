@@ -1,3 +1,4 @@
+import ComponentPage from "@/pages/ComponentPage.vue";
 import ConnectPage from "@/pages/ConnectPage.vue";
 import HomePage from "@/pages/HomePage.vue";
 import { createRouter, createWebHistory } from "vue-router";
@@ -12,6 +13,10 @@ const router = createRouter({
     {
       path: "/connect",
       component: ConnectPage,
+    },
+    {
+      path: "/component/:entityId",
+      component: ComponentPage,
     },
   ],
 });

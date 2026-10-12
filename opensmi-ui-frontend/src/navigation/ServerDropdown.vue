@@ -38,7 +38,7 @@ const modelStore = useModelStore();
                                 Laden...
                             </span>
                             <div
-                                v-for="rootComponent in modelStore.machines.values()"
+                                v-for="rootComponent in modelStore.rootComponents.values()"
                                 class="mb-10 border-b border-b-pink-500"
                             >
                                 <MachineComponentTree
@@ -50,7 +50,7 @@ const modelStore = useModelStore();
                             class="dropdown-state flex flex-row justify-center items-center"
                         >
                             <!-- Current state -->
-                            <ServerStateIndicator></ServerStateIndicator>
+                            <ServerStateIndicator @click="dropdownStore.closeDropdown()"></ServerStateIndicator>
                         </div>
                         <div
                             class="dropdown-overview px-4 py-0 flex flex-col gap-3"
@@ -64,14 +64,14 @@ const modelStore = useModelStore();
                             <span
                                 v-show="
                                     !modelStore.isWorking &&
-                                    modelStore.machines?.size == 0
+                                    modelStore.rootComponents?.size == 0
                                 "
                                 class="text-center text-stone-400 text-xs"
                             >
                                 Nothing to show
                             </span>
                             <ComponentCard
-                                v-for="machine in modelStore.machines.values()"
+                                v-for="machine in modelStore.rootComponents.values()"
                                 :component="machine"
                             >
                             </ComponentCard>

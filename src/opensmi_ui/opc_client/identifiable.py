@@ -1,25 +1,18 @@
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Protocol, override
+from pathlib import PurePosixPath
+from typing import Any, Protocol, TypeVar, override, runtime_checkable
 from uuid import UUID, uuid4
 
-from opensmi.client.dto import (
-    RemoteCallableDTO,
-    RemoteComponentDTO,
-    RemoteLockDTO,
-    RemoteMachineDTO,
-    RemoteResourceDTO,
-    RemoteSkillDTO,
-    RemoteUaObjectDTO,
-    RemoteUserDTO,
-    RemoteVariableDTO,
-)
+from opensmi.client import RemoteMethod, RemoteResource, RemoteSkill, RemoteUser
+from opensmi.client.dto import RemoteUaObjectDTO
 
 from opensmi_ui.model.common import JsonOutModel
 
 
+@runtime_checkable
 class DTOEntity(Protocol):
-    def dto(self) -> RemoteUaObjectDTO: ...
+    def dto(self) -> object: ...
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
@@ -37,19 +30,7 @@ class FeatureEntityDTO(JsonOutModel):
     entity_id: UUID
     entity_type: str
 
-    data: (
-        RemoteMachineDTO
-        | RemoteComponentDTO
-        | RemoteLockDTO
-        | RemoteResourceDTO
-        | RemoteSkillDTO
-        | RemoteCallableDTO
-        | list[RemoteVariableDTO]
-        | RemoteVariableDTO
-        | RemoteUserDTO
-        | RemoteUaObjectDTO
-        | DTOContainerEntityDTO
-    )
+    data: object
 
 
 class ComponentEntityDTO(FeatureEntityDTO):
@@ -76,12 +57,12 @@ class FeatureEntity:
         )
 
 
-class DTOContainerEntity[DTOEntity]:
+class DTOContainerEntity[T: DTOEntity]:
     def __init__(self):
-        self.list_type = str(type(DTOEntity))
-        self.items: list[DTOEntity] = []
+        self.list_type = str(T)
+        self.items: list[T] = []
 
-    def add_item(self, item: DTOEntity):
+    def add_item(self, item: T):
         self.items.append(item)
 
     def dto(
@@ -89,12 +70,24 @@ class DTOContainerEntity[DTOEntity]:
     ) -> DTOContainerEntityDTO:
         return DTOContainerEntityDTO(
             name="None",
-            path="None",
+            path=PurePosixPath(""),
             ua_node_id="None",
             ua_type="None",
             list_type=self.list_type,
             items=[item.dto() for item in self.items],
         )
+
+
+class SkillSetEntity(DTOContainerEntity[RemoteSkill]): ...
+
+
+class MethodSetEntity(DTOContainerEntity[RemoteMethod]): ...
+
+
+class ResourceSetEntity(DTOContainerEntity[RemoteResource]): ...
+
+
+class UserSetEntity(DTOContainerEntity[RemoteUser]): ...
 
 
 class ComponentEntity(FeatureEntity):

@@ -31,18 +31,8 @@ export const useModelStore = defineStore("model", {
 
     isWorking: boolean;
 
-    machines: Map<string, ComponentEntityDto>;
-
-    skillEntityMap: Map<string, SkillDto>;
-    methodEntityMap: Map<string, MethodDto>;
-    componentEntityMap: Map<string, ComponentDto>;
-    variableEntityMap: Map<string, RemoteVariableDto>;
-
-    entityToParentMachineMap: Map<string, MachineDto>;
-
-    nodeIdSkillMap: Map<string, SkillDto>;
-    nodeIdMethodMap: Map<string, MethodDto>;
-    nodeIdComponentMap: Map<string, ComponentDto>;
+    rootComponents: Map<string, ComponentEntityDto>;
+    entityIdComponentMap: Map<string, ComponentEntityDto>;
   } => {
     return {
       requestData: {
@@ -52,18 +42,8 @@ export const useModelStore = defineStore("model", {
 
       isWorking: false,
 
-      machines: new Map<string, ComponentEntityDto>(),
-
-      skillEntityMap: new Map<string, SkillDto>(),
-      methodEntityMap: new Map<string, MethodDto>(),
-      componentEntityMap: new Map<string, ComponentDto>(),
-      variableEntityMap: new Map<string, RemoteVariableDto>(),
-
-      entityToParentMachineMap: new Map<string, MachineDto>(),
-
-      nodeIdSkillMap: new Map<string, SkillDto>(),
-      nodeIdMethodMap: new Map<string, MethodDto>(),
-      nodeIdComponentMap: new Map<string, ComponentDto>(),
+      rootComponents: new Map<string, ComponentEntityDto>(),
+      entityIdComponentMap: new Map<string, ComponentEntityDto>(),
     };
   },
   getters: {},
@@ -90,21 +70,13 @@ export const useModelStore = defineStore("model", {
 
       console.log("requesting machine data...");
 
-      this.machines.clear();
-
-      this.skillEntityMap.clear();
-      this.methodEntityMap.clear();
-      this.componentEntityMap.clear();
-      this.variableEntityMap.clear();
-
-      this.entityToParentMachineMap.clear();
+      this.rootComponents.clear();
+      this.entityIdComponentMap.clear();
 
       try {
         const result = (await simplyGetToJSON(
           "/api/opc-session/model",
         )) as ComponentEntityDto[];
-
-        console.log(result);
 
         if (!Array.isArray(result)) {
           throw new Error(
@@ -113,8 +85,6 @@ export const useModelStore = defineStore("model", {
         }
 
         for (const rootComponent of result) {
-          console.log("Handling Machine", rootComponent.data.name);
-
           // walk the component tree and map relevant entities within it
           const componentsToProcess = [rootComponent] as ComponentEntityDto[];
 
@@ -130,15 +100,24 @@ export const useModelStore = defineStore("model", {
               break;
             } // this only exists to prevent null checks
 
+            this.entityIdComponentMap.set(
+              nextComponentEntity.entityId,
+              nextComponentEntity,
+            );
+
+            for (const feature of nextComponentEntity.features) {
+              console.log(feature);
+            }
+
             for (const child of nextComponentEntity.children) {
               componentsToProcess.push(child);
             }
           }
 
-          this.machines.set(rootComponent.entityId, rootComponent);
+          this.rootComponents.set(rootComponent.entityId, rootComponent);
         }
 
-        console.log(`Received ${this.machines.size} root components`);
+        console.log(`Received ${this.rootComponents.size} root components`);
         this.isWorking = false;
       } catch (e) {
         console.error(e);
@@ -191,7 +170,9 @@ export const useModelStore = defineStore("model", {
         case "ComponentStateUpdate":
           const msg_state_update =
             machineUpdate.updateContent as MachineStateUpdate;
-          const target_state_update = this.machines.get(machineUpdate.entityId);
+          const target_state_update = this.rootComponents.get(
+            machineUpdate.entityId,
+          );
 
           if (!target_state_update) {
             console.warn("Machine target not found for " + machineUpdate);
@@ -203,7 +184,9 @@ export const useModelStore = defineStore("model", {
         case "MachineLockStateUpdate":
           const msg_lock_state =
             machineUpdate.updateContent as MachineLockStateUpdate;
-          const target_lock_state = this.machines.get(machineUpdate.entityId);
+          const target_lock_state = this.rootComponents.get(
+            machineUpdate.entityId,
+          );
 
           if (!target_lock_state) {
             console.warn("Machine target not found for " + machineUpdate);
@@ -216,7 +199,9 @@ export const useModelStore = defineStore("model", {
         case "MachineLockUserUpdate":
           const msg_lock_user =
             machineUpdate.updateContent as MachineLockUserUpdate;
-          const target_lock_user = this.machines.get(machineUpdate.entityId);
+          const target_lock_user = this.rootComponents.get(
+            machineUpdate.entityId,
+          );
 
           if (!target_lock_user) {
             console.warn("Machine target not found for " + machineUpdate);
@@ -360,7 +345,7 @@ export const useModelStore = defineStore("model", {
       switch (update.entityType) {
         case "Component":
           response.targetEntity =
-            this.componentEntityMap.get(update.entityId) || null;
+            this.entityIdComponentMap.get(update.entityId) || null;
           break;
         case "Skill":
           response.targetEntity =
@@ -433,7 +418,7 @@ export const useModelStore = defineStore("model", {
 
       this.entityToParentMachineMap.set(component.entityId, parentMachine);
       this.nodeIdComponentMap.set(component.nodeId, component);
-      this.componentEntityMap.set(component.entityId, component);
+      this.entityIdComponentMap.set(component.entityId, component);
     },
     /**
      * Add all variables of this tree to the variableMap using entityId

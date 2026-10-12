@@ -17,7 +17,7 @@ function toggleModelDropdown() {
         @click="toggleModelDropdown"
     >
         <div class="text-lg">
-            Server with {{ modelStore.machines?.size || 0 }} Machines
+            Server with {{ modelStore.rootComponents?.size || 0 }} Machines
         </div>
         <div class="border-l border-l-slate-500 pl-2">
             <ArrowBigDownIcon

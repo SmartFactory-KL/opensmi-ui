@@ -7,7 +7,6 @@ from opensmi_ui.opc_client.client import (
     OPCClientConnectRequest,
     OPCClientSessionNotReadyError,
 )
-from opensmi_ui.opc_client.identifiable import ComponentEntityDTO
 
 logger = get_module_logger("opc_session_api")
 

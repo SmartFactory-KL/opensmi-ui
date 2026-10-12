@@ -20,6 +20,10 @@ from opensmi_ui.opc_client.identifiable import (
     DTOContainerEntity,
     DTOEntity,
     FeatureEntity,
+    MethodSetEntity,
+    ResourceSetEntity,
+    SkillSetEntity,
+    UserSetEntity,
 )
 
 logger = get_module_logger("opc_client.model")
@@ -90,6 +94,7 @@ def create_features(entity: DTOEntity) -> list[FeatureEntity]:
         return []
 
     result: list[FeatureEntity] = []
+    dto_entities: list[DTOEntity] = []
 
     # These are features that are directly available as a DTOEntity
     # The tuple contains: (attribute_name, expected_type)
@@ -101,10 +106,10 @@ def create_features(entity: DTOEntity) -> list[FeatureEntity]:
         ("parameter_set", RemoteVariableContainer),
     ]
 
-    skill_set_container = DTOContainerEntity[RemoteSkill]()
-    method_set_container = DTOContainerEntity[RemoteMethod]()
-    resources_container = DTOContainerEntity[RemoteResource]()
-    users_container = DTOContainerEntity[RemoteUser]()
+    skill_set_container = SkillSetEntity()
+    method_set_container = MethodSetEntity()
+    resources_container = ResourceSetEntity()
+    users_container = UserSetEntity()
 
     # These features have no direct DTOEntity, so they must be handled in lists
     # The tuple contains: (attribute_name, expected_type, expected_type_of_all_elements, target_dto_entity_container)
@@ -129,7 +134,13 @@ def create_features(entity: DTOEntity) -> list[FeatureEntity]:
             )
             continue
 
-        result.append(FeatureEntity(entity=attr))
+        if not isinstance(attr, DTOEntity):
+            logger.info(
+                f"type mismatch on features: expected {feat_type} to be of type DTOEntity but it was not for {feat_name}"
+            )
+            continue
+
+        dto_entities.append(attr)
 
     for feat_name, list_type, feat_type, target_container in listable_features_to_check:
         attr = getattr(entity, feat_name, None)
@@ -165,6 +176,10 @@ def create_features(entity: DTOEntity) -> list[FeatureEntity]:
         for val in elements:
             target_container.add_item(val)
 
-        result.append(FeatureEntity(entity=target_container))
+        if target_container not in dto_entities:
+            dto_entities.append(target_container)
+
+    for dto_entity in dto_entities:
+        result.append(FeatureEntity(entity=dto_entity))
 
     return result
