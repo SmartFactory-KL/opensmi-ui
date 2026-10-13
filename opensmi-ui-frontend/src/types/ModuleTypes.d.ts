@@ -8,17 +8,22 @@ export type RemoteVariableValueType =
   | "ImageGIF"
   | "Text";
 
-export type FeatureEntityType = "RemoteMachine" | "RemoteComponent";
+export type FeatureEntityType =
+  | "RemoteLock"
+  | "Attributes"
+  | "Identification"
+  | "Monitoring"
+  | "ParameterSet"
+  | "FeatureSetEntity";
 
 export interface FeatureEntityDto {
   entityId: string;
   entityType: FeatureEntityType;
-
   data: any;
+  features: FeatureEntityDto[];
 }
 
 export interface ComponentEntityDto extends FeatureEntityDto {
-  features: FeatureEntityDto[];
   children: ComponentEntityDto[];
 }
 

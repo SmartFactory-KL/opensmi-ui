@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import GenericFeature from "@/feature/GenericFeature.vue";
 import { useModelStore } from "@/stores/ModelStore";
 import { computed } from "vue";
 import { useRoute } from "vue-router";
@@ -28,13 +29,16 @@ const component = computed(() => {
         <section v-if="component === null">
             Invalid Component or Entity ID not found
         </section>
-        <section v-else>
-            {{ component.entityId }}
-            {{ component.entityType }}
-
-            <div v-for="feature in component.features">
-                {{ feature }}
-            </div>
+        <section
+            v-else
+            class="flex flex-row flex-wrap justify-start items-start p-4 gap-4"
+        >
+            <GenericFeature
+                v-for="feature in component.features"
+                :feature="feature"
+                :key="feature.entityId"
+            >
+            </GenericFeature>
         </section>
     </main>
 </template>
