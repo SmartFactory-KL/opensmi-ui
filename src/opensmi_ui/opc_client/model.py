@@ -1,7 +1,6 @@
 from collections import deque
 from dataclasses import dataclass
 
-from asyncua.ua import NodeId
 from opensmi.client import (
     BaseRemoteComponent,
     RemoteMethod,
@@ -115,6 +114,55 @@ class MachineryModel:
     def connect_signals(self, receiver: MessageReceiver) -> None:
         if not len(self.root_components):
             return
+
+        component_queue = deque(self.root_components)
+
+        while component_queue:
+            next_component = component_queue.popleft()
+
+            if not isinstance(next_component, ComponentEntity) or not isinstance(
+                next_component.entity, BaseRemoteComponent
+            ):
+                continue
+
+            # attach to components own signals
+            next_component.entity.status_changed.connect(
+                receiver.receive_component_state
+            )
+            next_component.entity.notification_received.connect(
+                receiver.receive_component_notification
+            )
+
+            for feature in next_component.features:
+                match feature.entity_type:
+                    case "RemoteLock":
+                        if not isinstance(feature.entity, RemoteLock):
+                            logger.info(
+                                f"skipped entity because type {type(feature.entity)} is not expected type {RemoteLock}"
+                            )
+                            continue
+
+                        feature.entity.locked_changed.connect(
+                            receiver.receive_lock_changed
+                        )
+                        feature.entity.locking_user_changed.connect(
+                            receiver.receive_lock_user_changed
+                        )
+
+                    case "Identification" | "Attributes" | "Monitoring" | "ParameterSet" | "FinalResultDataSet":
+                        if not isinstance(feature.entity, RemoteVariableContainer):
+                            logger.info(
+                                f"skipped entity because type {type(feature.entity)} is not expected type {RemoteVariableContainer}"
+                            )
+                            continue
+
+                        for variable in feature.entity:
+                            variable.value_changed.connect(
+                                receiver.receive_value_changed
+                            )
+
+
+# #########################################################################################
 
 
 def create_features(entity: DTOEntity) -> list[FeatureEntity]:

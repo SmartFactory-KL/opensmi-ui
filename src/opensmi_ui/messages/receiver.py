@@ -88,5 +88,5 @@ class MessageReceiver:
     async def receive_value_changed(
         self, variable: RemoteVariable, new_value: Variant
     ) -> None:
+        pass
         # logger.info(new_value)
-        ...
