@@ -146,7 +146,8 @@ class OPCClient:
         await self.disconnect()
 
     async def disconnect(self):
-        if self.client is None or self.client.status is RemoteServerStatus.DISCONNECTED:
+        if self.client is None:
+            #  or self.client.status is RemoteServerStatus.DISCONNECTED
             return
 
         await self.client.disconnect()

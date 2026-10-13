@@ -1,21 +1,7 @@
 <script setup lang="ts">
 import SquareStateIndicator from "@/components/SquareStateIndicator.vue";
 import type { ComponentEntityDto } from "@/types/ModuleTypes";
-import {
-    Box,
-    ChevronRight,
-    CircleCheck,
-    CircleX,
-    Cpu,
-    FileCog,
-    Gauge,
-    Lock,
-    Network,
-    Package,
-    Settings2,
-    Wrench,
-    Zap,
-} from "@lucide/vue";
+import { Box, CircleCheck, Gauge, Package, Wrench } from "@lucide/vue";
 
 const props = defineProps<{
     component: ComponentEntityDto;
@@ -98,7 +84,6 @@ const lockLabel = component.data.lock?.isLocked ? "Locked" : "Unlocked";
                 <div>
                     <div class="flex items-center gap-2 text-sm font-medium">
                         <Gauge :size="15" class="text-slate-400" />
-                        <span></span>
                         {{ component.data.skillSet?.length || 0 }} Skill(s)
                     </div>
                 </div>
@@ -135,15 +120,17 @@ const lockLabel = component.data.lock?.isLocked ? "Locked" : "Unlocked";
         >
             <div class="flex items-center gap-4 text-xs text-slate-400">
                 <span>
-                    {{ component.data.identification.length }} Identification
+                    {{ component.data.identification?.length }} Identification
                     Values
                 </span>
                 <span>
-                    {{ component.data.monitoring.length }} Monitoring Values
+                    {{ component.data.monitoring?.length }} Monitoring Values
                 </span>
-                <span> {{ component.data.attributes.length }} Attributes </span>
                 <span>
-                    {{ component.data.parameterSet.length }} Parameters
+                    {{ component.data.attributes?.length }} Attributes
+                </span>
+                <span>
+                    {{ component.data.parameterSet?.length }} Parameters
                 </span>
             </div>
 

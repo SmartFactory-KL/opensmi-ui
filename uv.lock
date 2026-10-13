@@ -409,8 +409,8 @@ wheels = [
 
 [[package]]
 name = "opensmi-client"
-version = "1.0.0rc2.dev39+gfa17099c4"
-source = { git = "https://github.com/SmartFactory-KL/opensmi-client.git?branch=main#fa17099c489f59a4abd3b76894fb317b458d20fb" }
+version = "1.0.0rc2.dev41+g8a65bbfbe"
+source = { git = "https://github.com/SmartFactory-KL/opensmi-client.git?branch=main#8a65bbfbeba69a3f7c3d74c4240a51c03e66a0d9" }
 dependencies = [
     { name = "asyncua" },
     { name = "opensmi-core" },
@@ -418,16 +418,16 @@ dependencies = [
 
 [[package]]
 name = "opensmi-core"
-version = "0.3.1"
+version = "0.4.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "asyncua" },
     { name = "structlog" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d7/b4/8feb993f4bdccc6f5dbd273a7b53c39da38f2a863a179a57c41d2342fd00/opensmi_core-0.3.1.tar.gz", hash = "sha256:3d70ed9c995540bb2d73dcdb478f92859667a4c6fa27753fc2656b071e5d6d18", size = 56847, upload-time = "2026-10-12T06:46:30.633Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/fb/1e/8da17c7d4b6b9c8474ea6c5daa53273ba67418173f811c2bb26de129ef4f/opensmi_core-0.4.1.tar.gz", hash = "sha256:7b3a8f00a9cf5891dadf63713bce4d507448986bd41f2f9cebb902c3baac8940", size = 57682, upload-time = "2026-10-13T07:06:15.914Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c7/21/bcee9881ca3295311fd53c6435a191c9b0d0c1d6e9b71e4117f442dd3983/opensmi_core-0.3.1-py3-none-any.whl", hash = "sha256:03b80467e1af44fceaa380a41305f88ca8a3e6f54320bfd986d52787e75ed302", size = 57111, upload-time = "2026-10-12T06:46:29.315Z" },
+    { url = "https://files.pythonhosted.org/packages/45/f4/b2d9e94375e0f930876aa8744849866f0ae578e9912cbebca74a0eef1f4f/opensmi_core-0.4.1-py3-none-any.whl", hash = "sha256:34a1f54a3871757432a604f78fc1640188f21f4f3145cc0fc28e09319d3671c5", size = 58059, upload-time = "2026-10-13T07:06:14.429Z" },
 ]
 
 [[package]]

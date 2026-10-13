@@ -19,7 +19,6 @@ class JsonBaseModel(BaseModel):
             validation_alias=to_camel,
             serialization_alias=to_camel,
         ),
-        json_encoders={pathlib.PurePosixPath: str},
         populate_by_name=True,
     )
 
@@ -29,7 +28,6 @@ class JsonOutModel(BaseModel):
         alias_generator=AliasGenerator(
             serialization_alias=to_camel,
         ),
-        json_encoders={pathlib.PurePosixPath: str},
     )
 
 

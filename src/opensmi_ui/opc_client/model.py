@@ -1,29 +1,27 @@
 from collections import deque
 from dataclasses import dataclass
 
+from asyncua.ua import NodeId
 from opensmi.client import (
     BaseRemoteComponent,
     RemoteMethod,
     RemoteServer,
     RemoteSkill,
 )
+from opensmi.client.dto import RemoteUaObjectDTO
 from opensmi.client.remote_lock import RemoteLock
 from opensmi.client.remote_resource import RemoteResource
 from opensmi.client.remote_user import RemoteUser
 from opensmi.client.remote_variable_container import RemoteVariableContainer
+from opensmi.core.base_ua_object import PurePosixPath
 
 from opensmi_ui.logger import get_module_logger
 from opensmi_ui.messages.receiver import MessageReceiver
 from opensmi_ui.opc_client.identifiable import (
     ComponentEntity,
     ComponentEntityDTO,
-    DTOContainerEntity,
     DTOEntity,
     FeatureEntity,
-    MethodSetEntity,
-    ResourceSetEntity,
-    SkillSetEntity,
-    UserSetEntity,
 )
 
 logger = get_module_logger("opc_client.model")
@@ -33,6 +31,36 @@ logger = get_module_logger("opc_client.model")
 class QueueItem:
     entity: DTOEntity
     parent_entity: ComponentEntity | None
+
+
+class FeatureSetEntityDTO(RemoteUaObjectDTO): ...
+
+
+class FeatureSetEntity:
+    name: str
+    path: PurePosixPath
+    ua_node_id: str
+    ua_type: str
+
+    def __init__(
+        self,
+        name: str | None = None,
+        path: PurePosixPath | None = None,
+        ua_node_id: str | None = None,
+        ua_type: str | None = None,
+    ):
+        self.name = name if name is not None else "FeatureSet"
+        self.path = path if path is not None else PurePosixPath()
+        self.ua_node_id = ua_node_id if ua_node_id is not None else ""
+        self.ua_type = ua_type if ua_type is not None else "unknown"
+
+    def dto(self) -> FeatureSetEntityDTO:
+        return FeatureSetEntityDTO(
+            name=self.name,
+            path=self.path,
+            ua_node_id=self.ua_node_id,
+            ua_type=self.ua_type,
+        )
 
 
 class MachineryModel:
@@ -94,7 +122,6 @@ def create_features(entity: DTOEntity) -> list[FeatureEntity]:
         return []
 
     result: list[FeatureEntity] = []
-    dto_entities: list[DTOEntity] = []
 
     # These are features that are directly available as a DTOEntity
     # The tuple contains: (attribute_name, expected_type)
@@ -106,22 +133,7 @@ def create_features(entity: DTOEntity) -> list[FeatureEntity]:
         ("parameter_set", RemoteVariableContainer),
     ]
 
-    skill_set_container = SkillSetEntity()
-    method_set_container = MethodSetEntity()
-    resources_container = ResourceSetEntity()
-    users_container = UserSetEntity()
-
-    # These features have no direct DTOEntity, so they must be handled in lists
-    # The tuple contains: (attribute_name, expected_type, expected_type_of_all_elements, target_dto_entity_container)
-    listable_features_to_check: list[tuple[str, type, type, DTOContainerEntity]] = [
-        ("skill_set", dict, RemoteSkill, skill_set_container),
-        ("feasibility_check_set", dict, RemoteSkill, skill_set_container),
-        ("precondition_check_set", dict, RemoteSkill, skill_set_container),
-        ("method_set", dict, RemoteMethod, method_set_container),
-        ("resources", dict, RemoteResource, resources_container),
-        ("users", list, RemoteUser, users_container),
-    ]
-
+    # check non-list attributes
     for feat_name, feat_type in features_to_check:
         attr = getattr(entity, feat_name, None)
 
@@ -140,11 +152,21 @@ def create_features(entity: DTOEntity) -> list[FeatureEntity]:
             )
             continue
 
-        dto_entities.append(attr)
+        result.append(FeatureEntity(entity=attr))
 
-    for feat_name, list_type, feat_type, target_container in listable_features_to_check:
+    # These features have no direct DTOEntity, so they must be handled in lists
+    # The tuple contains: (attribute_name, expected_type, expected_type_of_all_elements, target_dto_entity_container)
+    listable_features_to_check: list[tuple[str, type, type]] = [
+        ("skill_set", dict, RemoteSkill),
+        ("feasibility_check_set", dict, RemoteSkill),
+        ("precondition_check_set", dict, RemoteSkill),
+        ("method_set", dict, RemoteMethod),
+        ("resources", dict, RemoteResource),
+        ("users", list, RemoteUser),
+    ]
+
+    for feat_name, list_type, feat_type in listable_features_to_check:
         attr = getattr(entity, feat_name, None)
-
         if attr is None:
             continue
 
@@ -172,14 +194,11 @@ def create_features(entity: DTOEntity) -> list[FeatureEntity]:
         if not all_elements_ok:
             continue
 
-        # all checks passed
+        set_feature = FeatureEntity(entity=FeatureSetEntity(name=feat_name))
+
         for val in elements:
-            target_container.add_item(val)
+            set_feature.append_feature(FeatureEntity(entity=val))
 
-        if target_container not in dto_entities:
-            dto_entities.append(target_container)
-
-    for dto_entity in dto_entities:
-        result.append(FeatureEntity(entity=dto_entity))
+        result.append(set_feature)
 
     return result

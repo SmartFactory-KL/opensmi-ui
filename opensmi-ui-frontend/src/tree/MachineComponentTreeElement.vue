@@ -16,12 +16,15 @@ const hasChildElements = computed(() => {
 <template>
     <div>
         <div class="flex flex-row justify-start items-center">
-             <ComponentLink :component="component"></ComponentLink>
+            <ComponentLink :component="component"></ComponentLink>
             <!-- <ComponentCard :component="component"></ComponentCard> -->
         </div>
         <div>
-            <div v-for="feature in component.features" class="text-xs font-thin ml-2">
-                + {{ feature.entityType }}
+            <div
+                v-for="feature in component.features"
+                class="text-xs font-thin ml-2"
+            >
+                + {{ feature.entityType }} [{{ feature.data?.name || "" }}]
             </div>
         </div>
         <div v-if="hasChildElements" class="ml-4">
