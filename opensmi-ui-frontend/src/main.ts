@@ -8,7 +8,7 @@ import "./main.css";
 import SocketClient from "./socket/SocketClient";
 import { usePageStore } from "./stores/PageStore";
 import { usePinGuardStore } from "./stores/PinGuardStore";
-import { useServerStore } from "./stores/ServerStore";
+import { useServerStore } from "./stores/ServerSessionStore";
 
 const app = createApp(App);
 

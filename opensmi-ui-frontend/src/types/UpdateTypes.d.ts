@@ -1,14 +1,15 @@
 import type { GenericUpdateMessage } from "./GenericTypes";
 
-type RemoteServerStatus =
-  | "DISCONNECTED"
-  | "CONNECTING"
-  | "BROWSING"
-  | "CONNECTED"
-  | "RECONNECTING"
-  | "DISCONNECTING";
+type OPCClientState =
+  | "disconnected"
+  | "connecting"
+  | "socket_open"
+  | "channel_open"
+  | "connected"
+  | "reconnecting"
+  | "disconnecting";
 
-export type ServerStateUpdateMessage = GenericUpdateMessage<RemoteServerStatus>;
+export type ServerStateUpdateMessage = GenericUpdateMessage<OPCClientState>;
 export type ServerTimeUpdateMessage = GenericUpdateMessage<string>;
 
 // Machine Stuff

@@ -21,7 +21,7 @@ import {
 } from "@lucide/vue";
 import { usePinGuardStore } from "@/stores/PinGuardStore";
 import IconButton from "@/components/IconButton.vue";
-import { useServerStore } from "@/stores/ServerStore";
+import { useServerStore } from "@/stores/ServerSessionStore";
 import { usePageStore } from "@/stores/PageStore";
 import ServerStateIndicator from "@/navigation/ServerStateIndicator.vue";
 
@@ -255,7 +255,9 @@ function requestDisconnect() {
                 <aside class="space-y-4">
                     <!-- Current state -->
                     <section class="shadow-sm">
-                        <ServerStateIndicator class="p-5"></ServerStateIndicator>
+                        <ServerStateIndicator
+                            class="p-5"
+                        ></ServerStateIndicator>
                     </section>
 
                     <!-- Local data -->
@@ -318,20 +320,6 @@ function requestDisconnect() {
                         <dt class="text-xs text-slate-400">Product URI</dt>
                         <dd class="mt-1 break-all font-mono text-slate-700">
                             {{ serverStore.sessionData.productUri }}
-                        </dd>
-                    </div>
-
-                    <div>
-                        <dt class="text-xs text-slate-400">Security Policy</dt>
-                        <dd class="mt-1 text-slate-700">
-                            {{ serverStore.sessionData.securityPolicy }}
-                        </dd>
-                    </div>
-
-                    <div>
-                        <dt class="text-xs text-slate-400">Browse Rules</dt>
-                        <dd class="mt-1 text-slate-700">
-                            {{ serverStore.sessionData.browseRules }}
                         </dd>
                     </div>
 

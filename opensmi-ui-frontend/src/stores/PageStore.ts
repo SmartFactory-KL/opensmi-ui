@@ -1,7 +1,7 @@
 import { simplyGetToJSON } from "@/fetch/simplyFetch";
 import { mergeStoredSettings } from "@/util/merge";
 import { defineStore } from "pinia";
-import type { useServerStore } from "./ServerStore";
+import type { useServerStore } from "./ServerSessionStore";
 import type SocketClient from "@/socket/SocketClient";
 
 const LOCAL_STORAGE_PAGE_SETTINGS = "opensmi-ui-page-settings";

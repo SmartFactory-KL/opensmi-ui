@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { HousePlugIcon, SatelliteIcon } from "@lucide/vue";
 import LocalClock from "./LocalClock.vue";
-import { useServerStore } from "@/stores/ServerStore";
+import { useServerStore } from "@/stores/ServerSessionStore";
 
 const serverStore = useServerStore();
 </script>

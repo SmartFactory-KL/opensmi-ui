@@ -7,7 +7,8 @@ from starlette.staticfiles import StaticFiles
 
 from opensmi_ui.api.app_info_api import create_health_api
 from opensmi_ui.api.image_api import create_image_api
-from opensmi_ui.api.opc_client_api import create_opc_client_api
+from opensmi_ui.api.opc_model_api import create_opc_model_api
+from opensmi_ui.api.opc_session_api import create_opc_session_api
 from opensmi_ui.api.pin_guard_api import create_ping_guard_api
 from opensmi_ui.app_config.config import AppConfig
 from opensmi_ui.image.image_provider import StaticImageProvider
@@ -16,7 +17,8 @@ from opensmi_ui.messages.broadcast import MessageBroadcaster
 from opensmi_ui.messages.funnel import MessageFunnel
 from opensmi_ui.messages.receiver import MessageReceiver
 from opensmi_ui.metrics.metrics import Metrics
-from opensmi_ui.opc_client.client import OPCClient, OPCClientSettings
+from opensmi_ui.opc_model.browser import OPCBrowser
+from opensmi_ui.opc_session.session import OPCSession, OPCSessionSettings
 from opensmi_ui.pin_guard.pin_guard import PinGuard, PinGuardConfig
 
 logger = get_module_logger("composer")
@@ -85,14 +87,22 @@ class Composer:
             msg_receiver = MessageReceiver(funnel=msg_funnel)
 
             # session
-            opc_client = OPCClient(
-                settings=OPCClientSettings(), msg_receiver=msg_receiver
+            opc_session = OPCSession(
+                settings=OPCSessionSettings(), msg_receiver=msg_receiver
             )
-            self.closables.append(opc_client)
+            self.startables.append(opc_session)
+            self.closables.append(opc_session)
 
             # session api
-            opc_client_api = create_opc_client_api(opc_client=opc_client)
+            opc_client_api = create_opc_session_api(opc_session=opc_session)
             self.apis.append(opc_client_api)
+
+            # opc model
+            opc_model = OPCBrowser(opc_session=opc_session)
+
+            # opc model api
+            opc_model_api = create_opc_model_api(opc_model=opc_model)
+            self.apis.append(opc_model_api)
 
             # define lifecycle
             @asynccontextmanager

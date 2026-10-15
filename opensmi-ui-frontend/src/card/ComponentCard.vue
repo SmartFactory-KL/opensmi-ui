@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import SquareStateIndicator from "@/components/SquareStateIndicator.vue";
-import type { ComponentEntityDto } from "@/types/ModuleTypes";
+import type { ComponentEntityDto } from "@/types/NodeFeatureTypes";
 import { Box, CircleCheck, Gauge, Package, Wrench } from "@lucide/vue";
 
 const props = defineProps<{

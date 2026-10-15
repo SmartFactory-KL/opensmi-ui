@@ -70,11 +70,11 @@ const modelStore = useModelStore();
                             >
                                 Nothing to show
                             </span>
-                            <ComponentCard
+                            <!-- <ComponentCard
                                 v-for="machine in modelStore.rootComponents.values()"
                                 :component="machine"
                             >
-                            </ComponentCard>
+                            </ComponentCard> -->
                         </div>
                     </div>
                 </div>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { FeatureEntityDto, LockingModuleDto } from "@/types/ModuleTypes";
+import type { FeatureEntityDto, LockingModuleDto } from "@/types/NodeFeatureTypes";
 import { computed } from "vue";
 
 const props = defineProps<{

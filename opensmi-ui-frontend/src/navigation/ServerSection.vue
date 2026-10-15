@@ -18,9 +18,11 @@ const modelStore = useModelStore();
         >
             <IconButton
                 @click="modelStore.refreshMachineData()"
-                :class="{ 'animate-spin': modelStore.isWorking }"
+                :disabled="modelStore.isWorking"
             >
-                <RefreshCcwDotIcon></RefreshCcwDotIcon>
+                <RefreshCcwDotIcon
+                    :class="{ 'animate-spin': modelStore.isWorking }"
+                ></RefreshCcwDotIcon>
             </IconButton>
 
             <ServerState></ServerState>

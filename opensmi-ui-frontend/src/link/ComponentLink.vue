@@ -1,22 +1,27 @@
 <script setup lang="ts">
-import type { ComponentDto, ComponentEntityDto } from "@/types/ModuleTypes";
+import type { ComponentNodeData } from "@/types/NodeFeatureTypes";
 
 import { computed } from "vue";
 import { CompassIcon, RobotArmIcon } from "@lucide/vue";
 
 import ClassicLink from "./ClassicLink.vue";
+import type { ComponentEntityData } from "@/types/EntityTypes";
 
 const props = defineProps<{
-    component: ComponentEntityDto;
+    component: ComponentNodeData;
 }>();
 
 const href = computed(() => {
-    return "/component/" + props.component.entityId;
+    return "/component/" + props.component.entity.entityId;
 });
 
 const isMachineType = computed(() => {
-  return props.component.data.uaType == "MachineType"
-})
+    return props.component.opcNode.nodeClass == "MachineType";
+});
+
+const entity = computed(() => {
+    return props.component.entity as ComponentEntityData;
+});
 </script>
 
 <template>
@@ -26,6 +31,6 @@ const isMachineType = computed(() => {
     >
         <RobotArmIcon v-if="isMachineType" :size="16" />
         <CompassIcon v-else :size="16" />
-        <span>{{ component.data.name }}</span>
+        <span>{{ entity.name }}</span>
     </ClassicLink>
 </template>

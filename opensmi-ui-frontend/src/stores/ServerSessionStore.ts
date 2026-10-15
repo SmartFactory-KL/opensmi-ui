@@ -1,32 +1,30 @@
 import { simplyGetToJSON, simplyPostToText } from "@/fetch/simplyFetch";
 import type SocketClient from "@/socket/SocketClient";
 import type { GenericUpdateMessage } from "@/types/GenericTypes";
-import type { RemoteServerStatus } from "@/types/UpdateTypes";
+import type { OPCClientState } from "@/types/UpdateTypes";
 import { defineStore } from "pinia";
 import { usePageStore } from "./PageStore";
 import { mergeStoredSettings } from "@/util/merge";
 
-export interface ServerClientSettings {
+export interface OPCSessionSettings {
+  timeout: number;
   autoReconnect: boolean;
   reconnectMaxDelay: number;
-  reconnectRequestTimeout: number;
-  timeout: number;
   watchdogInterval: number;
+  reconnectRequestTimeout: number;
 }
 
-export interface ServerSessionData {
-  state: RemoteServerStatus;
-
-  applicationUri: string;
-  productUri: string;
-
-  browseRules: any;
-  securityPolicy: any;
-
+export interface OPCSessionData {
   url: string;
   username: string;
 
-  settings: ServerClientSettings;
+  state: OPCClientState;
+
+  applicationUri: string;
+  productUri: string;
+  namespaces: string[];
+
+  settings: OPCSessionSettings;
 }
 
 export interface ServerStoreUserInput {
@@ -36,7 +34,7 @@ export interface ServerStoreUserInput {
 }
 
 export interface ServerStateUpdate {
-  newState: RemoteServerStatus;
+  newState: OPCClientState;
 }
 
 export interface ServerTimeUpdate {
@@ -54,7 +52,7 @@ export const useServerStore = defineStore("server", {
 
     userInput: ServerStoreUserInput;
 
-    sessionData: ServerSessionData;
+    sessionData: OPCSessionData;
   } => {
     return {
       serverTime: "--:--:--",
@@ -72,10 +70,9 @@ export const useServerStore = defineStore("server", {
 
       sessionData: {
         applicationUri: "",
-        browseRules: null,
         productUri: "",
-        securityPolicy: null,
-        state: "DISCONNECTED",
+        state: "disconnected",
+        namespaces: [],
         url: "",
         username: "",
         settings: {
@@ -90,10 +87,10 @@ export const useServerStore = defineStore("server", {
   },
   getters: {
     isConnected(data) {
-      return data.sessionData.state === "CONNECTED";
+      return data.sessionData.state === "connected";
     },
     isDisconnected(data) {
-      return data.sessionData.state === "DISCONNECTED";
+      return data.sessionData.state === "disconnected";
     },
     getState(data) {
       return data.sessionData.state;
@@ -214,8 +211,8 @@ export const useServerStore = defineStore("server", {
     },
     handleSocketStateUpdate(newState: WebSocket["readyState"]) {
       if (newState == WebSocket.OPEN) {
-        this.requestServerStatus()
+        this.requestServerStatus();
       }
-    }
+    },
   },
 });

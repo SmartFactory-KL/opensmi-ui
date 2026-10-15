@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import ComponentCard from "@/card/ComponentCard.vue";
 import ComponentLink from "@/link/ComponentLink.vue";
-import type { ComponentDto, ComponentEntityDto } from "@/types/ModuleTypes";
+import type { ComponentDto, ComponentEntityDto } from "@/types/NodeFeatureTypes";
 import { computed } from "vue";
 
 const props = defineProps<{

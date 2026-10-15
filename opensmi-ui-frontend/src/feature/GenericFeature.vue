@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { FeatureEntityDto } from "@/types/ModuleTypes";
+import type { FeatureEntityDto } from "@/types/NodeFeatureTypes";
 import { computed } from "vue";
 import UnsupportedFeature from "./UnsupportedFeature.vue";
 import AttributesFeature from "./AttributesFeature.vue";

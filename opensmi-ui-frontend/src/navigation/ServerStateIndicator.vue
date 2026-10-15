@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { useServerStore } from "@/stores/ServerStore";
+import { useServerStore } from "@/stores/ServerSessionStore";
 import {
     CheckCircle2Icon,
-    ServerIcon,
     LinkIcon,
-    RotateCcwIcon,
     LogOutIcon,
     CircleOffIcon,
     CircleAlertIcon,
+    RotateCwIcon,
 } from "@lucide/vue";
 
 const props = withDefaults(
@@ -24,7 +23,7 @@ const serverStore = useServerStore();
 
 const stateConfig = computed(() => {
     switch (serverStore.sessionData.state) {
-        case "CONNECTED":
+        case "connected":
             return {
                 label: "Connected",
                 description: "Connected to the OPC UA server.",
@@ -34,17 +33,9 @@ const stateConfig = computed(() => {
                 animate: false,
             };
 
-        case "BROWSING":
-            return {
-                label: "Browsing",
-                description: "Connected and browsing the server.",
-                icon: ServerIcon,
-                classes: "bg-indigo-200 border-indigo-200 text-indigo-700",
-                iconClasses: "text-indigo-500",
-                animate: true,
-            };
-
-        case "CONNECTING":
+        case "connecting":
+        case "channel_open":
+        case "socket_open":
             return {
                 label: "Connecting",
                 description: "Establishing a connection to the OPC UA server.",
@@ -54,17 +45,17 @@ const stateConfig = computed(() => {
                 animate: true,
             };
 
-        case "RECONNECTING":
+        case "reconnecting":
             return {
                 label: "Reconnecting",
                 description: "Attempting to restore the server connection.",
-                icon: RotateCcwIcon,
+                icon: RotateCwIcon,
                 classes: "bg-violet-200 border-violet-200 text-violet-700",
                 iconClasses: "text-violet-500",
                 animate: true,
             };
 
-        case "DISCONNECTING":
+        case "disconnecting":
             return {
                 label: "Disconnecting",
                 description: "Closing the connection to the OPC UA server.",
@@ -74,7 +65,7 @@ const stateConfig = computed(() => {
                 animate: true,
             };
 
-        case "DISCONNECTED":
+        case "disconnected":
             return {
                 label: "Disconnected",
                 description: "No OPC UA server connection is active.",
@@ -109,7 +100,6 @@ const stateConfig = computed(() => {
         ]"
         :title="`${stateConfig.label}: ${stateConfig.description}`"
         :aria-label="stateConfig.label"
-
         @click="$router.push('/connect')"
     >
         <component
@@ -127,7 +117,6 @@ const stateConfig = computed(() => {
             'transition-colors duration-100',
             stateConfig.classes,
         ]"
-
         @click="$router.push('/connect')"
     >
         <div class="flex size-9 shrink-0 items-center justify-center">

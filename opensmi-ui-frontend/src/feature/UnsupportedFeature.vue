@@ -2,7 +2,7 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { AlertCircle, ChevronDown, Braces, Copy, Check } from "@lucide/vue";
-import type { FeatureEntityDto } from "@/types/ModuleTypes";
+import type { FeatureEntityDto } from "@/types/NodeFeatureTypes";
 
 const props = defineProps<{
     feature: FeatureEntityDto;

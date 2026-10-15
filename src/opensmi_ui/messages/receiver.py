@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
+from asyncua.client.ua_client import UaClientState
 from asyncua.ua import Variant
 from opensmi.client import (
     BaseRemoteComponent,
     NotificationEvent,
     RemoteLock,
-    RemoteServerStatus,
     RemoteSkill,
     RemoteUser,
     RemoteVariable,
@@ -35,11 +35,11 @@ class MessageReceiver:
         self.funnel = funnel
 
     # server channel
-    async def receive_server_state(self, new_state: RemoteServerStatus) -> None:
+    async def receive_server_state(self, new_state: UaClientState) -> None:
         msg = GenericUpdateMessage[ServerStateUpdate](
             entity_id=None,
             entity_type=GenericUpdateEntityType.Server,
-            update_content=ServerStateUpdate(new_state=new_state.name),
+            update_content=ServerStateUpdate(new_state=str(new_state.value)),
         )
 
         self.funnel.send_direct_message(msg)

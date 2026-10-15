@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { FeatureEntityDto } from "@/types/ModuleTypes";
+import type { FeatureEntityDto } from "@/types/NodeFeatureTypes";
 import VariableTreeFeature from "./VariableTreeFeature.vue";
 
 const props = defineProps<{

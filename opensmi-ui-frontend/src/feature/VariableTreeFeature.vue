@@ -1,6 +1,6 @@
 ```vue
 <script setup lang="ts">
-import type { RemoteVariableDto } from "@/types/ModuleTypes";
+import type { RemoteVariableDto } from "@/types/NodeFeatureTypes";
 
 defineProps<{
     items: RemoteVariableDto[];
@@ -25,7 +25,7 @@ defineProps<{
         >
             <div class="flex flex-col items-start justify-between">
                 <span
-                    class="break-all rounded bg-gray-100 font-mono text-xs text-stone-800"
+                    class="break-all rounded bg-gray-100 font-mono text-xs text-stone-800 min-w-32 min-h-4"
                 >
                     {{ variable.value }}
                 </span>
