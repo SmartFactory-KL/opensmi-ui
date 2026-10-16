@@ -80,8 +80,8 @@ class OPCNode:
     type_definition_id: ua.NodeId | None = None
     reference_type_id: ua.NodeId | None = None
 
-    attributes: Mapping[str, Any]
-    properties: Mapping[str, Any]
+    attributes: dict[str, Any]
+    properties: dict[str, Any]
 
     children: list["OPCNode"]
 
@@ -94,8 +94,8 @@ class OPCNode:
         ua_node: Node,
         type_definition_id: ua.NodeId | None = None,
         reference_type_id: ua.NodeId | None = None,
-        attributes: Mapping[str, Any] | None = None,
-        properties: Mapping[str, Any] | None = None,
+        attributes: dict[str, Any] | None = None,
+        properties: dict[str, Any] | None = None,
     ) -> None:
         self.node_id = node_id
         self.node_class = node_class

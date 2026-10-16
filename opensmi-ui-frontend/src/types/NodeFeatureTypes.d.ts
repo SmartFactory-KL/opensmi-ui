@@ -14,29 +14,35 @@ export interface LocalizedTextData {
   locale: string | null;
 }
 
-export interface OPCNodeData {
+export interface OPCNode {
   nodeId: NodeIdData;
   nodeClass: string;
   browseName: QualifiedNameData;
   displayName: LocalizedTextData;
+  typeDefinitionId: string | null;
+  referenceTypeId: string | null;
+  attributes: { [key: string]: string };
+  properties: { [key: string]: string };
 }
 
-export interface FeatureNodeData {
-  opcNode: OPCNodeData;
+export interface FeatureNode {
+  opcNode: OPCNode;
 
   entity: any | null;
+  entityId: string;
   entityType: string | null;
 
-  children: FeatureNodeData[];
+  features: FeatureNode[];
 }
 
-export interface ComponentNodeData {
-  opcNode: OPCNodeData;
+export interface ComponentNode {
+  opcNode: OPCNode;
 
   entity: any | null;
+  entityId: string;
   entityType: string | null;
 
-  features: FeatureNodeData[];
+  features: FeatureNode[];
 
-  children: ComponentNodeData[];
+  children: ComponentNode[];
 }

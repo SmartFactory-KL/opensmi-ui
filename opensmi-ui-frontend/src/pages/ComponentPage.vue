@@ -16,11 +16,11 @@ const component = computed(() => {
         return null;
     }
 
-    if (!modelStore.entityIdComponentMap.has(entityId)) {
+    if (!modelStore.entityIdComponentNodeMap.has(entityId)) {
         return null;
     }
 
-    return modelStore.entityIdComponentMap.get(entityId) ?? null;
+    return modelStore.entityIdComponentNodeMap.get(entityId) ?? null;
 });
 </script>
 

@@ -4,8 +4,16 @@ from dataclasses import dataclass
 from asyncua import ua
 
 from opensmi_ui.logger import get_module_logger
+from opensmi_ui.opc_model.entities.variable_container_entity import (
+    VariableContainerEntity,
+)
 from opensmi_ui.opc_model.features.variable_feature import VariableFeatureNode
-from opensmi_ui.opc_model.model_node import ComponentNode, FeatureNode
+from opensmi_ui.opc_model.model_node import (
+    ComponentNode,
+    FeatureInitRequest,
+    FeatureInitResult,
+    FeatureNode,
+)
 from opensmi_ui.opc_model.opc_node import OPCNode
 
 logger = get_module_logger("opc_model.features.variable_container")
@@ -25,6 +33,7 @@ class VariableContainerFeatureNode(FeatureNode):
         parent_feature_node: FeatureNode | None = None,
     ):
         super().__init__(opc_node, parent_component_node, parent_feature_node)
+        self.entity_type = "VariableContainer"
 
         # handle all variables
         vars_to_process = deque(
@@ -46,9 +55,10 @@ class VariableContainerFeatureNode(FeatureNode):
                 continue
 
             variable_feature = VariableFeatureNode(
-                opc_node=next_item.opc_node, parent_component_node=parent_component_node
+                opc_node=next_item.opc_node,
+                parent_component_node=parent_component_node,
+                parent_feature_node=next_item.parent_feature,
             )
-            variable_feature.entity_type = "VariableFeatureNode"
 
             if next_item.parent_feature is None:
                 variable_features.append(variable_feature)
@@ -61,3 +71,9 @@ class VariableContainerFeatureNode(FeatureNode):
                 )
 
         self.features.extend(variable_features)
+
+    def advance(
+        self, last_result: FeatureInitResult | None
+    ) -> FeatureInitRequest | None:
+        self.entity = VariableContainerEntity(opc_node=self.opc_node)
+        return None

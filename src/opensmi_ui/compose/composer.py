@@ -87,9 +87,11 @@ class Composer:
             msg_receiver = MessageReceiver(funnel=msg_funnel)
 
             # session
-            opc_session = OPCSession(
-                settings=OPCSessionSettings(), msg_receiver=msg_receiver
-            )
+            opc_session = OPCSession(settings=OPCSessionSettings())
+
+            opc_session.on_connection_state_changed(msg_receiver.receive_server_state)
+            opc_session.on_time_changed(msg_receiver.receive_server_time)
+
             self.startables.append(opc_session)
             self.closables.append(opc_session)
 

@@ -1,17 +1,27 @@
 import asyncio
+from collections.abc import Callable
+from datetime import datetime
 from uuid import uuid4
 
 from asyncua import ua
 from asyncua.client.client import Client
 from asyncua.client.ua_client import UaClientState
+from asyncua.common.subscription import (
+    DataChangeEvent,
+    OpcEvent,
+    StatusChangeEvent,
+)
 from asyncua.ua import Int16
 from asyncua.ua.uaerrors import BadNodeIdUnknown
 
 from opensmi_ui.logger import get_module_logger
-from opensmi_ui.messages.receiver import MessageReceiver
 from opensmi_ui.model.common import JsonBaseModel, JsonOutModel
+from opensmi_ui.opc_session.task import StoppableTask, wait_or_stop
 
 logger = get_module_logger("opc_session")
+
+ConnectionStateChangedHandler = Callable[[UaClientState], None]
+TimeChangedHandler = Callable[[datetime], None]
 
 
 class OPCSessionNotReadyError(Exception):
@@ -37,6 +47,9 @@ class OPCSessionSettings(JsonBaseModel):
 
     reconnect_request_timeout: float = 60.0
 
+    time_subscription_enabled: bool = True
+    time_subscription_sampling_interval_ms: float = 500.0
+
 
 class OPCSessionData(JsonOutModel):
     url: str = ""
@@ -54,7 +67,6 @@ class OPCSessionData(JsonOutModel):
 class OPCSession:
     def __init__(
         self,
-        msg_receiver: MessageReceiver,
         settings: OPCSessionSettings | None = None,
     ):
         """Create a new OPC Session while sending session updates to the msg_receiver. settings are optional and will be
@@ -68,12 +80,15 @@ class OPCSession:
             product_uri="urn:smartfactory-kl:opensmi_ui:session",
         )
 
-        self.msg_receiver = msg_receiver
-
         self.opc_client: Client = Client(
             url=""
         )  # this is only a dummy client to prevent None
-        self._connection_monitor_task: asyncio.Task[None] | None = None
+        self._connection_monitor_task: StoppableTask = StoppableTask(
+            worker=self._connection_monitor_worker
+        )
+        self._time_change_task: StoppableTask = StoppableTask(
+            worker=self._time_change_worker
+        )
 
         self._namespaces: list[str] = []
         self._ns_idx_uri: dict[int, str] = {}
@@ -81,38 +96,19 @@ class OPCSession:
 
         self._type_defs: dict[str, type] = {}
 
+        self._connection_state_changed_handler: set[ConnectionStateChangedHandler] = (
+            set()
+        )
+        self._time_changed_handler: set[TimeChangedHandler] = set()
+
     async def start(self) -> None:
-        await self._start_connection_monitor()
+        await self._connection_monitor_task.start()
 
     async def close(self) -> None:
-        await self._stop_connection_monitor()
+        await self._connection_monitor_task.stop()
+        await self._time_change_task.stop()
+
         await self.disconnect()
-
-    async def _start_connection_monitor(self):
-        # if the task is already running: stop and restart
-        # this is needed because every reconnect is a new client
-        # because the url could be different
-        if (
-            self._connection_monitor_task is not None
-            and not self._connection_monitor_task.done()
-        ):
-            await self._stop_connection_monitor()
-
-        logger.info("Starting Connection Monitor Task")
-        self._connection_monitor_task = asyncio.create_task(self._connection_monitor())
-
-    async def _stop_connection_monitor(self):
-        if self._connection_monitor_task is None:
-            return
-
-        self._connection_monitor_task.cancel()
-
-        try:
-            await self._connection_monitor_task
-        except asyncio.CancelledError:
-            pass
-        finally:
-            self._connection_monitor_task = None
 
     async def connect(self, url: str, username: str, password: str) -> None:
         if (
@@ -137,7 +133,7 @@ class OPCSession:
         self.opc_client.set_user(username)
         self.opc_client.set_password(password)
 
-        await self._start_connection_monitor()
+        await self._connection_monitor_task.start()
 
         try:
             await self.opc_client.connect(
@@ -174,6 +170,10 @@ class OPCSession:
             except Exception as e:  # noqa: BLE001 # only used for informational purposes anyway
                 logger.warning(f"Failed to read reference types: {e}")
 
+            # create the time subscription if enabled
+            if self._session_data.settings.time_subscription_enabled:
+                await self._time_change_task.start()
+
         except:
             logger.exception("Failed to connect")
             raise
@@ -207,20 +207,88 @@ class OPCSession:
 
         self._session_data.username = ""
 
-    async def _connection_monitor(self) -> None:
+    async def _connection_monitor_worker(self, stop_event: asyncio.Event) -> None:
         if self.opc_client is None:
             logger.warning("Connection monitor cannot work while opc_client is None")
             return
 
+        logger.info("Start Connection Monitor")
         async with self.opc_client.subscribe_state() as conn_state:
-            while True:
-                state = await conn_state.next_change()
+            while not stop_event.is_set():
+                state = await wait_or_stop(conn_state.next_change(), stop_event)
+
+                if state is None:
+                    break
+
                 logger.info(f"Session now in {state}")
                 self._session_data.state = state
 
-                # this is created as a task to not slow down the monitor
-                # because of slow connections
-                asyncio.create_task(self.msg_receiver.receive_server_state(state))
+                for handler in self._connection_state_changed_handler:
+                    try:
+                        handler(state)
+                    except Exception as e:  # noqa: BLE001
+                        # warning disabled because handlers are user defined and could raise anything
+                        logger.warning(f"failed to handle connection state change: {e}")
+
+    async def _time_change_worker(self, stop_event: asyncio.Event) -> None:
+        if self.opc_client is None:
+            logger.warning("Time Monitor cannot work while opc_client is None")
+            return
+
+        logger.info("Start Time Monitor")
+
+        current_time_node = self.opc_client.get_node(
+            ua.object_ids.ObjectIds.Server_ServerStatus_CurrentTime
+        )
+
+        async with await self.opc_client.create_subscription(
+            period=self._session_data.settings.time_subscription_sampling_interval_ms,
+            handler=None,
+        ) as subscription:
+            await subscription.subscribe_data_change(
+                nodes=current_time_node,
+                sampling_interval=ua.Duration(
+                    self._session_data.settings.time_subscription_sampling_interval_ms
+                ),
+            )
+
+            while not stop_event.is_set():
+                event = await wait_or_stop(subscription.__anext__(), stop_event)
+
+                if event is None:
+                    break
+
+                match event:
+                    case DataChangeEvent(node=node, value=value):
+                        if node == current_time_node:
+                            for handler in self._time_changed_handler:
+                                try:
+                                    handler(value)
+                                except Exception as e:  # noqa: BLE001
+                                    # warning disabled because handlers are user defined and could raise anything
+                                    logger.warning(f"failed to handle time change: {e}")
+
+                    case OpcEvent(event=event_data):
+                        logger.debug("Received OPC UA event: %s", event_data)
+                    case StatusChangeEvent(notification=notification):
+                        logger.info(
+                            "Time subscription status changed: %s", notification.Status
+                        )
+
+                        if notification.Status.is_bad():
+                            break
+
+    def on_connection_state_changed(self, handler):
+        self._connection_state_changed_handler.add(handler)
+
+    def off_connection_state_changed(self, handler):
+        self._connection_state_changed_handler.remove(handler)
+
+    def on_time_changed(self, handler: TimeChangedHandler):
+        self._time_changed_handler.add(handler)
+
+    def off_time_changed(self, handler: TimeChangedHandler):
+        self._time_changed_handler.discard(handler)
 
     def namespace_idx(self, uri: str) -> Int16:
         try:

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ComponentNodeData } from "@/types/NodeFeatureTypes";
+import type { ComponentNode } from "@/types/NodeFeatureTypes";
 
 import { computed } from "vue";
 import { CompassIcon, RobotArmIcon } from "@lucide/vue";
@@ -8,11 +8,11 @@ import ClassicLink from "./ClassicLink.vue";
 import type { ComponentEntityData } from "@/types/EntityTypes";
 
 const props = defineProps<{
-    component: ComponentNodeData;
+    component: ComponentNode;
 }>();
 
 const href = computed(() => {
-    return "/component/" + props.component.entity.entityId;
+    return "/component/" + props.component.entityId;
 });
 
 const isMachineType = computed(() => {

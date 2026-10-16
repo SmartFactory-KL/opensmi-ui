@@ -6,10 +6,11 @@ from asyncua import ua
 from asyncua.ua.uaprotocol_auto import ReferenceDescription
 
 from opensmi_ui.logger import get_module_logger
+from opensmi_ui.opc_model.entities.component_entity import ComponentEntity
 from opensmi_ui.opc_model.feature_proxy import (
     FeatureNotKnownError,
     FeatureSkippedError,
-    create_feature_for_node,
+    create_features_for_node,
 )
 from opensmi_ui.opc_model.model_node import (
     ComponentNode,
@@ -342,11 +343,9 @@ class OPCBrowser:
         feature_init_duration = perf_counter() - feature_init_start
         logger.info("Feature Initialization took %.6f seconds", feature_init_duration)
 
-        # enqueue the subscriptions
+        # create subscriptions
 
-        # create subscriptions from queue
-
-        # read entity values
+        # read values
 
         # convert to serializables
         component_tree_data_list: list[ComponentNodeData] = []
@@ -373,6 +372,8 @@ def get_component_trees(nodes: list[OPCNode]) -> list[ComponentNode]:
                 opc_node=next_item.opc_node,
                 parent_component_node=next_item.parent_component_node,
             )
+
+            component_node.entity = ComponentEntity(opc_node=next_item.opc_node)
 
             if next_item.parent_component_node is None:
                 root_component_node = component_node
@@ -403,11 +404,11 @@ def create_features_on_trees(component_trees: list[ComponentNode]):
 
         for child_node in next_component_node.opc_node.children:
             try:
-                new_feature = create_feature_for_node(
+                new_features = create_features_for_node(
                     opc_node=child_node, parent_component_node=next_component_node
                 )
 
-                next_component_node.features.append(new_feature)
+                next_component_node.features.extend(new_features)
             except FeatureSkippedError:
                 # mostly happens when the Components node is encountered and can be ignored
                 continue

@@ -1,5 +1,12 @@
 from opensmi_ui.logger import get_module_logger
+from opensmi_ui.opc_model.feature_factory.machinery_building_blocks_feature_factory import (
+    create_machinery_building_block_features,
+)
+from opensmi_ui.opc_model.features.lock_feature import LockFeatureNode
 from opensmi_ui.opc_model.features.notification_feature import NotificationFeatureNode
+from opensmi_ui.opc_model.features.resource_container_feature import (
+    ResourceContainerFeatureNode,
+)
 from opensmi_ui.opc_model.features.variable_container_feature import (
     VariableContainerFeatureNode,
 )
@@ -17,32 +24,52 @@ class FeatureNotKnownError(ValueError):
     """Raised whenever a BrowseName does not relate to a known Feature"""
 
 
-def create_feature_for_node(
+def create_features_for_node(
     opc_node: OPCNode, parent_component_node: ComponentNode
-) -> FeatureNode:
+) -> list[FeatureNode]:
     node_name = opc_node.browse_name.Name
 
-    feature: FeatureNode
+    feature_list: list[FeatureNode]
 
     match node_name:
-        case "Identification" | "ParameterSet" | "Monitoring" | "Attributes":
-            feature = VariableContainerFeatureNode(
-                opc_node=opc_node, parent_component_node=parent_component_node
-            )
+        case (
+            "Identification"
+            | "ParameterSet"
+            | "Monitoring"
+            | "Attributes"
+            | "FinalResultData"
+        ):
+            feature_list = [
+                VariableContainerFeatureNode(
+                    opc_node=opc_node, parent_component_node=parent_component_node
+                )
+            ]
         case "Notification":
-            feature = NotificationFeatureNode(
+            feature_list = [
+                NotificationFeatureNode(
+                    opc_node=opc_node, parent_component_node=parent_component_node
+                )
+            ]
+        case "Lock":
+            feature_list = [
+                LockFeatureNode(
+                    opc_node=opc_node, parent_component_node=parent_component_node
+                )
+            ]
+        case "Resources":
+            feature_list = [
+                ResourceContainerFeatureNode(
+                    opc_node=opc_node, parent_component_node=parent_component_node
+                )
+            ]
+        case "MachineryBuildingBlocks":
+            feature_list = create_machinery_building_block_features(
                 opc_node=opc_node, parent_component_node=parent_component_node
             )
 
-        # case "MachineryBuildingBlocks":
-        #     ...
-        # case "Resources":
-        #     ...
         # case "MethodSet":
         #     ...
         # case "SkillSet":
-        #     ...
-        # case "Lock":
         #     ...
 
         # no-ops
@@ -55,7 +82,4 @@ def create_feature_for_node(
                 f"Cannot create feature for {opc_node.browse_name.Name}"
             )
 
-    feature.entity_type = type(feature).__name__
-    feature.entity = None
-
-    return feature
+    return feature_list

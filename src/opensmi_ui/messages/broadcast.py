@@ -40,8 +40,11 @@ class MessageBroadcaster:
 
     async def broadcast(self, message: WebSocketMessage):
         """broadcast a simple WebSocketMessage to all clients"""
-        payload = message.model_dump_json(by_alias=True)
-        await self._broadcast_payload(payload)
+        try:
+            payload = message.model_dump_json(by_alias=True)
+            await self._broadcast_payload(payload)
+        except Exception as e:
+            logger.warning(f"Failed to broadcast: {e}")
 
     async def broadcast_batch(self, message_batch: list[WebSocketMessage]):
         """broadcast a batch of WebSocketMessages to the batch channel of all clients"""

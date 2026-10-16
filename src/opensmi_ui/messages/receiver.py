@@ -35,7 +35,7 @@ class MessageReceiver:
         self.funnel = funnel
 
     # server channel
-    async def receive_server_state(self, new_state: UaClientState) -> None:
+    def receive_server_state(self, new_state: UaClientState) -> None:
         msg = GenericUpdateMessage[ServerStateUpdate](
             entity_id=None,
             entity_type=GenericUpdateEntityType.Server,
@@ -44,13 +44,11 @@ class MessageReceiver:
 
         self.funnel.send_direct_message(msg)
 
-    async def receive_server_time(self, new_time: datetime) -> None:
+    def receive_server_time(self, new_time: datetime) -> None:
         msg = GenericUpdateMessage[ServerTimeUpdate](
             entity_id=None,
             entity_type=GenericUpdateEntityType.Server,
-            update_content=ServerTimeUpdate(
-                new_time=new_time.astimezone(UTC).isoformat()
-            ),
+            update_content=ServerTimeUpdate(new_time=new_time.astimezone(UTC).isoformat()),
         )
 
         self.funnel.send_direct_message(msg)

@@ -3,7 +3,7 @@ import type { SocketMessage } from "@/socket/SocketClient";
 import type SocketClient from "@/socket/SocketClient";
 import type { ComponentEntityData } from "@/types/EntityTypes";
 import type { GenericUpdateMessage } from "@/types/GenericTypes";
-import type { ComponentNodeData } from "@/types/NodeFeatureTypes";
+import type { ComponentNode } from "@/types/NodeFeatureTypes";
 import type {
   MachineStateUpdate,
   MachineLockStateUpdate,
@@ -17,8 +17,8 @@ import { createDeepCopy } from "@/util/copy";
 import { defineStore } from "pinia";
 
 type ComponentNodeProcessItem = {
-  componentNode: ComponentNodeData;
-  parent: ComponentNodeData | null;
+  componentNode: ComponentNode;
+  parent: ComponentNode | null;
 };
 
 export const useModelStore = defineStore("model", {
@@ -30,8 +30,8 @@ export const useModelStore = defineStore("model", {
 
     isWorking: boolean;
 
-    rootComponents: Map<string, ComponentNodeData>;
-    entityIdComponentNodeMap: Map<string, ComponentNodeData>;
+    rootComponents: Map<string, ComponentNode>;
+    entityIdComponentNodeMap: Map<string, ComponentNode>;
   } => {
     return {
       requestData: {
@@ -41,8 +41,8 @@ export const useModelStore = defineStore("model", {
 
       isWorking: false,
 
-      rootComponents: new Map<string, ComponentNodeData>(),
-      entityIdComponentNodeMap: new Map<string, ComponentNodeData>(),
+      rootComponents: new Map<string, ComponentNode>(),
+      entityIdComponentNodeMap: new Map<string, ComponentNode>(),
     };
   },
   getters: {},
@@ -75,15 +75,13 @@ export const useModelStore = defineStore("model", {
       try {
         const rootComponentNodes = (await simplyGetToJSON(
           "/api/opc-model/browse",
-        )) as ComponentNodeData[];
+        )) as ComponentNode[];
 
         if (!Array.isArray(rootComponentNodes)) {
           throw new Error(
             `Expected Model to ba Array, got ${typeof rootComponentNodes} instead`,
           );
         }
-
-        console.log(rootComponentNodes);
 
         // walk the component tree and map relevant entities within it
         for (const rootComponentNode of rootComponentNodes) {
@@ -102,20 +100,24 @@ export const useModelStore = defineStore("model", {
 
             const item = nodesToProcess.shift();
             if (!item || !item.componentNode || !item.componentNode.entity) {
-              break;
+              console.warn(
+                "skipped incoming data because one of the null checks failed!",
+              );
+              console.log(item);
+              continue;
             } // this only exists to prevent null checks
 
             const component = item.componentNode;
             const entity = component.entity as ComponentEntityData;
 
-            this.entityIdComponentNodeMap.set(entity.entityId, component);
+            this.entityIdComponentNodeMap.set(component.entityId, component);
 
             for (const feature of component.features) {
-              // console.log(feature);
+              console.log(feature);
             }
 
             if (item.parent === null) {
-              this.rootComponents.set(entity.entityId, component);
+              this.rootComponents.set(component.entityId, component);
             }
 
             for (const child of component.children) {

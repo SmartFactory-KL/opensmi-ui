@@ -1,3 +1,4 @@
+import uuid
 from abc import abstractmethod
 from collections import deque
 from collections.abc import Callable
@@ -5,8 +6,14 @@ from dataclasses import dataclass
 from typing import Any, Union
 
 from asyncua import ua
+from asyncua.common.events import Event
+from asyncua.common.node import Node
+from asyncua.common.subscription import DataChangeNotif
+from asyncua.ua.attribute_ids import AttributeIds
 
 from opensmi_ui.model.common import JsonOutModel
+from opensmi_ui.opc_model.entities.component_entity import ComponentEntity
+from opensmi_ui.opc_model.entities.entity import FeatureNodeEntity
 from opensmi_ui.opc_model.opc_node import OPCNode, OPCNodeData
 
 
@@ -24,10 +31,32 @@ class FeatureInitResult:
     browse_results: list[ua.BrowseResult]
 
 
+@dataclass
+class FeatureSubscribeDataRequest:
+    node: Node
+    attr: AttributeIds
+
+    handler: Callable[[Node, Any, DataChangeNotif], None]
+
+
+@dataclass
+class FeatureSubscribeEventRequest:
+    node: Node
+    attr: AttributeIds
+
+    handler: Callable[[Event], None]
+
+
+@dataclass
+class FeatureSubscribeRequest:
+    subscriptions: list[FeatureSubscribeDataRequest | FeatureSubscribeEventRequest]
+
+
 class EntityNodeData(JsonOutModel):
     opc_node: OPCNodeData
 
     entity: Any | None
+    entity_id: uuid.UUID
     entity_type: str | None
 
 
@@ -41,7 +70,8 @@ class FeatureNode:
     parent_component_node: "ComponentNode"
     parent_feature_node: Union["FeatureNode", None]
 
-    entity: Any | None
+    entity: FeatureNodeEntity | None
+    entity_id: uuid.UUID
     entity_type: str | None
 
     features: list["FeatureNode"]
@@ -54,6 +84,7 @@ class FeatureNode:
     ):
         self.opc_node = opc_node
         self.entity = None
+        self.entity_id = uuid.uuid4()
         self.entity_type = None
 
         self.parent_component_node = parent_component_node
@@ -62,7 +93,14 @@ class FeatureNode:
         self.features = []
 
     @abstractmethod
-    def advance(self, last_result: FeatureInitResult | None) -> FeatureInitRequest | None:
+    def subscribe(self) -> FeatureSubscribeRequest | None:
+        """subscribe() is called to gather all subscription requests. Returning None means no subscriptions are requested."""
+        return None
+
+    @abstractmethod
+    def advance(
+        self, last_result: FeatureInitResult | None
+    ) -> FeatureInitRequest | None:
         """advance() is called by the model until no further requests are present. The initial last_result will contain empty lists."""
         return None
 
@@ -70,6 +108,7 @@ class FeatureNode:
         return FeatureNodeData(
             opc_node=self.opc_node.get_data(),
             entity=self.entity.get_data() if self.entity is not None else None,
+            entity_id=self.entity_id,
             entity_type=self.entity_type if self.entity_type is not None else None,
             features=[feat.get_data() for feat in self.features],
         )
@@ -83,7 +122,8 @@ class ComponentNodeData(EntityNodeData):
 class ComponentNode:
     opc_node: OPCNode
 
-    entity: Any | None
+    entity: ComponentEntity | None
+    entity_id: uuid.UUID
     entity_type: str | None
 
     parent_component_node: Union["ComponentNode", None]
@@ -99,6 +139,7 @@ class ComponentNode:
     ):
         self.opc_node = opc_node
         self.entity = None
+        self.entity_id = uuid.uuid4()
         self.entity_type = None
 
         self.parent_component_node = parent_component_node
@@ -110,6 +151,7 @@ class ComponentNode:
         return ComponentNodeData(
             opc_node=self.opc_node.get_data(),
             entity=self.entity.get_data() if self.entity is not None else None,
+            entity_id=self.entity_id,
             entity_type=self.entity_type if self.entity_type is not None else None,
             features=[feat.get_data() for feat in self.features],
             children=[child.get_data() for child in self.children],

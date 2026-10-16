@@ -3,11 +3,13 @@ from enum import StrEnum
 from asyncua import ua
 
 from opensmi_ui.logger import get_module_logger
+from opensmi_ui.opc_model.entities.variable_entity import VariableEntity
 from opensmi_ui.opc_model.model_node import (
     ComponentNode,
     FeatureInitRequest,
     FeatureInitResult,
     FeatureNode,
+    FeatureSubscribeRequest,
 )
 from opensmi_ui.opc_model.opc_node import OPCNode
 
@@ -22,21 +24,21 @@ ATTRIBUTES_TO_READ = [
     # ua.attribute_ids.AttributeIds.DisplayName,
     ua.attribute_ids.AttributeIds.Description,
     # will be read separately at the end
-    # ua.attribute_ids.AttributeIds.Value,
+    ua.attribute_ids.AttributeIds.Value,
     ua.attribute_ids.AttributeIds.DataType,
     ua.attribute_ids.AttributeIds.ValueRank,
     ua.attribute_ids.AttributeIds.ArrayDimensions,
     ua.attribute_ids.AttributeIds.AccessLevel,
     ua.attribute_ids.AttributeIds.UserAccessLevel,
     # probably not interesting as of now
-    # ua.attribute_ids.AttributeIds.MinimumSamplingInterval,
-    # ua.attribute_ids.AttributeIds.Historizing,
-    # ua.attribute_ids.AttributeIds.WriteMask,
-    # ua.attribute_ids.AttributeIds.UserWriteMask,
-    # ua.attribute_ids.AttributeIds.RolePermissions,
-    # ua.attribute_ids.AttributeIds.UserRolePermissions,
-    # ua.attribute_ids.AttributeIds.AccessRestrictions,
-    # ua.attribute_ids.AttributeIds.EventNotifier,
+    ua.attribute_ids.AttributeIds.MinimumSamplingInterval,
+    ua.attribute_ids.AttributeIds.Historizing,
+    ua.attribute_ids.AttributeIds.WriteMask,
+    ua.attribute_ids.AttributeIds.UserWriteMask,
+    ua.attribute_ids.AttributeIds.RolePermissions,
+    ua.attribute_ids.AttributeIds.UserRolePermissions,
+    ua.attribute_ids.AttributeIds.AccessRestrictions,
+    ua.attribute_ids.AttributeIds.EventNotifier,
 ]
 
 
@@ -49,7 +51,7 @@ class VariableInitState(StrEnum):
 
 
 class VariableFeatureNode(FeatureNode):
-    init_state: VariableInitState = VariableInitState.OPEN
+    _init_state: VariableInitState
 
     def __init__(
         self,
@@ -58,13 +60,16 @@ class VariableFeatureNode(FeatureNode):
         parent_feature_node: FeatureNode | None = None,
     ):
         super().__init__(opc_node, parent_component_node, parent_feature_node)
+        self.entity_type = "Variable"
+        self._init_state = VariableInitState.OPEN
+
+    def subscribe(self) -> FeatureSubscribeRequest | None:
+        return None
 
     def advance(
         self, last_result: FeatureInitResult | None
     ) -> FeatureInitRequest | None:
-        match self.init_state:
-            case VariableInitState.ERROR:
-                return None
+        match self._init_state:
             case VariableInitState.OPEN:
                 # first step is to read the attributes and browse properties that are available
                 req = FeatureInitRequest(
@@ -76,6 +81,8 @@ class VariableFeatureNode(FeatureNode):
                         ua.ReadValueId(NodeId=self.opc_node.node_id, AttributeId=attr)
                     )
 
+                # TODO: These nodes are actually already available
+                # TODO: within opc_node.children -> Decide how to handle that?
                 req.browse_requests.append(
                     ua.BrowseDescription(
                         NodeId=self.opc_node.node_id,
@@ -89,7 +96,7 @@ class VariableFeatureNode(FeatureNode):
                     )
                 )
 
-                self.init_state = (
+                self._init_state = (
                     VariableInitState.RECEIVE_ATTRIBUTES_AND_BROWSE_PROPERTIES
                 )
                 return req
@@ -98,7 +105,7 @@ class VariableFeatureNode(FeatureNode):
                     logger.warning(
                         "Feature received unintended None Result. Going into Error mode."
                     )
-                    self.init_state = VariableInitState.ERROR
+                    self._init_state = VariableInitState.ERROR
                     # TODO Think about wether this should stop the whole deal
                     # TODO or if the Feature will need some kind of error feedback property
                     return None
@@ -125,7 +132,9 @@ class VariableFeatureNode(FeatureNode):
                 # if no properties are available, we are done.
                 # Otherwise their values need to be read
                 if len(available_properties) == 0:
-                    self.init_state = VariableInitState.DONE
+                    self._init_state = VariableInitState.DONE
+                    self.entity = VariableEntity(opc_node=self.opc_node)
+
                     return None
                 else:
                     req = FeatureInitRequest(
@@ -139,7 +148,7 @@ class VariableFeatureNode(FeatureNode):
                             )
                         )
 
-                    self.init_state = VariableInitState.RECEIVE_PROPERTIES_VALUE
+                    self._init_state = VariableInitState.RECEIVE_PROPERTIES_VALUE
                     return req
 
             case VariableInitState.RECEIVE_PROPERTIES_VALUE:
@@ -147,7 +156,7 @@ class VariableFeatureNode(FeatureNode):
                     logger.warning(
                         "Feature received unintended None Result. Going into Error mode."
                     )
-                    self.init_state = VariableInitState.ERROR
+                    self._init_state = VariableInitState.ERROR
                     # TODO Think about wether this should stop the whole deal
                     # TODO or if the Feature will need some kind of error feedback property
                     return None
@@ -155,12 +164,20 @@ class VariableFeatureNode(FeatureNode):
                 props_with_values = {}
 
                 for idx, key in enumerate(self.opc_node.properties.keys()):
-                    props_with_values[key] = last_result.read_results[idx]
+                    cur_result = last_result.read_results[idx]
+
+                    if cur_result.StatusCode is None or cur_result.StatusCode.is_bad():
+                        continue
+
+                    props_with_values[key] = last_result.read_results[idx].Value
 
                 self.opc_node.properties = props_with_values
 
+                self.entity = VariableEntity(opc_node=self.opc_node)
+
                 return None
 
+            case VariableInitState.ERROR:
+                return None
             case _:
-                print(last_result)
                 return None
