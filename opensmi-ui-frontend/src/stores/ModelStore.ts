@@ -1,19 +1,8 @@
 import { simplyGetToJSON } from "@/fetch/simplyFetch";
-import type { SocketMessage } from "@/socket/SocketClient";
 import type SocketClient from "@/socket/SocketClient";
+import Toaster from "@/toast/Toaster";
 import type { ComponentEntityData } from "@/types/EntityTypes";
-import type { GenericUpdateMessage } from "@/types/GenericTypes";
 import type { ComponentNode } from "@/types/NodeFeatureTypes";
-import type {
-  MachineStateUpdate,
-  MachineLockStateUpdate,
-  MachineLockUserUpdate,
-  MachineNewMessageUpdate,
-  ComponentStateUpdate,
-  SkillStateUpdate,
-  VariableDataValueUpdate,
-} from "@/types/UpdateTypes";
-import { createDeepCopy } from "@/util/copy";
 import { defineStore } from "pinia";
 
 type ComponentNodeProcessItem = {
@@ -63,6 +52,8 @@ export const useModelStore = defineStore("model", {
         return;
       }
 
+      Toaster.info("Refreshing Machine Data ...");
+
       this.requestData.isPending = true;
       this.requestData.error = null;
       this.isWorking = true;
@@ -108,7 +99,6 @@ export const useModelStore = defineStore("model", {
             } // this only exists to prevent null checks
 
             const component = item.componentNode;
-            const entity = component.entity as ComponentEntityData;
 
             this.entityIdComponentNodeMap.set(component.entityId, component);
 
@@ -130,10 +120,12 @@ export const useModelStore = defineStore("model", {
         }
 
         console.log(`Received ${this.rootComponents.size} root components`);
+        Toaster.success(`Received ${this.rootComponents.size} root components`);
         this.isWorking = false;
       } catch (e) {
         console.error(e);
         this.requestData.error = `Failed to request model: ${e}`;
+        Toaster.error(this.requestData.error);
       } finally {
         this.requestData.isPending = false;
         this.isWorking = false;

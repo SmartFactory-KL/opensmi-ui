@@ -5,6 +5,7 @@ import type { OPCClientState } from "@/types/UpdateTypes";
 import { defineStore } from "pinia";
 import { usePageStore } from "./PageStore";
 import { mergeStoredSettings } from "@/util/merge";
+import Toaster from "@/toast/Toaster";
 
 export interface OPCSessionSettings {
   timeout: number;
@@ -168,6 +169,7 @@ export const useServerStore = defineStore("server", {
         await this.requestServerStatus();
       } catch (e) {
         this.requestData.error = `Failed to connect: ${e}`;
+        Toaster.error(this.requestData.error);
       } finally {
         this.requestData.isPending = false;
       }

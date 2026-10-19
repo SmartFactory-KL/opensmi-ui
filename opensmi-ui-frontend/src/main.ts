@@ -9,6 +9,8 @@ import SocketClient from "./socket/SocketClient";
 import { usePageStore } from "./stores/PageStore";
 import { usePinGuardStore } from "./stores/PinGuardStore";
 import { useServerStore } from "./stores/ServerSessionStore";
+import { useToasterStore } from "./stores/ToasterStore";
+import Toaster from "./toast/Toaster";
 
 const app = createApp(App);
 
@@ -16,6 +18,9 @@ app.use(createPinia());
 app.use(router);
 
 async function compose() {
+  Toaster.attachStore()
+  Toaster.addMessage("info", "Hello World");
+
   const pageStore = usePageStore();
   await pageStore.requestPageInfo();
 

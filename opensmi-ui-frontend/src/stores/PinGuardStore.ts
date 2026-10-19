@@ -1,5 +1,6 @@
 import { simplyGetToJSON } from "@/fetch/simplyFetch";
 import type SocketClient from "@/socket/SocketClient";
+import Toaster from "@/toast/Toaster";
 import type { GenericUpdateMessage } from "@/types/GenericTypes";
 import { defineStore } from "pinia";
 
@@ -63,6 +64,7 @@ export const usePinGuardStore = defineStore("pin-guard", {
         this.state = result;
       } catch (e) {
         this.requestState.error = `Failed to gather PinGuard State: ${e}`;
+        Toaster.error(this.requestState.error);
       } finally {
         this.requestState.isPending = false;
       }

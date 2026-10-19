@@ -3,6 +3,7 @@ import { mergeStoredSettings } from "@/util/merge";
 import { defineStore } from "pinia";
 import type { useServerStore } from "./ServerSessionStore";
 import type SocketClient from "@/socket/SocketClient";
+import Toaster from "@/toast/Toaster";
 
 const LOCAL_STORAGE_PAGE_SETTINGS = "opensmi-ui-page-settings";
 const LOCAL_STORAGE_CONNECTION_DATA = "opensmi-ui-connection-data";
@@ -190,6 +191,7 @@ export const usePageStore = defineStore("page", {
         this.loadSettings();
       } catch (e) {
         this.requestData.error = `Failed to load Page: ${e}`;
+        Toaster.error(this.requestData.error);
       } finally {
         this.requestData.isPending = false;
       }

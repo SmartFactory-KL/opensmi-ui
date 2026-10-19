@@ -8,6 +8,7 @@ import ServerDropdown from "./navigation/ServerDropdown.vue";
 import { useDropdownStore } from "./stores/DropdownStore";
 import { useRoute } from "vue-router";
 import { watch } from "vue";
+import Toaster from "./toast/Toaster.vue";
 
 const pageStore = usePageStore();
 const dropdownStore = useDropdownStore();
@@ -69,6 +70,8 @@ watch(
                 <!-- Always add some spacing for that funky on-screen-display on the touchscreens -->
                 <div class="on-screen-placeholder" style="height: 25vh"></div>
             </div>
+
+            <Toaster></Toaster>
         </div>
     </main>
 </template>
