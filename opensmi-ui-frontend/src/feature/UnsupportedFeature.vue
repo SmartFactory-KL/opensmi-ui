@@ -2,10 +2,11 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { AlertCircle, ChevronDown, Braces, Copy, Check } from "@lucide/vue";
-import type { FeatureEntityDto } from "@/types/NodeFeatureTypes";
+import type { FeatureNode } from "@/types/NodeFeatureTypes";
+import GenericFeature from "./GenericFeature.vue";
 
 const props = defineProps<{
-    feature: FeatureEntityDto;
+    feature: FeatureNode;
 }>();
 
 const jsonExpanded = ref(false);
@@ -42,13 +43,20 @@ async function copyJson() {
 
             <div class="min-w-0 flex-1">
                 <h3 class="text-sm font-semibold text-slate-900">
-                    Unsupported Feature: {{ feature.entityType }}
+                    Unknown Feature:
+                    {{ feature.opcNode.browseName.name }}
                 </h3>
 
-                <p class="mt-1 text-sm leading-5 text-slate-500">
-                    This feature type does not have a dedicated renderer.
-                </p>
+                <p>[FeatureType: {{ feature.entityType }}]</p>
             </div>
+        </div>
+
+        <!-- Feature List -->
+        <div class="ml-2 p-4">
+            <GenericFeature
+                :feature="childFeature"
+                v-for="childFeature in feature.features"
+            ></GenericFeature>
         </div>
 
         <!-- JSON disclosure -->

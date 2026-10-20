@@ -3,6 +3,7 @@ from abc import abstractmethod
 from collections import deque
 from collections.abc import Callable
 from dataclasses import dataclass
+from enum import StrEnum
 from typing import Any, Union
 
 from asyncua import ua
@@ -29,6 +30,13 @@ class FeatureInitRequest:
 class FeatureInitResult:
     read_results: list[ua.DataValue]
     browse_results: list[ua.BrowseResult]
+
+
+class FeatureInitState(StrEnum):
+    OPEN = "open"  # feature has not been initalized yet
+    PENDING = "pending"  # feature init has been started
+    DONE = "done"  # feature is ready to be used for the entity
+    ERROR = "error"  # something went wrong while initializing.
 
 
 @dataclass
@@ -61,6 +69,9 @@ class EntityNodeData(JsonOutModel):
 
 
 class FeatureNodeData(EntityNodeData):
+    init_state: FeatureInitState
+    init_error: str | None
+
     features: list["FeatureNodeData"]
 
 
@@ -73,6 +84,9 @@ class FeatureNode:
     entity: FeatureNodeEntity | None
     entity_id: uuid.UUID
     entity_type: str | None
+
+    init_state: FeatureInitState
+    init_error: str | None
 
     features: list["FeatureNode"]
 
@@ -89,6 +103,9 @@ class FeatureNode:
 
         self.parent_component_node = parent_component_node
         self.parent_feature_node = parent_feature_node
+
+        self.init_state = FeatureInitState.OPEN
+        self.init_error = None
 
         self.features = []
 
@@ -110,6 +127,8 @@ class FeatureNode:
             entity=self.entity.get_data() if self.entity is not None else None,
             entity_id=self.entity_id,
             entity_type=self.entity_type if self.entity_type is not None else None,
+            init_state=self.init_state,
+            init_error=self.init_error,
             features=[feat.get_data() for feat in self.features],
         )
 

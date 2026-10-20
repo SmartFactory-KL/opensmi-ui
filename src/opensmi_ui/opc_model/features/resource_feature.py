@@ -11,6 +11,7 @@ from opensmi_ui.opc_model.model_node import (
     ComponentNode,
     FeatureInitRequest,
     FeatureInitResult,
+    FeatureInitState,
     FeatureNode,
 )
 from opensmi_ui.opc_model.opc_node import OPCNode
@@ -26,7 +27,7 @@ class ResourceFeatureNode(FeatureNode):
         parent_feature_node: FeatureNode | None = None,
     ):
         super().__init__(opc_node, parent_component_node, parent_feature_node)
-        self.entity_type="Resource"
+        self.entity_type = "Resource"
 
         # add variables
         for child in opc_node.children:
@@ -46,9 +47,7 @@ class ResourceFeatureNode(FeatureNode):
     def advance(
         self, last_result: FeatureInitResult | None
     ) -> FeatureInitRequest | None:
-        logger.info("Resource Data")
-        logger.info(self.opc_node.children)
-
         self.entity = ResourceContainerEntity(opc_node=self.opc_node)
+        self.init_state = FeatureInitState.DONE
 
         return None

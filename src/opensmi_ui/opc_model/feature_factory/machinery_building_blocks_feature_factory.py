@@ -1,6 +1,9 @@
 from opensmi_ui.opc_model.features.machinery_item_state_feature import (
     MachineryItemStateFeatureNode,
 )
+from opensmi_ui.opc_model.features.user_container_feature import (
+    UserContainerFeatureNode,
+)
 from opensmi_ui.opc_model.model_node import ComponentNode, FeatureNode
 from opensmi_ui.opc_model.opc_node import OPCNode
 
@@ -25,7 +28,13 @@ def create_machinery_building_block_features(
             case "MachineryOperationMode":
                 print("mode!")
             case "Users":
-                print("users!")
+                feature_list.append(
+                    UserContainerFeatureNode(
+                        opc_node=child,
+                        parent_component_node=parent_component_node,
+                        parent_feature_node=parent_feature_node,
+                    )
+                )
             case _:
                 print(f"unkown block: {child.browse_name.Name}")
 

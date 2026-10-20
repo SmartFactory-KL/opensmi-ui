@@ -12,6 +12,7 @@ from opensmi_ui.opc_model.model_node import (
     ComponentNode,
     FeatureInitRequest,
     FeatureInitResult,
+    FeatureInitState,
     FeatureNode,
 )
 from opensmi_ui.opc_model.opc_node import OPCNode
@@ -76,4 +77,5 @@ class VariableContainerFeatureNode(FeatureNode):
         self, last_result: FeatureInitResult | None
     ) -> FeatureInitRequest | None:
         self.entity = VariableContainerEntity(opc_node=self.opc_node)
+        self.init_state = FeatureInitState.DONE
         return None

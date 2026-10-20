@@ -3,9 +3,15 @@ from opensmi_ui.opc_model.feature_factory.machinery_building_blocks_feature_fact
     create_machinery_building_block_features,
 )
 from opensmi_ui.opc_model.features.lock_feature import LockFeatureNode
+from opensmi_ui.opc_model.features.method_container_feature import (
+    MethodContainerFeatureNode,
+)
 from opensmi_ui.opc_model.features.notification_feature import NotificationFeatureNode
 from opensmi_ui.opc_model.features.resource_container_feature import (
     ResourceContainerFeatureNode,
+)
+from opensmi_ui.opc_model.features.skill_container_feature import (
+    SkillContainerFeatureNode,
 )
 from opensmi_ui.opc_model.features.variable_container_feature import (
     VariableContainerFeatureNode,
@@ -67,10 +73,18 @@ def create_features_for_node(
                 opc_node=opc_node, parent_component_node=parent_component_node
             )
 
-        # case "MethodSet":
-        #     ...
-        # case "SkillSet":
-        #     ...
+        case "MethodSet":
+            feature_list = [
+                MethodContainerFeatureNode(
+                    opc_node=opc_node, parent_component_node=parent_component_node
+                )
+            ]
+        case "SkillSet":
+            feature_list = [
+                SkillContainerFeatureNode(
+                    opc_node=opc_node, parent_component_node=parent_component_node
+                )
+            ]
 
         # no-ops
         case "Components":

@@ -1,9 +1,8 @@
-from enum import StrEnum
-
 from asyncua import ua
 
 from opensmi_ui.logger import get_module_logger
 from opensmi_ui.opc_model.entities.lock_entity import LockEntity
+from opensmi_ui.opc_model.features.machinery_item_state_feature import FeatureInitState
 from opensmi_ui.opc_model.model_node import (
     ComponentNode,
     FeatureInitRequest,
@@ -15,14 +14,8 @@ from opensmi_ui.opc_model.opc_node import OPCNode
 logger = get_module_logger("opc_model.features.lock")
 
 
-class LockInitState(StrEnum):
-    OPEN = "open"
-    RECEIVE_LOCKING_NODES = "receive_locking_nodes"
-    DONE = "done"
-
-
 class LockFeatureNode(FeatureNode):
-    init_state: LockInitState
+    _init_step: int
 
     def __init__(
         self,
@@ -31,14 +24,16 @@ class LockFeatureNode(FeatureNode):
         parent_feature_node: FeatureNode | None = None,
     ):
         super().__init__(opc_node, parent_component_node, parent_feature_node)
-        self._init_state = LockInitState.OPEN
+        self._init_step = 0
         self.entity_type = "Lock"
 
     def advance(
         self, last_result: FeatureInitResult | None
     ) -> FeatureInitRequest | None:
-        match self._init_state:
-            case LockInitState.OPEN:
+        match self._init_step:
+            case 0:
+                self.init_state = FeatureInitState.PENDING
+
                 req = FeatureInitRequest(
                     browse_requests=[], read_requests=[], feature=self
                 )
@@ -64,12 +59,21 @@ class LockFeatureNode(FeatureNode):
                             )
                             continue
 
-                self._init_state = LockInitState.RECEIVE_LOCKING_NODES
+                self._init_step += 1
                 return req
-            case LockInitState.RECEIVE_LOCKING_NODES:
-                # logger.info(last_result)
+
+            case 1:
+                if last_result is None:
+                    self.init_state = FeatureInitState.ERROR
+                    self.init_error = (
+                        f"Received Unexpected None Result for step {self._init_step}"
+                    )
+                    return None
 
                 self.entity = LockEntity(opc_node=self.opc_node)
+
+                self._init_step += 1
+                self.init_state = FeatureInitState.DONE
                 return None
             case _:
                 return None

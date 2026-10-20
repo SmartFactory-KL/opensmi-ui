@@ -1,5 +1,3 @@
-from enum import StrEnum
-
 from asyncua import ua
 
 from opensmi_ui.logger import get_module_logger
@@ -8,6 +6,7 @@ from opensmi_ui.opc_model.model_node import (
     ComponentNode,
     FeatureInitRequest,
     FeatureInitResult,
+    FeatureInitState,
     FeatureNode,
     FeatureSubscribeRequest,
 )
@@ -42,16 +41,8 @@ ATTRIBUTES_TO_READ = [
 ]
 
 
-class VariableInitState(StrEnum):
-    OPEN = "open"
-    RECEIVE_ATTRIBUTES_AND_BROWSE_PROPERTIES = "reveice_attributes_and_properties"
-    RECEIVE_PROPERTIES_VALUE = "receive_properties_value"
-    DONE = "done"
-    ERROR = "error"
-
-
 class VariableFeatureNode(FeatureNode):
-    _init_state: VariableInitState
+    _init_step: int
 
     def __init__(
         self,
@@ -60,8 +51,8 @@ class VariableFeatureNode(FeatureNode):
         parent_feature_node: FeatureNode | None = None,
     ):
         super().__init__(opc_node, parent_component_node, parent_feature_node)
+        self._init_step = 0
         self.entity_type = "Variable"
-        self._init_state = VariableInitState.OPEN
 
     def subscribe(self) -> FeatureSubscribeRequest | None:
         return None
@@ -69,8 +60,10 @@ class VariableFeatureNode(FeatureNode):
     def advance(
         self, last_result: FeatureInitResult | None
     ) -> FeatureInitRequest | None:
-        match self._init_state:
-            case VariableInitState.OPEN:
+        match self._init_step:
+            case 0:
+                self.init_state = FeatureInitState.PENDING
+
                 # first step is to read the attributes and browse properties that are available
                 req = FeatureInitRequest(
                     browse_requests=[], read_requests=[], feature=self
@@ -96,18 +89,14 @@ class VariableFeatureNode(FeatureNode):
                     )
                 )
 
-                self._init_state = (
-                    VariableInitState.RECEIVE_ATTRIBUTES_AND_BROWSE_PROPERTIES
-                )
+                self._init_step += 1
                 return req
-            case VariableInitState.RECEIVE_ATTRIBUTES_AND_BROWSE_PROPERTIES:
+            case 1:
                 if last_result is None:
-                    logger.warning(
-                        "Feature received unintended None Result. Going into Error mode."
+                    self.init_state = FeatureInitState.ERROR
+                    self.init_error = (
+                        f"Received Unexpected None Result for step {self._init_step}"
                     )
-                    self._init_state = VariableInitState.ERROR
-                    # TODO Think about wether this should stop the whole deal
-                    # TODO or if the Feature will need some kind of error feedback property
                     return None
 
                 # attach attributes to node
@@ -132,8 +121,8 @@ class VariableFeatureNode(FeatureNode):
                 # if no properties are available, we are done.
                 # Otherwise their values need to be read
                 if len(available_properties) == 0:
-                    self._init_state = VariableInitState.DONE
                     self.entity = VariableEntity(opc_node=self.opc_node)
+                    self.init_state = FeatureInitState.DONE
 
                     return None
                 else:
@@ -148,17 +137,15 @@ class VariableFeatureNode(FeatureNode):
                             )
                         )
 
-                    self._init_state = VariableInitState.RECEIVE_PROPERTIES_VALUE
+                    self._init_step += 1
                     return req
 
-            case VariableInitState.RECEIVE_PROPERTIES_VALUE:
+            case 2:
                 if last_result is None:
-                    logger.warning(
-                        "Feature received unintended None Result. Going into Error mode."
+                    self.init_state = FeatureInitState.ERROR
+                    self.init_error = (
+                        f"Received Unexpected None Result for step {self._init_step}"
                     )
-                    self._init_state = VariableInitState.ERROR
-                    # TODO Think about wether this should stop the whole deal
-                    # TODO or if the Feature will need some kind of error feedback property
                     return None
 
                 props_with_values = {}
@@ -175,9 +162,8 @@ class VariableFeatureNode(FeatureNode):
 
                 self.entity = VariableEntity(opc_node=self.opc_node)
 
-                return None
-
-            case VariableInitState.ERROR:
+                self._init_step += 1
+                self.init_state = FeatureInitState.DONE
                 return None
             case _:
                 return None
