@@ -25,12 +25,17 @@ export interface OPCNode {
   properties: { [key: string]: string };
 }
 
+export type FeatureInitState = "open" | "pending" | "done" | "error";
+
 export interface FeatureNode {
   opcNode: OPCNode;
 
   entity: any | null;
   entityId: string;
   entityType: string | null;
+
+  initState: FeatureInitState;
+  initError: string | null;
 
   features: FeatureNode[];
 }

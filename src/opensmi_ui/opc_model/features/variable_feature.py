@@ -1,4 +1,6 @@
 from asyncua import ua
+from asyncua.common.node import Node
+from asyncua.common.subscription import DataChangeEvent
 
 from opensmi_ui.logger import get_module_logger
 from opensmi_ui.opc_model.entities.variable_entity import VariableEntity
@@ -8,9 +10,11 @@ from opensmi_ui.opc_model.model_node import (
     FeatureInitResult,
     FeatureInitState,
     FeatureNode,
+    FeatureSubscribeDataRequest,
     FeatureSubscribeRequest,
 )
 from opensmi_ui.opc_model.opc_node import OPCNode
+from opensmi_ui.opc_model.opc_types import VariantData
 
 logger = get_module_logger("opc_model.features.variable")
 
@@ -53,9 +57,6 @@ class VariableFeatureNode(FeatureNode):
         super().__init__(opc_node, parent_component_node, parent_feature_node)
         self._init_step = 0
         self.entity_type = "Variable"
-
-    def subscribe(self) -> FeatureSubscribeRequest | None:
-        return None
 
     def advance(
         self, last_result: FeatureInitResult | None
@@ -167,3 +168,27 @@ class VariableFeatureNode(FeatureNode):
                 return None
             case _:
                 return None
+
+    def subscribe(self) -> FeatureSubscribeRequest | None:
+        req = FeatureSubscribeRequest(subscriptions=[])
+
+        req.subscriptions.append(
+            FeatureSubscribeDataRequest(
+                attr=ua.attribute_ids.AttributeIds.Value,
+                handler=self.on_value_update,
+                node_id=self.opc_node.node_id,
+            )
+        )
+
+        return req
+
+    def on_value_update(self, node: Node, evt: DataChangeEvent):
+        # TODO: I think I need a more generic "apply_update" method that could take some sort
+        # TODO: of  generic update that the entity knows how to apply
+        # TODO: so that any FeatureEntity could have the method
+        # TODO: Also unknown: These updates would probably also be useful for the frontend,
+        # TODO: but how to add here without adding the msg_receiver as dependency?
+        if not isinstance(self.entity, VariableEntity):
+            return
+
+        self.entity.update_value(VariantData.from_ua(evt.data.monitored_item.Value.Value))

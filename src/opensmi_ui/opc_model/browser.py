@@ -14,10 +14,10 @@ from opensmi_ui.opc_model.feature_proxy import (
 )
 from opensmi_ui.opc_model.model_node import (
     ComponentNode,
-    ComponentNodeData,
     FeatureInitRequest,
     FeatureInitResult,
     FeatureNode,
+    print_component_trees,
     visit_tree_features,
 )
 from opensmi_ui.opc_model.opc_node import OPCNode
@@ -242,7 +242,7 @@ class OPCBrowser:
 
         return results
 
-    async def read_model(self) -> list[ComponentNodeData]:
+    async def read_model(self) -> list[ComponentNode]:
         # read basic nodes
         browse_start = perf_counter()
         basic_nodes = await self.browse_basic_nodes()
@@ -255,7 +255,7 @@ class OPCBrowser:
         tree_convert_duration = perf_counter() - tree_convert_start
         logger.info("Tree Conversion took %.6f seconds", tree_convert_duration)
 
-        # print_component_trees(component_trees)
+        print_component_trees(component_trees)
 
         # create features for nodes
         feature_create_start = perf_counter()
@@ -343,16 +343,7 @@ class OPCBrowser:
         feature_init_duration = perf_counter() - feature_init_start
         logger.info("Feature Initialization took %.6f seconds", feature_init_duration)
 
-        # create subscriptions
-
-        # read values
-
-        # convert to serializables
-        component_tree_data_list: list[ComponentNodeData] = []
-        for component_tree in component_trees:
-            component_tree_data_list.append(component_tree.get_data())
-
-        return component_tree_data_list
+        return component_trees
 
 
 def get_component_trees(nodes: list[OPCNode]) -> list[ComponentNode]:

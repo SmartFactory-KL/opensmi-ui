@@ -8,11 +8,14 @@ from opensmi_ui.opc_session.session import (
     OPCSessionAlreadyConnectedError,
     OPCSessionConnectRequest,
 )
+from opensmi_ui.opc_subscriber.subscriber import OPCSubscriber
 
 logger = get_module_logger("opc_session_api")
 
 
-def create_opc_session_api(opc_session: OPCSession) -> APIRouter:
+def create_opc_session_api(
+    opc_session: OPCSession, opc_subscriber: OPCSubscriber
+) -> APIRouter:
     router = APIRouter(prefix="/api/opc-session", tags=["opc-session"])
 
     @router.get("/info", summary="Get Session Data")
@@ -24,6 +27,8 @@ def create_opc_session_api(opc_session: OPCSession) -> APIRouter:
     async def post_connect(request: OPCSessionConnectRequest):
         try:
             await opc_session.connect(request.url, request.username, request.password)
+
+            await opc_subscriber.start()
         except ConnectionRefusedError:
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
@@ -46,6 +51,7 @@ def create_opc_session_api(opc_session: OPCSession) -> APIRouter:
 
     @router.post("/disconnect", summary="Disconnect from a server")
     async def post_disconnect():
+        await opc_subscriber.close()
         await opc_session.disconnect()
 
         return Response(status_code=status.HTTP_204_NO_CONTENT)

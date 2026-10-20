@@ -38,44 +38,58 @@ class SkillStateFeatureNode(FeatureNode):
     def advance(
         self, last_result: FeatureInitResult | None
     ) -> FeatureInitRequest | None:
+        if self.init_state == FeatureInitState.ERROR:
+            return None
+
         match self._init_step:
             case 0:
-                self.init_state = FeatureInitState.PENDING
+                try:
+                    self.init_state = FeatureInitState.PENDING
 
-                req = FeatureInitRequest(
-                    browse_requests=[], read_requests=[], feature=self
-                )
-
-                req.read_requests.append(
-                    ua.ReadValueId(
-                        NodeId=self.opc_node.node_id,
-                        AttributeId=ua.attribute_ids.AttributeIds.Value,
+                    req = FeatureInitRequest(
+                        browse_requests=[], read_requests=[], feature=self
                     )
-                )
 
-                self._init_step += 1
-                return req
+                    current_state_node = self.opc_node.get_first_child_node_for_name(
+                        "CurrentState"
+                    )
+
+                    req.read_requests.append(
+                        ua.ReadValueId(
+                            NodeId=current_state_node.node_id,
+                            AttributeId=ua.attribute_ids.AttributeIds.Value,
+                        )
+                    )
+
+                    self._init_step += 1
+                    return req
+                except Exception as e:  # noqa: BLE001 # warning disabled since all errors must lead to error init_state
+                    self.init_state = FeatureInitState.ERROR
+                    self.init_error = str(e)
+
+                    return None
             case 1:
-                if last_result is None:
-                    self.init_state = FeatureInitState.ERROR
-                    self.init_error = (
-                        f"Received Unexpected None Result for step {self._init_step}"
-                    )
+                try:
+                    if last_result is None:
+                        raise RuntimeError(
+                            f"Received Unexpected None Result for step {self._init_step}"
+                        )
+
+                    val = last_result.read_results[0]
+
+                    if val.StatusCode is None or val.StatusCode.is_bad():
+                        raise ValueError("Failed to read skill state")
+
+                    self.opc_node.attributes["Value"] = val.Value
+                    self.entity = SkillStateEntity(opc_node=self.opc_node)
+
+                    self._init_step += 1
+                    self.init_state = FeatureInitState.DONE
                     return None
-
-                val = last_result.read_results[0]
-
-                if val.StatusCode is None or val.StatusCode.is_bad():
+                except Exception as e:  # noqa: BLE001 # warning disabled since all errors must lead to error init_state
                     self.init_state = FeatureInitState.ERROR
-                    self.init_error = "Failed to read state"
+                    self.init_error = str(e)
+
                     return None
-
-                self.opc_node.attributes["Value"] = val.Value
-                self.entity = SkillStateEntity(opc_node=self.opc_node)
-
-                self._init_step += 1
-                self.init_state = FeatureInitState.DONE
-                return None
-
             case _:
                 return None

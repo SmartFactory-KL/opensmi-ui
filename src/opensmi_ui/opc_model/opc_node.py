@@ -1,60 +1,18 @@
-from base64 import b64encode
 from collections.abc import Mapping
 from typing import Any
-from uuid import UUID
 
 from asyncua import ua
 from asyncua.common.node import Node
 
 from opensmi_ui.logger import get_module_logger
 from opensmi_ui.model.common import JsonOutModel
+from opensmi_ui.opc_model.opc_types import (
+    LocalizedTextData,
+    NodeIdData,
+    QualifiedNameData,
+)
 
 logger = get_module_logger("opc_model.node")
-
-
-class QualifiedNameData(JsonOutModel):
-    name: str
-    namespace_index: int
-
-    @classmethod
-    def from_ua(cls, value: ua.QualifiedName) -> "QualifiedNameData":
-        return cls(
-            name=value.Name,
-            namespace_index=value.NamespaceIndex,
-        )
-
-
-class LocalizedTextData(JsonOutModel):
-    text: str | None
-    locale: str | None
-
-    @classmethod
-    def from_ua(cls, value: ua.LocalizedText) -> "LocalizedTextData":
-        return cls(
-            text=value.Text,
-            locale=value.Locale,
-        )
-
-
-class NodeIdData(JsonOutModel):
-    identifier: str | int
-    namespace_index: int
-    identifier_type: str
-
-    @classmethod
-    def from_ua(cls, value: ua.NodeId) -> "NodeIdData":
-        identifier = value.Identifier
-
-        if isinstance(identifier, UUID):
-            identifier = str(identifier)
-        elif isinstance(identifier, bytes):
-            identifier = b64encode(identifier).decode("ascii")
-
-        return cls(
-            identifier=identifier,
-            namespace_index=value.NamespaceIndex,
-            identifier_type=value.NodeIdType.name,
-        )
 
 
 class OPCNodeData(JsonOutModel):
@@ -118,6 +76,17 @@ class OPCNode:
 
     def append_child(self, opc_node: "OPCNode"):
         self.children.append(opc_node)
+
+    def get_first_child_node_for_name(self, name: str) -> "OPCNode":
+        """Raises KeyError if no child node was found with matching name"""
+        # TODO: Think about how to handle namespacing cleanly
+        # TODO: and check if a node can have multiple children with the same
+        # TODO: BrowseName.Name while having different BrowseName.NamespaceIndex values
+        for child in self.children:
+            if child.browse_name.Name == name:
+                return child
+
+        raise KeyError(f"No Child Node found for Name {name}")
 
     def get_children(self) -> list["OPCNode"]:
         return self.children

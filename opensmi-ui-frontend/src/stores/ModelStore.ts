@@ -1,7 +1,6 @@
-import { simplyGetToJSON } from "@/fetch/simplyFetch";
+import { simplyGetToText, simplyGetToJSON } from "@/fetch/simplyFetch";
 import type SocketClient from "@/socket/SocketClient";
 import Toaster from "@/toast/Toaster";
-import type { ComponentEntityData } from "@/types/EntityTypes";
 import type { ComponentNode } from "@/types/NodeFeatureTypes";
 import { defineStore } from "pinia";
 
@@ -47,25 +46,49 @@ export const useModelStore = defineStore("model", {
       //       socketClient.addChannelListener("Method", this.handleMethodUpdate);
       //       socketClient.addChannelListener("Variable", this.handleVariableUpdate);
     },
-    async refreshMachineData() {
+    async requestBrowsing() {
       if (this.requestData.isPending == true || this.isWorking == true) {
         return;
       }
 
-      Toaster.info("Refreshing Machine Data ...");
+      Toaster.info("Loading Model ...");
 
       this.requestData.isPending = true;
       this.requestData.error = null;
       this.isWorking = true;
 
-      console.log("requesting machine data...");
+      try {
+        await simplyGetToText("/api/opc-model/browse");
+
+        Toaster.success(`Browsing successful!`);
+
+        this.isWorking = false;
+      } catch (e) {
+        console.error(e);
+        this.requestData.error = `Failed to browse: ${e}`;
+        Toaster.error(this.requestData.error);
+      } finally {
+        this.requestData.isPending = false;
+        this.isWorking = false;
+      }
+    },
+    async loadModel() {
+      if (this.requestData.isPending == true || this.isWorking == true) {
+        return;
+      }
+
+      Toaster.info("Loading Model ...");
+
+      this.requestData.isPending = true;
+      this.requestData.error = null;
+      this.isWorking = true;
 
       this.rootComponents.clear();
       this.entityIdComponentNodeMap.clear();
 
       try {
         const rootComponentNodes = (await simplyGetToJSON(
-          "/api/opc-model/browse",
+          "/api/opc-model/",
         )) as ComponentNode[];
 
         if (!Array.isArray(rootComponentNodes)) {

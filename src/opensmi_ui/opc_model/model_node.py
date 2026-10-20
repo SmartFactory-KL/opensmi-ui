@@ -9,7 +9,7 @@ from typing import Any, Union
 from asyncua import ua
 from asyncua.common.events import Event
 from asyncua.common.node import Node
-from asyncua.common.subscription import DataChangeNotif
+from asyncua.common.subscription import DataChangeEvent
 from asyncua.ua.attribute_ids import AttributeIds
 
 from opensmi_ui.model.common import JsonOutModel
@@ -41,17 +41,15 @@ class FeatureInitState(StrEnum):
 
 @dataclass
 class FeatureSubscribeDataRequest:
-    node: Node
+    node_id: ua.NodeId
     attr: AttributeIds
 
-    handler: Callable[[Node, Any, DataChangeNotif], None]
+    handler: Callable[[Node, DataChangeEvent], None]
 
 
 @dataclass
 class FeatureSubscribeEventRequest:
-    node: Node
-    attr: AttributeIds
-
+    node_id: ua.NodeId
     handler: Callable[[Event], None]
 
 
@@ -182,13 +180,16 @@ def print_component_trees(trees: list[ComponentNode]) -> None:
 
     def print_tree(tree: ComponentNode, prefix: str = "", is_last: bool = True) -> None:
         name = tree.opc_node.browse_name.Name
+        ns_idx = tree.opc_node.browse_name.NamespaceIndex
         child_count = len(tree.opc_node.get_children())
 
         branch = "└── " if is_last else "├── "
-        print(f"{prefix}{branch}{name}[{child_count}]")
+        print(f"{prefix}{branch}{ns_idx}:{name}[{child_count}]")
 
-        for feature in tree.opc_node.get_children():
-            print(f"{prefix}    +{feature.display_name.Text}")
+        for child_node in tree.opc_node.get_children():
+            print(
+                f"{prefix}    +{child_node.browse_name.NamespaceIndex}:{child_node.browse_name.Name}"
+            )
 
         prefix += "    "
 

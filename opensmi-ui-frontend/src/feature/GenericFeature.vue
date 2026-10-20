@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { FeatureEntityDto } from "@/types/NodeFeatureTypes";
+import type { FeatureNode } from "@/types/NodeFeatureTypes";
 import { computed } from "vue";
 import UnsupportedFeature from "./UnsupportedFeature.vue";
 import AttributesFeature from "./AttributesFeature.vue";
@@ -9,7 +9,7 @@ import ParameterFeature from "./ParameterFeature.vue";
 import RemoteLockFeature from "./RemoteLockFeature.vue";
 
 const props = defineProps<{
-    feature: FeatureEntityDto;
+    feature: FeatureNode;
 }>();
 
 const featureComponent = computed(() => {
@@ -34,6 +34,12 @@ const featureComponent = computed(() => {
 
 <template>
     <div>
+        <div class="text-red-800" v-show="feature.initState === 'error'">
+            This feature failed to initialize due to an error:
+            <div class="bg-stone-100 text-stone-800 p-4 text-xs">
+                {{ feature.initError }}
+            </div>
+        </div>
         <component :is="featureComponent" :feature="feature"></component>
     </div>
 </template>

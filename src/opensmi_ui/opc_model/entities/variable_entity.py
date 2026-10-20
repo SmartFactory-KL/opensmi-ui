@@ -9,6 +9,7 @@ from opensmi_ui.opc_model.entities.entity import (
     FeatureNodeEntityData,
 )
 from opensmi_ui.opc_model.opc_node import OPCNode
+from opensmi_ui.opc_model.opc_types import VariantData
 
 
 class VariableEntityData(FeatureNodeEntityData):
@@ -54,6 +55,9 @@ class VariableEntity(FeatureNodeEntity):
         )
 
         self.content = content
+
+    def update_value(self, new_value: VariantData):
+        self.content.value = new_value
 
     def get_data(self) -> FeatureNodeEntityData:
         return self.content

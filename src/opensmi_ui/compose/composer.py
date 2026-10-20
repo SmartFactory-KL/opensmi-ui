@@ -18,7 +18,9 @@ from opensmi_ui.messages.funnel import MessageFunnel
 from opensmi_ui.messages.receiver import MessageReceiver
 from opensmi_ui.metrics.metrics import Metrics
 from opensmi_ui.opc_model.browser import OPCBrowser
+from opensmi_ui.opc_model.opc_model import OPCModel
 from opensmi_ui.opc_session.session import OPCSession, OPCSessionSettings
+from opensmi_ui.opc_subscriber.subscriber import OPCSubscriber
 from opensmi_ui.pin_guard.pin_guard import PinGuard, PinGuardConfig
 
 logger = get_module_logger("composer")
@@ -95,15 +97,24 @@ class Composer:
             self.startables.append(opc_session)
             self.closables.append(opc_session)
 
+            # subscriber
+            opc_subscriber = OPCSubscriber(opc_session=opc_session)
+            opc_session.on_connection_state_changed(opc_subscriber.receive_server_state)
+
             # session api
-            opc_client_api = create_opc_session_api(opc_session=opc_session)
+            opc_client_api = create_opc_session_api(
+                opc_session=opc_session, opc_subscriber=opc_subscriber
+            )
             self.apis.append(opc_client_api)
 
             # opc model
-            opc_model = OPCBrowser(opc_session=opc_session)
+            opc_browser = OPCBrowser(opc_session=opc_session)
+            opc_model = OPCModel(opc_browser=opc_browser)
 
             # opc model api
-            opc_model_api = create_opc_model_api(opc_model=opc_model)
+            opc_model_api = create_opc_model_api(
+                opc_model=opc_model, opc_subscriber=opc_subscriber
+            )
             self.apis.append(opc_model_api)
 
             # define lifecycle
