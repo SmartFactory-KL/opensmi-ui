@@ -7,7 +7,7 @@ from uuid import UUID
 
 from asyncua import ua
 
-from opensmi_ui.model.common import JsonOutModel
+from opensmi_ui.model.json import JsonOutModel
 
 VT = ua.VariantType
 

@@ -1,5 +1,8 @@
 from time import perf_counter
 
+from asyncua import ua
+
+from opensmi_ui.event.bus import EventBus
 from opensmi_ui.logger import get_module_logger
 from opensmi_ui.opc_model.browser import OPCBrowser
 from opensmi_ui.opc_model.model_node import (
@@ -9,6 +12,8 @@ from opensmi_ui.opc_model.model_node import (
     FeatureSubscribeDataRequest,
     FeatureSubscribeEventRequest,
     FeatureSubscribeRequest,
+    FeatureValueReadRequest,
+    FeatureValueReadResult,
     visit_tree_features,
 )
 from opensmi_ui.opc_subscriber.subscriber import (
@@ -23,11 +28,13 @@ logger = get_module_logger("opc_model.model")
 class OPCModel:
     opc_browser: OPCBrowser
 
+    event_bus: EventBus
+
     root_component_nodes: list[ComponentNode]
 
     def __init__(self, opc_browser: OPCBrowser):
         self.opc_browser = opc_browser
-
+        self.event_bus = EventBus()
         self.root_component_nodes = []
 
     async def browse_model(self):
@@ -40,14 +47,12 @@ class OPCModel:
         sub_requests: list[FeatureSubscribeRequest] = []
 
         def read_sub(feature: FeatureNode, _) -> None:
-            req = feature.subscribe()
+            req = feature.request_subscription(self.event_bus)
             if req is not None:
                 sub_requests.append(req)
 
         for root_node in self.root_component_nodes:
             visit_tree_features(tree=root_node, method=read_sub)
-
-
 
         subs_to_create: list[SubscribeDataRequest | SubscribeEventRequest] = []
         for sub_request in sub_requests:
@@ -74,6 +79,42 @@ class OPCModel:
 
         sub_init_duration = perf_counter() - sub_init_start
         logger.info("Subscription Requesting took %.6f seconds", sub_init_duration)
+
+    async def attach_values(self):
+        # final attribute read run
+        val_read_start = perf_counter()
+        feat_val_read_requests: list[FeatureValueReadRequest] = []
+
+        def read_val_request(feature: FeatureNode, _) -> None:
+            req = feature.request_value()
+            if req is not None:
+                feat_val_read_requests.append(req)
+
+        for root_node in self.root_component_nodes:
+            visit_tree_features(tree=root_node, method=read_val_request)
+
+        read_value_list: list[ua.ReadValueId] = []
+        for feat_read_request in feat_val_read_requests:
+            read_value_list.extend(feat_read_request.read_requests)
+
+        reading_results = await self.opc_browser.read_all_in_chunks(
+            reading_requests=read_value_list
+        )
+
+        result_idx = 0
+        for feat_read_request in feat_val_read_requests:
+            _size = len(feat_read_request.read_requests)
+
+            feat_results = reading_results[result_idx : (result_idx + _size)]
+
+            feat_read_request.feature.handle_value_result(
+                FeatureValueReadResult(read_results=feat_results)
+            )
+
+            result_idx += _size
+
+        val_read_duration = perf_counter() - val_read_start
+        logger.info("Reading Values took %.6f seconds", val_read_duration)
 
     def get_data(self):
         # convert to serializables

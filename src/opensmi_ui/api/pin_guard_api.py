@@ -2,7 +2,7 @@ from fastapi import Response, status
 from fastapi.routing import APIRouter
 
 from opensmi_ui.logger import get_module_logger
-from opensmi_ui.model.common import ModuleDisabledError
+from opensmi_ui.model.json import ModuleDisabledError
 from opensmi_ui.pin_guard.pin_guard import PinGuard, PinGuardUnlockRequest
 
 logger = get_module_logger("pin_guard_api")

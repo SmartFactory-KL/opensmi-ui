@@ -12,7 +12,8 @@ from asyncua.common.node import Node
 from asyncua.common.subscription import DataChangeEvent
 from asyncua.ua.attribute_ids import AttributeIds
 
-from opensmi_ui.model.common import JsonOutModel
+from opensmi_ui.event.bus import EventBus
+from opensmi_ui.model.json import JsonOutModel
 from opensmi_ui.opc_model.entities.component_entity import ComponentEntity
 from opensmi_ui.opc_model.entities.entity import FeatureNodeEntity
 from opensmi_ui.opc_model.opc_node import OPCNode, OPCNodeData
@@ -58,6 +59,17 @@ class FeatureSubscribeRequest:
     subscriptions: list[FeatureSubscribeDataRequest | FeatureSubscribeEventRequest]
 
 
+@dataclass
+class FeatureValueReadRequest:
+    read_requests: list[ua.ReadValueId]
+    feature: "FeatureNode"
+
+
+@dataclass
+class FeatureValueReadResult:
+    read_results: list[ua.DataValue]
+
+
 class EntityNodeData(JsonOutModel):
     opc_node: OPCNodeData
 
@@ -86,6 +98,8 @@ class FeatureNode:
     init_state: FeatureInitState
     init_error: str | None
 
+    event_bus: EventBus | None
+
     features: list["FeatureNode"]
 
     def __init__(
@@ -105,12 +119,9 @@ class FeatureNode:
         self.init_state = FeatureInitState.OPEN
         self.init_error = None
 
-        self.features = []
+        self.event_bus = None
 
-    @abstractmethod
-    def subscribe(self) -> FeatureSubscribeRequest | None:
-        """subscribe() is called to gather all subscription requests. Returning None means no subscriptions are requested."""
-        return None
+        self.features = []
 
     @abstractmethod
     def advance(
@@ -118,6 +129,23 @@ class FeatureNode:
     ) -> FeatureInitRequest | None:
         """advance() is called by the model until no further requests are present. The initial last_result will contain empty lists."""
         return None
+
+    @abstractmethod
+    def request_subscription(
+        self, event_bus: EventBus
+    ) -> FeatureSubscribeRequest | None:
+        """subscribe() is called to gather all subscription requests. Returning None means no subscriptions are requested."""
+        return None
+
+    @abstractmethod
+    def request_value(self) -> FeatureValueReadRequest | None:
+        """request_value() is called to gather all final read requests to read value (or other attributes) after subscriptions have been established"""
+        return None
+
+    @abstractmethod
+    def handle_value_result(self, result: FeatureValueReadResult) -> None:
+        """handle_value_result() is called to return the values requested by request_value()"""
+        ...
 
     def get_data(self) -> FeatureNodeData:
         return FeatureNodeData(
@@ -188,7 +216,7 @@ def print_component_trees(trees: list[ComponentNode]) -> None:
 
         for child_node in tree.opc_node.get_children():
             print(
-                f"{prefix}    +{child_node.browse_name.NamespaceIndex}:{child_node.browse_name.Name}"
+                f"{prefix}    +{child_node.browse_name.NamespaceIndex}:{child_node.browse_name.Name}[{len(child_node.children)}]"
             )
 
         prefix += "    "

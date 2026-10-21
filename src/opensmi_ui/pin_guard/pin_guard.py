@@ -4,9 +4,7 @@ from datetime import timedelta
 from time import monotonic
 
 from opensmi_ui.logger import get_module_logger
-from opensmi_ui.model.common import (
-    GenericUpdateEntityType,
-    GenericUpdateMessage,
+from opensmi_ui.model.json import (
     JsonBaseModel,
     JsonOutModel,
     ModuleDisabledError,
@@ -30,10 +28,6 @@ class PinGuardState(JsonOutModel):
 
 class PinGuardUnlockRequest(JsonBaseModel):
     pin: str
-
-
-class PinGuardUpdateMessage[T](GenericUpdateMessage[T]):
-    entity_type: GenericUpdateEntityType = GenericUpdateEntityType.PinGuard
 
 
 class PinGuardStateUpdate(JsonOutModel):

@@ -1,10 +1,9 @@
 import { simplyGetToJSON, simplyPostToText } from "@/fetch/simplyFetch";
 import type SocketClient from "@/socket/SocketClient";
 import type { GenericUpdateMessage } from "@/types/GenericTypes";
-import type { OPCClientState } from "@/types/UpdateTypes";
+import type { OPCClientState, ServerStateUpdate, ServerTimeUpdate } from "@/types/UpdateTypes";
 import { defineStore } from "pinia";
 import { usePageStore } from "./PageStore";
-import { mergeStoredSettings } from "@/util/merge";
 import Toaster from "@/toast/Toaster";
 
 export interface OPCSessionSettings {
@@ -32,14 +31,6 @@ export interface ServerStoreUserInput {
   serverUrl: string;
   username: string;
   password: string;
-}
-
-export interface ServerStateUpdate {
-  newState: OPCClientState;
-}
-
-export interface ServerTimeUpdate {
-  newTime: string;
 }
 
 export const useServerStore = defineStore("server", {

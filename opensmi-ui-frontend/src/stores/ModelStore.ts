@@ -1,13 +1,20 @@
 import { simplyGetToText, simplyGetToJSON } from "@/fetch/simplyFetch";
 import type SocketClient from "@/socket/SocketClient";
 import Toaster from "@/toast/Toaster";
-import type { ComponentNode } from "@/types/NodeFeatureTypes";
+import type { ComponentNode, FeatureNode } from "@/types/NodeFeatureTypes";
+import type { VariableValueUpdate } from "@/types/UpdateTypes";
 import { defineStore } from "pinia";
 
 type ComponentNodeProcessItem = {
   componentNode: ComponentNode;
   parent: ComponentNode | null;
 };
+
+export interface ModelUpdateMessage {
+  entityId: string;
+  updateType: string;
+  updateContent: any;
+}
 
 export const useModelStore = defineStore("model", {
   state: (): {
@@ -20,6 +27,7 @@ export const useModelStore = defineStore("model", {
 
     rootComponents: Map<string, ComponentNode>;
     entityIdComponentNodeMap: Map<string, ComponentNode>;
+    entityIdFeatureNodeMap: Map<string, FeatureNode>;
   } => {
     return {
       requestData: {
@@ -31,20 +39,13 @@ export const useModelStore = defineStore("model", {
 
       rootComponents: new Map<string, ComponentNode>(),
       entityIdComponentNodeMap: new Map<string, ComponentNode>(),
+      entityIdFeatureNodeMap: new Map<string, FeatureNode>(),
     };
   },
   getters: {},
   actions: {
     attachToSocketClient(socketClient: SocketClient) {
-      // add batch listener
-      //       socketClient.addChannelListener("batch", this.handleBatchUpdate);
-      //
-      // these channels are still listened to because direct messages might happen outside the batch
-      //       socketClient.addChannelListener("Machine", this.handleMachineUpdate);
-      //       socketClient.addChannelListener("Component", this.handleComponentUpdate);
-      //       socketClient.addChannelListener("Skill", this.handleSkillUpdate);
-      //       socketClient.addChannelListener("Method", this.handleMethodUpdate);
-      //       socketClient.addChannelListener("Variable", this.handleVariableUpdate);
+      socketClient.addChannelListener("Model", this.handleModelUpdate);
     },
     async requestBrowsing() {
       if (this.requestData.isPending == true || this.isWorking == true) {
@@ -85,6 +86,7 @@ export const useModelStore = defineStore("model", {
 
       this.rootComponents.clear();
       this.entityIdComponentNodeMap.clear();
+      this.entityIdFeatureNodeMap.clear();
 
       try {
         const rootComponentNodes = (await simplyGetToJSON(
@@ -99,42 +101,69 @@ export const useModelStore = defineStore("model", {
 
         // walk the component tree and map relevant entities within it
         for (const rootComponentNode of rootComponentNodes) {
-          const nodesToProcess = [] as ComponentNodeProcessItem[];
-          nodesToProcess.push({
+          const componentsToProcess = [] as ComponentNodeProcessItem[];
+          componentsToProcess.push({
             componentNode: rootComponentNode,
             parent: null,
           });
 
           let count = 0;
-          while (nodesToProcess.length > 0) {
+          while (componentsToProcess.length > 0) {
             count++;
             if (count > 100_000) {
               throw new Error("Count OVF when processing components.");
             }
 
-            const item = nodesToProcess.shift();
-            if (!item || !item.componentNode || !item.componentNode.entity) {
+            const componentItem = componentsToProcess.shift();
+            if (
+              !componentItem ||
+              !componentItem.componentNode ||
+              !componentItem.componentNode.entity
+            ) {
               console.warn(
                 "skipped incoming data because one of the null checks failed!",
               );
-              console.log(item);
+              console.log(componentItem);
               continue;
             } // this only exists to prevent null checks
 
-            const component = item.componentNode;
+            const component = componentItem.componentNode;
 
             this.entityIdComponentNodeMap.set(component.entityId, component);
 
+            const featuresToProcess = [] as FeatureNode[];
+
             for (const feature of component.features) {
-              console.log(feature);
+              featuresToProcess.push(feature);
             }
 
-            if (item.parent === null) {
+            let featureCount = 0;
+            while (featuresToProcess.length > 0) {
+              if (featureCount > 10_000) {
+                console.warn("Feature Count Overflow")
+                break;
+              }
+              featureCount++;
+
+              const featureItem = featuresToProcess.shift();
+
+              if (!featureItem) {
+                continue;
+              }
+
+              this.entityIdFeatureNodeMap.set(featureItem.entityId, featureItem);
+
+              for (const childFeature of featureItem.features) {
+                featuresToProcess.push(childFeature);
+              }
+            }
+
+            if (componentItem.parent === null) {
               this.rootComponents.set(component.entityId, component);
             }
 
             for (const child of component.children) {
-              nodesToProcess.push({
+              componentsToProcess.push({
                 componentNode: child,
                 parent: component,
               });
@@ -152,6 +181,32 @@ export const useModelStore = defineStore("model", {
       } finally {
         this.requestData.isPending = false;
         this.isWorking = false;
+      }
+    },
+    getFeatureForEntity(entityId: string): FeatureNode | null {
+      if (this.entityIdFeatureNodeMap.has(entityId)) {
+        const feature = this.entityIdFeatureNodeMap.get(entityId)!;
+        return feature;
+      }
+
+      return null;
+    },
+    handleModelUpdate(update: ModelUpdateMessage) {
+      const targetFeature = this.getFeatureForEntity(update.entityId);
+
+      if (targetFeature === null) {
+        return;
+      }
+
+      switch (update.updateType) {
+        case "VariableValueUpdate":
+          const typedUpdate = update.updateContent as VariableValueUpdate;
+
+          targetFeature.entity.value = typedUpdate.newValue;
+          break;
+        default:
+          console.warn("unknown updateType", update.updateType);
+          break;
       }
     },
   },

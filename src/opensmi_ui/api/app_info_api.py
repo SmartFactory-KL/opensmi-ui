@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from opensmi_ui.app_config.config import AppConfig
-from opensmi_ui.model.common import JsonOutModel
+from opensmi_ui.model.json import JsonOutModel
 
 
 class HealthResponse(JsonOutModel):

@@ -5,7 +5,7 @@ from asyncua import ua
 from asyncua.common.node import Node
 
 from opensmi_ui.logger import get_module_logger
-from opensmi_ui.model.common import JsonOutModel
+from opensmi_ui.model.json import JsonOutModel
 from opensmi_ui.opc_model.opc_types import (
     LocalizedTextData,
     NodeIdData,

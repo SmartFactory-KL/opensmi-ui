@@ -26,6 +26,7 @@ def create_opc_model_api(
         try:
             await opc_model.browse_model()
             await opc_model.attach_subscriptions(opc_subscriber=opc_subscriber)
+            await opc_model.attach_values()
         except OPCSessionNotReadyError:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,

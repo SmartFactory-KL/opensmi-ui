@@ -107,22 +107,41 @@ class SocketClient {
   }
 
   handleMessage(evt: MessageEvent) {
-    const data = JSON.parse(evt.data);
+    const msg = JSON.parse(evt.data);
 
-    if ("channel" in data) {
-      if (data["channel"] == "batch") {
-        this.messageCount += data["data"].length ?? 1;
-      } else {
-        this.messageCount++;
+    if (!("channel" in msg)) {
+      return;
+    }
+
+    // re-call handleMessage for Batches
+    if (msg["channel"] == "batch") {
+      if (!Array.isArray(msg["data"])) {
+        return;
       }
 
-      const handlerList = this.channelHandlerMap.get(data.channel) || [];
-      for (const handler of handlerList) {
-        if (handler) {
-          handler.call(null, data.data);
+      for (const batch_msg of msg["data"]) {
+        this.handleJSONMessage(batch_msg);
+      }
+      return;
+    }
+
+    this.handleJSONMessage(msg);
+  }
+
+  handleJSONMessage(msg: SocketMessage) {
+    const handlerList = this.channelHandlerMap.get(msg.channel) || [];
+
+    for (const handler of handlerList) {
+      if (handler) {
+        try {
+          handler.call(null, msg.data);
+        } catch (e) {
+          console.error(e);
         }
       }
     }
+
+    this.messageCount++;
   }
 
   addChannelListener(channel: string, handler: TopicMessageHandler) {
@@ -138,7 +157,7 @@ class SocketClient {
   }
 
   addMessageCountListener(handler: MessageCountHandler) {
-    this.messageCountHandler.push(handler)
+    this.messageCountHandler.push(handler);
   }
 }
 

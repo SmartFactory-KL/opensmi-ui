@@ -1,6 +1,6 @@
 from abc import abstractmethod
 
-from opensmi_ui.model.common import JsonOutModel
+from opensmi_ui.model.json import JsonOutModel
 from opensmi_ui.opc_model.opc_node import OPCNode
 
 

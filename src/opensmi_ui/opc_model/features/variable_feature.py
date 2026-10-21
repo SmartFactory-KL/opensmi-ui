@@ -1,8 +1,13 @@
+from typing import Any
+from uuid import UUID
+
 from asyncua import ua
 from asyncua.common.node import Node
 from asyncua.common.subscription import DataChangeEvent
 
+from opensmi_ui.event.bus import EventBus
 from opensmi_ui.logger import get_module_logger
+from opensmi_ui.model.json import JsonOutModel
 from opensmi_ui.opc_model.entities.variable_entity import VariableEntity
 from opensmi_ui.opc_model.model_node import (
     ComponentNode,
@@ -12,6 +17,8 @@ from opensmi_ui.opc_model.model_node import (
     FeatureNode,
     FeatureSubscribeDataRequest,
     FeatureSubscribeRequest,
+    FeatureValueReadRequest,
+    FeatureValueReadResult,
 )
 from opensmi_ui.opc_model.opc_node import OPCNode
 from opensmi_ui.opc_model.opc_types import VariantData
@@ -43,6 +50,11 @@ ATTRIBUTES_TO_READ = [
     ua.attribute_ids.AttributeIds.AccessRestrictions,
     ua.attribute_ids.AttributeIds.EventNotifier,
 ]
+
+
+class VariableValueUpdate(JsonOutModel):
+    entity_id: UUID
+    new_value: Any
 
 
 class VariableFeatureNode(FeatureNode):
@@ -169,7 +181,9 @@ class VariableFeatureNode(FeatureNode):
             case _:
                 return None
 
-    def subscribe(self) -> FeatureSubscribeRequest | None:
+    def request_subscription(
+        self, event_bus: EventBus
+    ) -> FeatureSubscribeRequest | None:
         req = FeatureSubscribeRequest(subscriptions=[])
 
         req.subscriptions.append(
@@ -180,7 +194,40 @@ class VariableFeatureNode(FeatureNode):
             )
         )
 
+        self.event_bus = event_bus
+
         return req
+
+    def request_value(self) -> FeatureValueReadRequest | None:
+        req = FeatureValueReadRequest(read_requests=[], feature=self)
+
+        req.read_requests.append(
+            ua.ReadValueId(
+                NodeId=self.opc_node.node_id,
+                AttributeId=ua.attribute_ids.AttributeIds.Value,
+            )
+        )
+
+        return req
+
+    def handle_value_result(self, result: FeatureValueReadResult) -> None:
+        if len(result.read_results) != 1:
+            return
+
+        first_result = result.read_results[0]
+
+        if first_result.StatusCode is None or first_result.StatusCode.is_bad():
+            return
+
+        val_attr = self.opc_node.attributes.get("Value", None)
+
+        if val_attr is None:
+            return
+
+        if first_result.Value is None:
+            return
+
+        self.opc_node.attributes["Value"] = first_result.Value.Value
 
     def on_value_update(self, node: Node, evt: DataChangeEvent):
         # TODO: I think I need a more generic "apply_update" method that could take some sort
@@ -191,4 +238,16 @@ class VariableFeatureNode(FeatureNode):
         if not isinstance(self.entity, VariableEntity):
             return
 
-        self.entity.update_value(VariantData.from_ua(evt.data.monitored_item.Value.Value))
+        self.opc_node.attributes["Value"] = evt.data.monitored_item.Value.Value
+
+        self.entity.update_value(
+            VariantData.from_ua(evt.data.monitored_item.Value.Value)
+        )
+
+        if self.event_bus is not None:
+            self.event_bus.publish(
+                VariableValueUpdate(
+                    entity_id=self.entity_id,
+                    new_value=VariantData.from_ua(evt.data.monitored_item.Value.Value),
+                )
+            )

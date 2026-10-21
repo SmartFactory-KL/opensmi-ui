@@ -1,21 +1,20 @@
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from typing import Protocol, TypeGuard
+from uuid import UUID
 
 from asyncua.client.ua_client import UaClientState
-from asyncua.ua import Variant
-from opensmi.client import (
-    BaseRemoteComponent,
-    NotificationEvent,
-    RemoteLock,
-    RemoteSkill,
-    RemoteUser,
-    RemoteVariable,
-)
-from opensmi.core import SkillState
+from pydantic import BaseModel
 
 from opensmi_ui.logger import get_module_logger
 from opensmi_ui.messages.funnel import MessageFunnel
-from opensmi_ui.model.common import GenericUpdateEntityType, GenericUpdateMessage
+from opensmi_ui.messages.types import (
+    Channel,
+    ChanneledMessage,
+    ModelUpdateMessage,
+    SimpleUpdateMessage,
+)
+from opensmi_ui.model.json import JsonBaseModel, JsonOutModel
 
 logger = get_module_logger("messages.receiver")
 
@@ -30,61 +29,53 @@ class ServerTimeUpdate:
     new_time: str
 
 
+class HasEntityId(Protocol):
+    entity_id: UUID
+
+
+def has_entity_id(
+    model: BaseModel,
+) -> TypeGuard[HasEntityId]:
+    return "entity_id" in type(model).model_fields
+
+
 class MessageReceiver:
     def __init__(self, funnel: MessageFunnel):
         self.funnel = funnel
 
     # server channel
     def receive_server_state(self, new_state: UaClientState) -> None:
-        msg = GenericUpdateMessage[ServerStateUpdate](
-            entity_id=None,
-            entity_type=GenericUpdateEntityType.Server,
-            update_content=ServerStateUpdate(new_state=str(new_state.value)),
+        msg = ChanneledMessage(
+            channel=Channel.SERVER,
+            data=SimpleUpdateMessage[ServerStateUpdate](
+                update_content=ServerStateUpdate(new_state=str(new_state.value))
+            ),
         )
 
         self.funnel.send_direct_message(msg)
 
     def receive_server_time(self, new_time: datetime) -> None:
-        msg = GenericUpdateMessage[ServerTimeUpdate](
-            entity_id=None,
-            entity_type=GenericUpdateEntityType.Server,
-            update_content=ServerTimeUpdate(new_time=new_time.astimezone(UTC).isoformat()),
+        msg = ChanneledMessage(
+            channel=Channel.SERVER,
+            data=SimpleUpdateMessage[ServerTimeUpdate](
+                update_content=ServerTimeUpdate(
+                    new_time=new_time.astimezone(UTC).isoformat()
+                ),
+            ),
         )
 
         self.funnel.send_direct_message(msg)
 
-    # model channel
-    async def receive_component_state(
-        self, component: BaseRemoteComponent, new_state: str
-    ) -> None:
-        logger.info(new_state)
+    def receive_event_bus_update(self, update: JsonBaseModel | JsonOutModel):
+        if not has_entity_id(update):
+            return
 
-    async def receive_component_notification(
-        self, component: BaseRemoteComponent, notification: NotificationEvent
-    ) -> None:
-        logger.info(notification)
+        msg = ChanneledMessage(
+            channel=Channel.MODEL,
+            data=ModelUpdateMessage[type(update)](
+                entity_id=update.entity_id,
+                update_content=update,
+            ),
+        )
 
-    async def receive_skill_state(
-        self, skill: RemoteSkill, new_state: SkillState
-    ) -> None:
-        logger.info(new_state)
-
-    async def receive_lock_changed(self, lock: RemoteLock, new_is_locked: bool) -> None:
-        logger.info(new_is_locked)
-        logger.info(lock.parent.name)
-
-    async def receive_lock_user_changed(
-        self, lock: RemoteLock, new_username: str
-    ) -> None:
-        logger.info(new_username)
-
-    async def receive_user_presence_changed(
-        self, user: RemoteUser, new_user_presence: bool
-    ) -> None:
-        logger.info(new_user_presence)
-
-    async def receive_value_changed(
-        self, variable: RemoteVariable, new_value: Variant
-    ) -> None:
-        pass
-        # logger.info(new_value)
+        self.funnel.queue_message(msg)

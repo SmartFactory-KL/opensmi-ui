@@ -3,8 +3,7 @@ import time
 
 from opensmi_ui.logger import get_module_logger
 from opensmi_ui.messages.broadcast import MessageBroadcaster
-from opensmi_ui.messages.model import WebSocketMessage
-from opensmi_ui.model.common import GenericUpdateMessage
+from opensmi_ui.messages.types import ChanneledMessage, WebSocketMessage
 
 MESSAGE_FUNNEL_BATCH_DELAY_SECONDS = 0.05
 
@@ -26,7 +25,7 @@ class MessageFunnel:
         self._batching_watchdog_task: asyncio.Task
         self._degraded_watchdog_count: int = 0
 
-    def send_direct_message(self, message: GenericUpdateMessage):
+    def send_direct_message(self, message: ChanneledMessage):
         """
         Directly send a message to all clients without batching.
         Only use this for critical messages like connection state
@@ -34,7 +33,7 @@ class MessageFunnel:
         """
         asyncio.create_task(
             self.broadcaster.broadcast(
-                WebSocketMessage(channel=message.entity_type, data=message)
+                WebSocketMessage(channel=message.channel, data=message.data)
             )
         )
 
@@ -47,7 +46,7 @@ class MessageFunnel:
             self.broadcaster.broadcast(WebSocketMessage(channel="refresh", data=None))
         )
 
-    def queue_message(self, message: GenericUpdateMessage):
+    def queue_message(self, message: ChanneledMessage):
         """
         Append message to the current queue for the next batch
         """
@@ -55,7 +54,9 @@ class MessageFunnel:
             logger.debug("MessageFunnel: received message on inactive batching task!")
             return
 
-        web_socket_message = WebSocketMessage(channel=message.entity_type, data=message)
+        web_socket_message = WebSocketMessage(
+            channel=message.channel, data=message.data
+        )
         self._receiving_buffer.append(web_socket_message)
 
     async def flush_messages(self):

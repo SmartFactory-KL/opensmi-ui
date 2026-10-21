@@ -53,6 +53,10 @@ class VariableContainerFeatureNode(FeatureNode):
 
             # only use for components, ignore properties here for now
             if not ref or ref.Identifier != ua.object_ids.ObjectIds.HasComponent:
+                if ref is not None:
+                    logger.info(
+                        f"Found Node without HasComponent: Ref Type is {ua.object_ids.ObjectIdNames.get(ref.Identifier, 'unknown')} for NodeId {next_item.opc_node.node_id.NamespaceIndex} : {next_item.opc_node.node_id.Identifier}"
+                    )
                 continue
 
             variable_feature = VariableFeatureNode(

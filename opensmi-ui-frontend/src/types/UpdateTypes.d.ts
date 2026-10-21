@@ -9,43 +9,19 @@ type OPCClientState =
   | "reconnecting"
   | "disconnecting";
 
-export type ServerStateUpdateMessage = GenericUpdateMessage<OPCClientState>;
-export type ServerTimeUpdateMessage = GenericUpdateMessage<string>;
+// SERVER
 
-// Machine Stuff
-export interface MachineStateUpdate {
-  newState: string;
+export interface ServerStateUpdate {
+  newState: OPCClientState;
 }
 
-export interface MachineNewMessageUpdate {
-  severity: number;
-  code: string;
-  text: string;
+export interface ServerTimeUpdate {
+  newTime: string;
 }
 
-export interface MachineLockStateUpdate {
-  isLocked: boolean;
-}
+// MODEL
 
-export interface MachineLockUserUpdate {
-  newLockingUser: string;
+export interface VariableValueUpdate {
+  entityId: string;
+  newValue: any;
 }
-
-// Component Stuff
-export interface ComponentStateUpdate {
-  newState: string;
-}
-
-export interface ComponentNewMessageUpdate {
-  severity: number;
-  code: string;
-  text: string;
-}
-
-// Skill Stuff
-export interface SkillStateUpdate {
-  newState: string;
-}
-
-// Variable Stuff
-export interface VariableDataValueUpdate extends SimpleDataValueDto {}

@@ -111,6 +111,10 @@ class Composer:
             opc_browser = OPCBrowser(opc_session=opc_session)
             opc_model = OPCModel(opc_browser=opc_browser)
 
+            opc_model.event_bus.subscribe(
+                "msg_receiver", msg_receiver.receive_event_bus_update
+            )
+
             # opc model api
             opc_model_api = create_opc_model_api(
                 opc_model=opc_model, opc_subscriber=opc_subscriber

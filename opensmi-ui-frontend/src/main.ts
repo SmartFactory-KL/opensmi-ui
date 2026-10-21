@@ -9,8 +9,8 @@ import SocketClient from "./socket/SocketClient";
 import { usePageStore } from "./stores/PageStore";
 import { usePinGuardStore } from "./stores/PinGuardStore";
 import { useServerStore } from "./stores/ServerSessionStore";
-import { useToasterStore } from "./stores/ToasterStore";
 import Toaster from "./toast/Toaster";
+import { useModelStore } from "./stores/ModelStore";
 
 const app = createApp(App);
 
@@ -18,7 +18,7 @@ app.use(createPinia());
 app.use(router);
 
 async function compose() {
-  Toaster.attachStore()
+  Toaster.attachStore();
   Toaster.addMessage("info", "Hello World");
 
   const pageStore = usePageStore();
@@ -35,6 +35,9 @@ async function compose() {
 
   const serverStore = useServerStore();
   serverStore.attachToSocketClient(socketClient);
+
+  const modelStore = useModelStore();
+  modelStore.attachToSocketClient(socketClient);
 
   pageStore.writeDefaultsToServerStore(serverStore);
 

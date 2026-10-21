@@ -15,7 +15,7 @@ from asyncua.ua import Int16
 from asyncua.ua.uaerrors import BadNodeIdUnknown
 
 from opensmi_ui.logger import get_module_logger
-from opensmi_ui.model.common import JsonBaseModel, JsonOutModel
+from opensmi_ui.model.json import JsonBaseModel, JsonOutModel
 from opensmi_ui.opc_session.task import StoppableTask, wait_or_stop
 
 logger = get_module_logger("opc_session")

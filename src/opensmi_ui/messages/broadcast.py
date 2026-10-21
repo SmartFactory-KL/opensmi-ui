@@ -1,7 +1,7 @@
 from fastapi import WebSocket
 
 from opensmi_ui.logger import get_module_logger
-from opensmi_ui.messages.model import WebSocketMessage, WebSocketMessageBatch
+from opensmi_ui.messages.types import WebSocketMessage, WebSocketMessageBatch
 
 logger = get_module_logger("messages.broadcaster")
 
@@ -43,7 +43,7 @@ class MessageBroadcaster:
         try:
             payload = message.model_dump_json(by_alias=True)
             await self._broadcast_payload(payload)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 # unknown exceptions in broadcast and model_dump
             logger.warning(f"Failed to broadcast: {e}")
 
     async def broadcast_batch(self, message_batch: list[WebSocketMessage]):

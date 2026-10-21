@@ -23,8 +23,8 @@ from opensmi_ui.opc_session.task import StoppableTask, wait_or_stop
 logger = get_module_logger("opc_subscriber")
 
 
-DEFAULT_SUBSCRIPTION_PERIOD_MS = 100
-SUBSCRIPTION_ADD_CHUNK_SIZE = 50
+DEFAULT_SUBSCRIPTION_PERIOD_MS = 200
+SUBSCRIPTION_ADD_CHUNK_SIZE = 200
 
 
 @dataclass
@@ -114,7 +114,6 @@ class OPCSubscriber:
                             result,
                         )
                     else:
-                        logger.info(result)
                         self.data_handlers[req.node_id] = req.handler
 
             # events do not seem to be batchable at this time without going to monitored items

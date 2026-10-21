@@ -169,7 +169,7 @@ class OPCBrowser:
 
         return root_nodes
 
-    async def _read_all_in_chunks(
+    async def read_all_in_chunks(
         self, reading_requests: list[ua.ReadValueId]
     ) -> list[ua.DataValue]:
         logger.info(f"Reading {len(reading_requests)} elements")
@@ -290,7 +290,7 @@ class OPCBrowser:
 
             # handle the reads and match them to their request
             reading_requests = aggregate_reading_requests(init_requests)
-            reading_results = await self._read_all_in_chunks(
+            reading_results = await self.read_all_in_chunks(
                 reading_requests=reading_requests
             )
             result_idx = 0

@@ -54,9 +54,9 @@ class LockFeatureNode(FeatureNode):
                                 )
                             )
                         case _:
-                            logger.info(
-                                f"skipped lock node: {child_node.browse_name.Name}"
-                            )
+                            # logger.info(
+                            #     f"skipped lock node: {child_node.browse_name.Name}"
+                            # )
                             continue
 
                 self._init_step += 1
