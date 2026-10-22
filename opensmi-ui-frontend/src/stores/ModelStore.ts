@@ -5,6 +5,8 @@ import type { LockEntityData, VariableEntityData } from "@/types/EntityTypes";
 import type { ComponentNode, FeatureNode } from "@/types/NodeFeatureTypes";
 import type {
   LockIsLockedUpdate,
+  LockLockingClientUpdate,
+  LockLockingUserUpdate,
   VariableValueUpdate,
 } from "@/types/UpdateTypes";
 import { defineStore } from "pinia";
@@ -206,19 +208,43 @@ export const useModelStore = defineStore("model", {
       }
 
       switch (update.updateType) {
-        case "VariableValueUpdate": {
-          const typedUpdate = update.updateContent as VariableValueUpdate;
-          const typedEntity = targetFeature.entity as VariableEntityData;
-          typedEntity.value = typedUpdate.newValue;
-        }
+        case "VariableValueUpdate":
+          {
+            const typedUpdate = update.updateContent as VariableValueUpdate;
+            const typedEntity = targetFeature.entity as VariableEntityData;
+            typedEntity.value = typedUpdate.newValue;
+          }
+          break;
 
-        case "LockIsLockedUpdate": {
-          const typedUpdate = update.updateContent as LockIsLockedUpdate;
-          const typedEntity = targetFeature.entity as LockEntityData;
+        case "LockIsLockedUpdate":
+          {
+            const typedUpdate = update.updateContent as LockIsLockedUpdate;
+            const typedEntity = targetFeature.entity as LockEntityData;
 
-          typedEntity.isLocked = typedUpdate.newIsLocked;
-          typedEntity.isLockedLastChange = typedUpdate.timestamp;
-        }
+            typedEntity.isLocked = typedUpdate.newIsLocked;
+            typedEntity.isLockedLastChange = typedUpdate.timestamp;
+          }
+          break;
+
+        case "LockLockingUserUpdate":
+          {
+            const typedUpdate = update.updateContent as LockLockingUserUpdate;
+            const typedEntity = targetFeature.entity as LockEntityData;
+
+            typedEntity.lockingUser = typedUpdate.newUser;
+            typedEntity.lockingUserLastChange = typedUpdate.timestamp;
+          }
+          break;
+
+        case "LockLockingClientUpdate":
+          {
+            const typedUpdate = update.updateContent as LockLockingClientUpdate;
+            const typedEntity = targetFeature.entity as LockEntityData;
+
+            typedEntity.lockingClient = typedUpdate.newClient;
+            typedEntity.lockingClientLastChange = typedUpdate.timestamp;
+          }
+          break;
 
         default:
           console.warn("unknown updateType", update.updateType);

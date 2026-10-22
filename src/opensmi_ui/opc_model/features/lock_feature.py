@@ -1,4 +1,3 @@
-import asyncio
 from collections.abc import Callable
 from datetime import datetime
 from enum import StrEnum
@@ -7,7 +6,6 @@ from typing import Any
 from asyncua import ua
 from asyncua.common.node import Node
 from asyncua.common.subscription import DataChangeEvent
-from pydantic import BaseModel
 
 from opensmi_ui.event.bus import EventBus
 from opensmi_ui.logger import get_module_logger
@@ -144,17 +142,36 @@ class LockFeatureNode(FeatureNode):
     def request_subscription(
         self, event_bus: EventBus
     ) -> FeatureSubscribeRequest | None:
+        self.event_bus = event_bus
+
         req = FeatureSubscribeRequest(subscriptions=[])
 
         try:
-            locked_node = self.opc_node.get_first_child_node_for_name("Locked")
-            req.subscriptions.append(
-                FeatureSubscribeDataRequest(
-                    attr=ua.attribute_ids.AttributeIds.Value,
-                    handler=self.on_locked_update,
-                    node_id=locked_node.node_id,
+            # locked_node = self.opc_node.get_first_child_node_for_name("Locked")
+            items_to_sub_to = [
+                (
+                    self.opc_node.get_first_child_node_for_name("Locked"),
+                    self.on_locked_update,
+                ),
+                (
+                    self.opc_node.get_first_child_node_for_name("LockingUser"),
+                    self.on_locking_user_update,
+                ),
+                (
+                    self.opc_node.get_first_child_node_for_name("LockingClient"),
+                    self.on_locking_client_update,
+                ),
+            ]
+
+            for item in items_to_sub_to:
+                req.subscriptions.append(
+                    FeatureSubscribeDataRequest(
+                        attr=ua.attribute_ids.AttributeIds.Value,
+                        handler=item[1],
+                        node_id=item[0].node_id,
+                    )
                 )
-            )
+
         except KeyError:
             logger.warning(
                 "Failed to subscribe to Locked since no Locked node was present"
@@ -188,6 +205,8 @@ class LockFeatureNode(FeatureNode):
 
             self.entity.apply_update(update)
             if self.event_bus is not None:
+                logger.info("publishing update about lock")
+                logger.info(update)
                 self.event_bus.publish(update)
 
         except Exception:

@@ -32,6 +32,18 @@ export interface LockIsLockedUpdate {
   newIsLocked: boolean;
 }
 
+export interface LockLockingUserUpdate {
+  entityId: string;
+  timestamp: string;
+  newUser: string;
+}
+
+export interface LockLockingClientUpdate {
+  entityId: string;
+  timestamp: string;
+  newClient: string;
+}
+
 // ACTIONS
 export interface GenericAction {
   entityId: string;
@@ -40,5 +52,5 @@ export interface GenericAction {
 }
 
 export interface LockAction {
-  requestedAction: "InitLock" | "BreakLock" | "ExitLock"
+  requestedAction: "InitLock" | "BreakLock" | "ExitLock";
 }
