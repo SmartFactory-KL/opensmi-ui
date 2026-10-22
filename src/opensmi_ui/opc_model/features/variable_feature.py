@@ -7,7 +7,7 @@ from asyncua.common.subscription import DataChangeEvent
 
 from opensmi_ui.event.bus import EventBus
 from opensmi_ui.logger import get_module_logger
-from opensmi_ui.model.json import JsonOutModel
+from opensmi_ui.model.json import JsonInModel, JsonOutModel
 from opensmi_ui.opc_model.entities.variable_entity import VariableEntity
 from opensmi_ui.opc_model.model_node import (
     ComponentNode,
@@ -60,6 +60,8 @@ class VariableValueUpdate(JsonOutModel):
     entity_id: UUID
     new_value: Any
 
+class VariableSetValueAction(JsonInModel):
+    new_value: Any
 
 class VariableFeatureNode(FeatureNode):
     _init_step: int

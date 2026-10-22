@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Response
 from starlette import status
 
 from opensmi_ui.logger import get_module_logger
+from opensmi_ui.model.action import GenericAction
 from opensmi_ui.opc_model.opc_model import OPCModel
 from opensmi_ui.opc_session.session import OPCSessionNotReadyError
 from opensmi_ui.opc_subscriber.subscriber import OPCSubscriber
@@ -35,6 +36,27 @@ def create_opc_model_api(
             )
         except Exception:
             raise
+
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+    @router.post(
+        "/action",
+        summary="Request to use an action",
+    )
+    async def request_action(action: GenericAction):
+        try:
+            await opc_model.proxy_action(action)
+        except KeyError as e:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Failed to locate target feature: {e!s}",
+            )
+        except Exception as e:  # used to capture all ua exceptions out there
+            logger.exception("Failed to apply action")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to apply action: {e!s}",
+            )
 
         return Response(status_code=status.HTTP_204_NO_CONTENT)
 

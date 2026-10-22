@@ -31,3 +31,14 @@ export interface LockIsLockedUpdate {
   timestamp: string;
   newIsLocked: boolean;
 }
+
+// ACTIONS
+export interface GenericAction {
+  entityId: string;
+  action: any;
+  actionType: string;
+}
+
+export interface LockAction {
+  requestedAction: "InitLock" | "BreakLock" | "ExitLock"
+}

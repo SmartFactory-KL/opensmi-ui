@@ -1,9 +1,11 @@
 from time import perf_counter
+from uuid import UUID
 
 from asyncua import ua
 
 from opensmi_ui.event.bus import EventBus
 from opensmi_ui.logger import get_module_logger
+from opensmi_ui.model.action import GenericAction
 from opensmi_ui.opc_model.browser import OPCBrowser
 from opensmi_ui.opc_model.model_node import (
     ComponentNode,
@@ -33,6 +35,7 @@ class OPCModel:
     event_bus: EventBus
 
     root_component_nodes: list[ComponentNode]
+    entity_id_feature_map: dict[UUID, FeatureNode]
 
     def __init__(self, opc_browser: OPCBrowser):
         self.opc_browser = opc_browser
@@ -40,10 +43,21 @@ class OPCModel:
             data_change_handles=[], event_handles=[]
         )
         self.event_bus = EventBus()
+
         self.root_component_nodes = []
+        self.entity_id_feature_map = {}
 
     async def browse_model(self):
+        self.entity_id_feature_map.clear()
+
         result = await self.opc_browser.read_model()
+
+        def add_entity_ref(feature: FeatureNode, component: ComponentNode):
+            self.entity_id_feature_map[feature.entity_id] = feature
+
+        for root_component_node in result:
+            visit_tree_features(root_component_node, add_entity_ref)
+
         self.root_component_nodes = result
 
     async def discard_old_subscriptions(self, opc_subscriber: OPCSubscriber):
@@ -138,6 +152,15 @@ class OPCModel:
 
         val_read_duration = perf_counter() - val_read_start
         logger.info("Reading Values took %.6f seconds", val_read_duration)
+
+    async def proxy_action(self, action: GenericAction) -> None:
+        target_entity_id = action.entity_id
+
+        target_feature = self.entity_id_feature_map.get(target_entity_id, None)
+        if target_feature is None:
+            raise KeyError(f"No Feature found for entityId {target_entity_id}")
+
+        await target_feature.handle_action(action)
 
     def get_data(self):
         # convert to serializables

@@ -1,14 +1,18 @@
+import asyncio
+from collections.abc import Callable
 from datetime import datetime
-from typing import Any, Callable
-from uuid import UUID
+from enum import StrEnum
+from typing import Any
 
 from asyncua import ua
 from asyncua.common.node import Node
 from asyncua.common.subscription import DataChangeEvent
+from pydantic import BaseModel
 
 from opensmi_ui.event.bus import EventBus
 from opensmi_ui.logger import get_module_logger
-from opensmi_ui.model.json import JsonOutModel
+from opensmi_ui.model.action import GenericAction
+from opensmi_ui.model.json import JsonInModel, JsonOutModel
 from opensmi_ui.opc_model.entities.lock_entity import (
     LockEntity,
     LockIsLockedUpdate,
@@ -27,11 +31,20 @@ from opensmi_ui.opc_model.model_node import (
 from opensmi_ui.opc_model.opc_node import OPCNode
 from opensmi_ui.opc_model.opc_types import VariantData
 from opensmi_ui.opc_model.value_read import (
-    VariantNormalizationFailedError,
     normalize_to_variant,
 )
 
 logger = get_module_logger("opc_model.features.lock")
+
+
+class PossibleLockActions(StrEnum):
+    INIT_LOCK = "InitLock"
+    BREAK_LOCK = "BreakLock"
+    EXIT_LOCK = "ExitLock"
+
+
+class LockAction(JsonInModel):
+    requested_action: PossibleLockActions
 
 
 class LockFeatureInitData:
@@ -42,6 +55,8 @@ class LockFeatureNode(FeatureNode):
     _init_step: int
     _init_data: LockFeatureInitData
 
+    action_nodes: dict[str, OPCNode]
+
     def __init__(
         self,
         opc_node: OPCNode,
@@ -50,8 +65,15 @@ class LockFeatureNode(FeatureNode):
     ):
         super().__init__(opc_node, parent_component_node, parent_feature_node)
         self._init_step = 0
-        self._init_data = LockFeatureInitData()
         self.entity_type = "Lock"
+
+        self._init_data = LockFeatureInitData()
+
+        self.action_nodes = {}
+        for child_node in opc_node.children:
+            match child_node.browse_name.Name:
+                case "InitLock" | "BreakLock" | "ExitLock" | "RenewLock":
+                    self.action_nodes[child_node.browse_name.Name] = child_node
 
     def advance(
         self, last_result: FeatureInitResult | None
@@ -201,3 +223,24 @@ class LockFeatureNode(FeatureNode):
                 timestamp=str(timestamp),
             ),
         )
+
+    async def handle_action(self, action: GenericAction) -> None:
+        method_node_to_call: OPCNode | None = None
+        match action.action_type:
+            case "LockAction":
+                data = LockAction.model_validate(action.action)
+                method_node_to_call = self.action_nodes.get(
+                    data.requested_action.value, None
+                )
+            case _:
+                logger.warning(
+                    f"received unsupported Action of type {action.action_type} on LockFeature"
+                )
+                return
+
+        if method_node_to_call is None:
+            raise RuntimeError(
+                f"Cannot complete Action {action.action_type} because the desired Node is not present"
+            )
+
+        await self.opc_node.ua_node.call_method(methodid=method_node_to_call.node_id)

@@ -14,4 +14,10 @@ class FeatureNodeEntity:
 
     @abstractmethod
     def get_data(self) -> FeatureNodeEntityData:
+        """Returns the entity data in jsonizable format (hopefully)"""
         return FeatureNodeEntityData()
+
+    @abstractmethod
+    def apply_update(self, update: JsonOutModel):
+        """This method can be used to apply updates to the entity"""
+        ...

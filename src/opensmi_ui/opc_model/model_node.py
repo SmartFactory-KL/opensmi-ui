@@ -13,6 +13,7 @@ from asyncua.common.subscription import DataChangeEvent
 from asyncua.ua.attribute_ids import AttributeIds
 
 from opensmi_ui.event.bus import EventBus
+from opensmi_ui.model.action import GenericAction
 from opensmi_ui.model.json import JsonOutModel
 from opensmi_ui.opc_model.entities.component_entity import ComponentEntity
 from opensmi_ui.opc_model.entities.entity import FeatureNodeEntity
@@ -145,6 +146,11 @@ class FeatureNode:
     @abstractmethod
     def handle_value_result(self, result: FeatureValueReadResult) -> None:
         """handle_value_result() is called to return the values requested by request_value()"""
+        ...
+
+    @abstractmethod
+    async def handle_action(self, action: GenericAction) -> None:
+        """handle_action() is called whenever any action has been received for the entityId of this feature"""
         ...
 
     def get_data(self) -> FeatureNodeData:

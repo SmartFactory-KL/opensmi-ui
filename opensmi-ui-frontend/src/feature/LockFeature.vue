@@ -10,6 +10,9 @@ import {
     Monitor,
     ShieldCheck,
 } from "@lucide/vue";
+import type { GenericAction, LockAction } from "@/types/UpdateTypes";
+import { simplyPostToText } from "@/fetch/simplyFetch";
+import IconButton from "@/components/IconButton.vue";
 
 const props = defineProps<{
     feature: FeatureNode;
@@ -24,6 +27,50 @@ const lockingUser = computed(() => entity.value.lockingUser?.trim() || null);
 const lockingClient = computed(
     () => entity.value.lockingClient?.trim() || null,
 );
+
+function requestInitLock() {
+    const action = {
+        entityId: props.feature.entityId,
+        actionType: "LockAction",
+        action: {
+            requestedAction: "InitLock",
+        } as LockAction,
+    };
+
+    requestAction(action);
+}
+
+function requestBreakLock() {
+    const action = {
+        entityId: props.feature.entityId,
+        actionType: "LockAction",
+        action: {
+            requestedAction: "BreakLock",
+        } as LockAction,
+    };
+
+    requestAction(action);
+}
+
+function requestExitLock() {
+    const action = {
+        entityId: props.feature.entityId,
+        actionType: "LockAction",
+        action: {
+            requestedAction: "ExitLock",
+        } as LockAction,
+    };
+
+    requestAction(action);
+}
+
+async function requestAction(action: GenericAction) {
+    try {
+        await simplyPostToText("/api/opc-model/action", action);
+    } catch (e) {
+        console.error(e);
+    }
+}
 </script>
 
 <template>
@@ -53,6 +100,12 @@ const lockingClient = computed(
                 <h3 class="truncate text-sm font-semibold tracking-tight">
                     {{ feature.entityType }}
                 </h3>
+            </div>
+
+            <div class="min-w-0 flex-1">
+                <IconButton @click="requestInitLock">Init Lock</IconButton>
+                <IconButton @click="requestBreakLock">Break Lock</IconButton>
+                <IconButton @click="requestExitLock">Exit Lock</IconButton>
             </div>
 
             <span
@@ -88,7 +141,9 @@ const lockingClient = computed(
                     >
                         {{ lockingUser || "-" }}
                     </p>
-                    <span class="text-xs text-stone-500"> since {{ entity.lockingUserLastChange }} </span>
+                    <span class="text-xs text-stone-500">
+                        since {{ entity.lockingUserLastChange }}
+                    </span>
                 </div>
             </div>
 
@@ -107,7 +162,9 @@ const lockingClient = computed(
                     >
                         {{ lockingClient || "-" }}
                     </p>
-                    <span class="text-xs text-stone-500"> since {{ entity.lockingClientLastChange }} </span>
+                    <span class="text-xs text-stone-500">
+                        since {{ entity.lockingClientLastChange }}
+                    </span>
                 </div>
             </div>
         </div>
