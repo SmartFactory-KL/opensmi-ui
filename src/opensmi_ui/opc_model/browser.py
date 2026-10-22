@@ -17,7 +17,6 @@ from opensmi_ui.opc_model.model_node import (
     FeatureInitRequest,
     FeatureInitResult,
     FeatureNode,
-    print_component_trees,
     visit_tree_features,
 )
 from opensmi_ui.opc_model.opc_node import OPCNode
@@ -120,7 +119,7 @@ class OPCBrowser:
             ]
 
             # send the actual request in batches of n to prevent running into operation limit
-            results = await self._browse_all_in_chunks(
+            results = await self.browse_requests_in_chunks(
                 browse_descriptions=browse_descriptions
             )
 
@@ -169,7 +168,7 @@ class OPCBrowser:
 
         return root_nodes
 
-    async def read_all_in_chunks(
+    async def read_requests_in_chunks(
         self, reading_requests: list[ua.ReadValueId]
     ) -> list[ua.DataValue]:
         logger.info(f"Reading {len(reading_requests)} elements")
@@ -201,7 +200,7 @@ class OPCBrowser:
 
         return results
 
-    async def _browse_all_in_chunks(
+    async def browse_requests_in_chunks(
         self, browse_descriptions: list[ua.BrowseDescription]
     ) -> list[ua.BrowseResult]:
         logger.info(f"Browsing {len(browse_descriptions)} elements")
@@ -255,7 +254,7 @@ class OPCBrowser:
         tree_convert_duration = perf_counter() - tree_convert_start
         logger.info("Tree Conversion took %.6f seconds", tree_convert_duration)
 
-        print_component_trees(component_trees)
+        # print_component_trees(component_trees)
 
         # create features for nodes
         feature_create_start = perf_counter()
@@ -290,7 +289,7 @@ class OPCBrowser:
 
             # handle the reads and match them to their request
             reading_requests = aggregate_reading_requests(init_requests)
-            reading_results = await self.read_all_in_chunks(
+            reading_results = await self.read_requests_in_chunks(
                 reading_requests=reading_requests
             )
             result_idx = 0
@@ -309,7 +308,7 @@ class OPCBrowser:
 
             # handle the browses and match them to their request
             browsing_requests = aggregate_browsing_requests(init_requests)
-            browsing_results = await self._browse_all_in_chunks(
+            browsing_results = await self.browse_requests_in_chunks(
                 browse_descriptions=browsing_requests
             )
             result_idx = 0

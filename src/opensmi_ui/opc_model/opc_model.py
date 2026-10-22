@@ -20,6 +20,7 @@ from opensmi_ui.opc_subscriber.subscriber import (
     OPCSubscriber,
     SubscribeDataRequest,
     SubscribeEventRequest,
+    SubscriptionHandles,
 )
 
 logger = get_module_logger("opc_model.model")
@@ -28,18 +29,39 @@ logger = get_module_logger("opc_model.model")
 class OPCModel:
     opc_browser: OPCBrowser
 
+    last_subscription_handles: SubscriptionHandles
     event_bus: EventBus
 
     root_component_nodes: list[ComponentNode]
 
     def __init__(self, opc_browser: OPCBrowser):
         self.opc_browser = opc_browser
+        self.last_subscription_handles = SubscriptionHandles(
+            data_change_handles=[], event_handles=[]
+        )
         self.event_bus = EventBus()
         self.root_component_nodes = []
 
     async def browse_model(self):
         result = await self.opc_browser.read_model()
         self.root_component_nodes = result
+
+    async def discard_old_subscriptions(self, opc_subscriber: OPCSubscriber):
+        if len(self.last_subscription_handles.data_change_handles) > 0 or (
+            len(self.last_subscription_handles.event_handles) > 0
+        ):
+            logger.info(
+                "Clearing old subscriptions: %d data_change and %d events",
+                len(self.last_subscription_handles.data_change_handles),
+                len(self.last_subscription_handles.event_handles),
+            )
+            try:
+                await opc_subscriber.clear_subscription_handles(
+                    self.last_subscription_handles
+                )
+                logger.info("Clearing old subscriptions finished")
+            except RuntimeError as e:
+                logger.warning("Failed to clear old subscriptions: %s", str(e))
 
     async def attach_subscriptions(self, opc_subscriber: OPCSubscriber):
         # create subscriptions
@@ -75,7 +97,8 @@ class OPCModel:
                 else:
                     continue
 
-        await opc_subscriber.add_subscription_batch(subs_to_create)
+        result_handles = await opc_subscriber.add_subscription_batch(subs_to_create)
+        self.last_subscription_handles = result_handles
 
         sub_init_duration = perf_counter() - sub_init_start
         logger.info("Subscription Requesting took %.6f seconds", sub_init_duration)
@@ -97,7 +120,7 @@ class OPCModel:
         for feat_read_request in feat_val_read_requests:
             read_value_list.extend(feat_read_request.read_requests)
 
-        reading_results = await self.opc_browser.read_all_in_chunks(
+        reading_results = await self.opc_browser.read_requests_in_chunks(
             reading_requests=read_value_list
         )
 

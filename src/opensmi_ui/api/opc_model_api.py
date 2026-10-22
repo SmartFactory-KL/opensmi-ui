@@ -24,6 +24,7 @@ def create_opc_model_api(
     @router.get("/browse", summary="Request to (re-)browse the server")
     async def request_browse():
         try:
+            await opc_model.discard_old_subscriptions(opc_subscriber=opc_subscriber)
             await opc_model.browse_model()
             await opc_model.attach_subscriptions(opc_subscriber=opc_subscriber)
             await opc_model.attach_values()

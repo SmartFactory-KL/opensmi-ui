@@ -25,6 +25,7 @@ logger = get_module_logger("opc_subscriber")
 
 DEFAULT_SUBSCRIPTION_PERIOD_MS = 200
 SUBSCRIPTION_ADD_CHUNK_SIZE = 200
+SUBSCRIPTION_REMOVE_CHUNK_SIZE = 200
 
 
 @dataclass
@@ -38,6 +39,12 @@ class SubscribeDataRequest:
 class SubscribeEventRequest:
     node_id: NodeId
     handler: Callable[[Event], None]
+
+
+@dataclass
+class SubscriptionHandles:
+    data_change_handles: list
+    event_handles: list
 
 
 class OPCSubscriber:
@@ -66,12 +73,14 @@ class OPCSubscriber:
     async def add_subscription_batch(
         self,
         subscription_request_list: list[SubscribeDataRequest | SubscribeEventRequest],
-    ):
+    ) -> SubscriptionHandles:
         if self.subscription is None:
             raise RuntimeError("Cannot add subscriptions to a non-ready subscription")
 
         if not self.opc_session.is_connected():
             raise RuntimeError("Cannot add subscriptions to a non-connected session")
+
+        handles = SubscriptionHandles(data_change_handles=[], event_handles=[])
 
         logger.info("Requesting %d Subscriptions", len(subscription_request_list))
         total = len(subscription_request_list)
@@ -114,14 +123,17 @@ class OPCSubscriber:
                             result,
                         )
                     else:
+                        # only keep track of subscriptions that actually worked
+                        handles.data_change_handles.append(result)
                         self.data_handlers[req.node_id] = req.handler
 
             # events do not seem to be batchable at this time without going to monitored items
             for req in event_requests:
                 try:
-                    await self.subscription.subscribe_events(
+                    evt_handle = await self.subscription.subscribe_events(
                         self.opc_session.opc_client.get_node(req.node_id)
                     )
+                    handles.event_handles.append(evt_handle)
                 except Exception:
                     logger.exception("Event subscription for %s failed", req.node_id)
                 else:
@@ -133,6 +145,22 @@ class OPCSubscriber:
                 start + len(chunk),
                 total,
                 perf_counter() - chunk_start,
+            )
+
+        return handles
+
+    async def clear_subscription_handles(self, handles: SubscriptionHandles):
+        if self.subscription is None:
+            raise RuntimeError("Cannot add subscriptions to a non-ready subscription")
+
+        if not self.opc_session.is_connected():
+            raise RuntimeError("Cannot add subscriptions to a non-connected session")
+
+        all_handles = handles.data_change_handles + handles.event_handles
+
+        for idx in range(0, len(all_handles), SUBSCRIPTION_REMOVE_CHUNK_SIZE):
+            await self.subscription.unsubscribe(
+                all_handles[idx : idx + SUBSCRIPTION_REMOVE_CHUNK_SIZE]
             )
 
     # react to server states
