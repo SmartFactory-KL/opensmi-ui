@@ -11,6 +11,7 @@ import { usePinGuardStore } from "./stores/PinGuardStore";
 import { useServerStore } from "./stores/ServerSessionStore";
 import Toaster from "./toast/Toaster";
 import { useModelStore } from "./stores/ModelStore";
+import { useNotificationStore } from "./stores/NotificationStore";
 
 const app = createApp(App);
 
@@ -35,6 +36,9 @@ async function compose() {
 
   const serverStore = useServerStore();
   serverStore.attachToSocketClient(socketClient);
+
+  const notificationStore = useNotificationStore();
+
 
   const modelStore = useModelStore();
   modelStore.attachToSocketClient(socketClient);

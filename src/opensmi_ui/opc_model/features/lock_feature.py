@@ -205,8 +205,6 @@ class LockFeatureNode(FeatureNode):
 
             self.entity.apply_update(update)
             if self.event_bus is not None:
-                logger.info("publishing update about lock")
-                logger.info(update)
                 self.event_bus.publish(update)
 
         except Exception:
