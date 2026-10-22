@@ -25,7 +25,7 @@ class ResourceContainerFeatureNode(FeatureNode):
         parent_feature_node: FeatureNode | None = None,
     ):
         super().__init__(opc_node, parent_component_node, parent_feature_node)
-        self.entity_type = "ResourceSet"
+        self.entity_type = "ResourceContainer"
 
         # create child resources (recursive or not?)
         for child in opc_node.children:

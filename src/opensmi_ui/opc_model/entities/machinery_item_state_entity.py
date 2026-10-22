@@ -1,3 +1,5 @@
+from asyncua.ua import LocalizedText
+
 from opensmi_ui.opc_model.entities.entity import (
     FeatureNodeEntity,
     FeatureNodeEntityData,
@@ -20,7 +22,12 @@ class MachineryItemStateEntity(FeatureNodeEntity):
 
         for child in opc_node.children:
             if child.browse_name.Name == "CurrentState":
-                self.current_state = str(child.attributes.get("Value", "unknown"))
+                state_val = child.attributes.get("Value", "unknown")
+
+                if isinstance(state_val, LocalizedText):
+                    self.current_state = str(state_val.Text)
+                else:
+                    self.current_state = str(state_val)
 
     def get_data(self) -> MachineryItemStateEntityData:
         return MachineryItemStateEntityData(

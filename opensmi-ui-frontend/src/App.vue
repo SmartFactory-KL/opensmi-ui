@@ -1,4 +1,3 @@
-```vue
 <script setup lang="ts">
 import { WifiOffIcon } from "@lucide/vue";
 import BasicError from "./components/BasicError.vue";
@@ -85,4 +84,3 @@ watch(
     grid-template-columns: 1fr;
 }
 </style>
-```

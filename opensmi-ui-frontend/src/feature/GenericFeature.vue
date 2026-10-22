@@ -2,11 +2,13 @@
 import type { FeatureNode } from "@/types/NodeFeatureTypes";
 import { computed } from "vue";
 import UnsupportedFeature from "./UnsupportedFeature.vue";
-import AttributesFeature from "./AttributesFeature.vue";
-import IdentificationFeature from "./IdentificationFeature.vue";
-import MonitoringFeature from "./MonitoringFeature.vue";
-import ParameterFeature from "./ParameterFeature.vue";
-import RemoteLockFeature from "./RemoteLockFeature.vue";
+import VariableContainerFeature from "./VariableContainerFeature.vue";
+import MachineryItemStateFeature from "./MachineryItemStateFeature.vue";
+import UserContainerFeature from "./UserContainerFeature.vue";
+import UserFeature from "./UserFeature.vue";
+import VariableFeature from "./VariableFeature.vue";
+import LockFeature from "./LockFeature.vue";
+import SkillStateFeature from "./SkillStateFeature.vue";
 
 const props = defineProps<{
     feature: FeatureNode;
@@ -14,17 +16,24 @@ const props = defineProps<{
 
 const featureComponent = computed(() => {
     switch (props.feature.entityType) {
-        case "Attributes":
-            return AttributesFeature;
-        case "Identification":
-            return IdentificationFeature;
-        case "Monitoring":
-            return MonitoringFeature;
-        case "ParameterSet":
-            return ParameterFeature;
+        case "MachineryItemState":
+            return MachineryItemStateFeature;
 
-        case "RemoteLock":
-            return RemoteLockFeature;
+        case "Lock":
+            return LockFeature;
+
+        case "SkillState":
+            return SkillStateFeature;
+
+        case "UserContainer":
+            return UserContainerFeature;
+        case "User":
+            return UserFeature;
+
+        case "VariableContainer":
+            return VariableContainerFeature;
+        case "Variable":
+            return VariableFeature;
 
         default:
             return UnsupportedFeature;

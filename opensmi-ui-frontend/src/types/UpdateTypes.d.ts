@@ -25,3 +25,9 @@ export interface VariableValueUpdate {
   entityId: string;
   newValue: any;
 }
+
+export interface LockIsLockedUpdate {
+  entityId: string;
+  timestamp: string;
+  newIsLocked: boolean;
+}

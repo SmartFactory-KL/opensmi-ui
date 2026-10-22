@@ -1,8 +1,12 @@
 import { simplyGetToText, simplyGetToJSON } from "@/fetch/simplyFetch";
 import type SocketClient from "@/socket/SocketClient";
 import Toaster from "@/toast/Toaster";
+import type { LockEntityData, VariableEntityData } from "@/types/EntityTypes";
 import type { ComponentNode, FeatureNode } from "@/types/NodeFeatureTypes";
-import type { VariableValueUpdate } from "@/types/UpdateTypes";
+import type {
+  LockIsLockedUpdate,
+  VariableValueUpdate,
+} from "@/types/UpdateTypes";
 import { defineStore } from "pinia";
 
 type ComponentNodeProcessItem = {
@@ -140,7 +144,7 @@ export const useModelStore = defineStore("model", {
             let featureCount = 0;
             while (featuresToProcess.length > 0) {
               if (featureCount > 10_000) {
-                console.warn("Feature Count Overflow")
+                console.warn("Feature Count Overflow");
                 break;
               }
               featureCount++;
@@ -151,7 +155,10 @@ export const useModelStore = defineStore("model", {
                 continue;
               }
 
-              this.entityIdFeatureNodeMap.set(featureItem.entityId, featureItem);
+              this.entityIdFeatureNodeMap.set(
+                featureItem.entityId,
+                featureItem,
+              );
 
               for (const childFeature of featureItem.features) {
                 featuresToProcess.push(childFeature);
@@ -199,11 +206,20 @@ export const useModelStore = defineStore("model", {
       }
 
       switch (update.updateType) {
-        case "VariableValueUpdate":
+        case "VariableValueUpdate": {
           const typedUpdate = update.updateContent as VariableValueUpdate;
+          const typedEntity = targetFeature.entity as VariableEntityData;
+          typedEntity.value = typedUpdate.newValue;
+        }
 
-          targetFeature.entity.value = typedUpdate.newValue;
-          break;
+        case "LockIsLockedUpdate": {
+          const typedUpdate = update.updateContent as LockIsLockedUpdate;
+          const typedEntity = targetFeature.entity as LockEntityData;
+
+          typedEntity.isLocked = typedUpdate.newIsLocked;
+          typedEntity.isLockedLastChange = typedUpdate.timestamp;
+        }
+
         default:
           console.warn("unknown updateType", update.updateType);
           break;

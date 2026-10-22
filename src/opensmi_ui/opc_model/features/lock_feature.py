@@ -1,21 +1,46 @@
-from asyncua import ua
+from datetime import datetime
+from typing import Any, Callable
+from uuid import UUID
 
+from asyncua import ua
+from asyncua.common.node import Node
+from asyncua.common.subscription import DataChangeEvent
+
+from opensmi_ui.event.bus import EventBus
 from opensmi_ui.logger import get_module_logger
-from opensmi_ui.opc_model.entities.lock_entity import LockEntity
+from opensmi_ui.model.json import JsonOutModel
+from opensmi_ui.opc_model.entities.lock_entity import (
+    LockEntity,
+    LockIsLockedUpdate,
+    LockLockingClientUpdate,
+    LockLockingUserUpdate,
+)
 from opensmi_ui.opc_model.features.machinery_item_state_feature import FeatureInitState
 from opensmi_ui.opc_model.model_node import (
     ComponentNode,
     FeatureInitRequest,
     FeatureInitResult,
     FeatureNode,
+    FeatureSubscribeDataRequest,
+    FeatureSubscribeRequest,
 )
 from opensmi_ui.opc_model.opc_node import OPCNode
+from opensmi_ui.opc_model.opc_types import VariantData
+from opensmi_ui.opc_model.value_read import (
+    VariantNormalizationFailedError,
+    normalize_to_variant,
+)
 
 logger = get_module_logger("opc_model.features.lock")
 
 
+class LockFeatureInitData:
+    nodes_to_read: list[OPCNode]
+
+
 class LockFeatureNode(FeatureNode):
     _init_step: int
+    _init_data: LockFeatureInitData
 
     def __init__(
         self,
@@ -25,55 +50,154 @@ class LockFeatureNode(FeatureNode):
     ):
         super().__init__(opc_node, parent_component_node, parent_feature_node)
         self._init_step = 0
+        self._init_data = LockFeatureInitData()
         self.entity_type = "Lock"
 
     def advance(
         self, last_result: FeatureInitResult | None
     ) -> FeatureInitRequest | None:
         match self._init_step:
+            # Step 0
             case 0:
                 self.init_state = FeatureInitState.PENDING
 
-                req = FeatureInitRequest(
-                    browse_requests=[], read_requests=[], feature=self
-                )
+                try:
+                    nodes_to_read = [
+                        self.opc_node.get_first_child_node_for_name("Locked"),
+                        self.opc_node.get_first_child_node_for_name("LockingUser"),
+                        self.opc_node.get_first_child_node_for_name("LockingClient"),
+                    ]
 
-                # read values for data nodes
-                for child_node in self.opc_node.children:
-                    match child_node.browse_name.Name:
-                        case (
-                            "Locked"
-                            | "LockingUser"
-                            | "LockingClient"
-                            | "RemainingLockTime"
-                        ):
-                            req.read_requests.append(
-                                ua.ReadValueId(
-                                    NodeId=child_node.node_id,
-                                    AttributeId=ua.attribute_ids.AttributeIds.Value,
-                                )
-                            )
-                        case _:
-                            # logger.info(
-                            #     f"skipped lock node: {child_node.browse_name.Name}"
-                            # )
-                            continue
+                    self._init_data.nodes_to_read = nodes_to_read
 
-                self._init_step += 1
-                return req
-
-            case 1:
-                if last_result is None:
-                    self.init_state = FeatureInitState.ERROR
-                    self.init_error = (
-                        f"Received Unexpected None Result for step {self._init_step}"
+                    req = FeatureInitRequest(
+                        browse_requests=[], read_requests=[], feature=self
                     )
+
+                    for node_to_read in nodes_to_read:
+                        req.read_requests.append(
+                            ua.ReadValueId(
+                                NodeId=node_to_read.node_id,
+                                AttributeId=ua.attribute_ids.AttributeIds.Value,
+                            )
+                        )
+
+                    self._init_step += 1
+                    return req
+
+                except KeyError as e:
+                    self.init_state = FeatureInitState.ERROR
+                    self.init_error = f"Missing node: {e!s}"
+
                     return None
+            # Step 1
+            case 1:
+                try:
+                    if last_result is None:
+                        raise RuntimeError(
+                            "Got unexpected none for last_result in LockFeature"
+                        )
 
-                self.entity = LockEntity(opc_node=self.opc_node)
+                    for idx, target_node in enumerate(self._init_data.nodes_to_read):
+                        target_node.attributes["Value"] = last_result.read_results[
+                            idx
+                        ].Value
+                        target_node.attributes["LastChange"] = last_result.read_results[
+                            idx
+                        ].SourceTimestamp
 
-                self._init_step += 1
-                self.init_state = FeatureInitState.DONE
-                return None
+                    self.entity = LockEntity(opc_node=self.opc_node)
+
+                    self._init_step += 1
+                    self.init_state = FeatureInitState.DONE
+                    return None
+                except Exception as e:  # noqa: BLE001 # could be any exception
+                    self.init_state = FeatureInitState.ERROR
+                    self.init_error = str(e)
+                    return None
+            # catch all to always return None
             case _:
                 return None
+
+    def request_subscription(
+        self, event_bus: EventBus
+    ) -> FeatureSubscribeRequest | None:
+        req = FeatureSubscribeRequest(subscriptions=[])
+
+        try:
+            locked_node = self.opc_node.get_first_child_node_for_name("Locked")
+            req.subscriptions.append(
+                FeatureSubscribeDataRequest(
+                    attr=ua.attribute_ids.AttributeIds.Value,
+                    handler=self.on_locked_update,
+                    node_id=locked_node.node_id,
+                )
+            )
+        except KeyError:
+            logger.warning(
+                "Failed to subscribe to Locked since no Locked node was present"
+            )
+
+        return req
+
+    def _handle_update(
+        self,
+        evt: DataChangeEvent,
+        callback: Callable[[Any, datetime | None], JsonOutModel],
+    ):
+        if not isinstance(self.entity, LockEntity):
+            return
+
+        try:
+            data_value = evt.data.monitored_item.Value
+            if not isinstance(data_value, ua.DataValue):
+                logger.warning(
+                    "Received unexpected Non-DataValue Update on LockFeature"
+                )
+                return
+
+            value = normalize_to_variant(data_value)
+            if not isinstance(value, ua.Variant):
+                logger.warning("Received unexpected Non-Variant Update on LockFeature")
+                return
+
+            data = VariantData.from_ua(value)
+            update = callback(data.value, (data_value.SourceTimestamp))
+
+            self.entity.apply_update(update)
+            if self.event_bus is not None:
+                self.event_bus.publish(update)
+
+        except Exception:
+            logger.exception("Failed to handle Update due to an Exception")
+            return
+
+    def on_locked_update(self, node: Node, evt: DataChangeEvent):
+        self._handle_update(
+            evt,
+            lambda val, timestamp: LockIsLockedUpdate(
+                entity_id=self.entity_id,
+                new_is_locked=val,
+                timestamp=str(timestamp),
+            ),
+        )
+
+    def on_locking_user_update(self, node: Node, evt: DataChangeEvent):
+        self._handle_update(
+            evt,
+            lambda val, timestamp: LockLockingUserUpdate(
+                entity_id=self.entity_id,
+                new_user=val,
+                timestamp=str(timestamp),
+            ),
+        )
+
+    def on_locking_client_update(self, node: Node, evt: DataChangeEvent):
+        self._handle_update(
+            evt,
+            lambda val, timestamp: LockLockingClientUpdate(
+                entity_id=self.entity_id,
+                new_client=val,
+                timestamp=str(timestamp),
+            ),
+        )

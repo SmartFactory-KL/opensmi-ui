@@ -26,7 +26,7 @@ def create_machinery_building_block_features(
                     )
                 )
             case "MachineryOperationMode":
-                print("mode!")
+                ...
             case "Users":
                 feature_list.append(
                     UserContainerFeatureNode(

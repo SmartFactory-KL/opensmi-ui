@@ -31,7 +31,7 @@ const component = computed(() => {
         </section>
         <section
             v-else
-            class="flex flex-row flex-wrap justify-start items-start p-4 gap-4"
+            class="flex flex-col flex-wrap justify-start items-start p-4 gap-4"
         >
             <GenericFeature
                 v-for="feature in component.features"

@@ -22,6 +22,10 @@ from opensmi_ui.opc_model.model_node import (
 )
 from opensmi_ui.opc_model.opc_node import OPCNode
 from opensmi_ui.opc_model.opc_types import VariantData
+from opensmi_ui.opc_model.value_read import (
+    VariantNormalizationFailedError,
+    normalize_to_variant,
+)
 
 logger = get_module_logger("opc_model.features.variable")
 
@@ -230,24 +234,30 @@ class VariableFeatureNode(FeatureNode):
         self.opc_node.attributes["Value"] = first_result.Value.Value
 
     def on_value_update(self, node: Node, evt: DataChangeEvent):
-        # TODO: I think I need a more generic "apply_update" method that could take some sort
-        # TODO: of  generic update that the entity knows how to apply
-        # TODO: so that any FeatureEntity could have the method
-        # TODO: Also unknown: These updates would probably also be useful for the frontend,
-        # TODO: but how to add here without adding the msg_receiver as dependency?
         if not isinstance(self.entity, VariableEntity):
             return
 
-        self.opc_node.attributes["Value"] = evt.data.monitored_item.Value.Value
+        try:
+            value = normalize_to_variant(evt.data.monitored_item.Value)
 
-        self.entity.update_value(
-            VariantData.from_ua(evt.data.monitored_item.Value.Value)
-        )
-
-        if self.event_bus is not None:
-            self.event_bus.publish(
-                VariableValueUpdate(
-                    entity_id=self.entity_id,
-                    new_value=VariantData.from_ua(evt.data.monitored_item.Value.Value),
+            if not isinstance(value, ua.Variant) or value is None:
+                logger.warning(
+                    "received unexpected None value update on VariableFeature"
                 )
-            )
+                return
+
+            self.opc_node.attributes["Value"] = value
+
+            data = VariantData.from_ua(value)
+            self.entity.update_value(data)
+
+            if self.event_bus is not None:
+                self.event_bus.publish(
+                    VariableValueUpdate(
+                        entity_id=self.entity_id,
+                        new_value=data,
+                    )
+                )
+
+        except VariantNormalizationFailedError:
+            logger.exception("Failed to handle update on VariableFeature")

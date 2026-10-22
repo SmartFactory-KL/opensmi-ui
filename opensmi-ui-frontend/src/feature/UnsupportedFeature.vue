@@ -1,4 +1,3 @@
-```vue
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { AlertCircle, ChevronDown, Braces, Copy, Check } from "@lucide/vue";
@@ -106,4 +105,3 @@ async function copyJson() {
         </div>
     </div>
 </template>
-```
