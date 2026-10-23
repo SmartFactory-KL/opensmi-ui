@@ -9,7 +9,7 @@ const router = useRouter();
 
 <template>
     <main>
-        <div class="mx-auto flex max-w-6xl flex-col px-6 py-12 lg:px-8">
+        <div class="mx-auto w-full flex max-w-6xl flex-col px-6 py-12 lg:px-8">
             <!-- Hero -->
             <section class="flex flex-1 flex-col justify-center py-16">
                 <div class="max-w-3xl">
@@ -60,5 +60,8 @@ const router = useRouter();
                 >
             </footer>
         </div>
+
+        <!-- Always add some spacing for that funky on-screen-display on the touchscreens -->
+        <div class="on-screen-placeholder" style="height: 25vh"></div>
     </main>
 </template>

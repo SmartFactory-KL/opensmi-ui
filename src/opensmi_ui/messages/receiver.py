@@ -15,6 +15,7 @@ from opensmi_ui.messages.types import (
     SimpleUpdateMessage,
 )
 from opensmi_ui.model.json import JsonBaseModel, JsonOutModel
+from opensmi_ui.opc_subscriber.notification import NotificationEvent
 
 logger = get_module_logger("messages.receiver")
 
@@ -67,15 +68,19 @@ class MessageReceiver:
         self.funnel.send_direct_message(msg)
 
     def receive_event_bus_update(self, update: JsonBaseModel | JsonOutModel):
-        if not has_entity_id(update):
-            return
+        # handle notifications differently
+        if isinstance(update, NotificationEvent):
+            msg = ChanneledMessage(channel=Channel.NOTIFICATION, data=update)
+        else:
+            if not has_entity_id(update):
+                return
 
-        msg = ChanneledMessage(
-            channel=Channel.MODEL,
-            data=ModelUpdateMessage[type(update)](
-                entity_id=update.entity_id,
-                update_content=update,
-            ),
-        )
+            msg = ChanneledMessage(
+                channel=Channel.MODEL,
+                data=ModelUpdateMessage[type(update)](
+                    entity_id=update.entity_id,
+                    update_content=update,
+                ),
+            )
 
         self.funnel.queue_message(msg)

@@ -1,148 +1,102 @@
+import type SocketClient from "@/socket/SocketClient";
+import type { LocalizedTextData, NodeIdData } from "@/types/NodeFeatureTypes";
 import { defineStore } from "pinia";
+
+export const MAX_NOTIFICATION_COUNT = 15;
 
 export type NotificationLevel = "info" | "error" | "warning";
 
-export type UINotification = {
-  level: NotificationLevel;
-  message: string;
-  debugMessage: string;
-  createTime: string;
-  createTimeStamp: number;
-};
+export interface NotificationEvent {
+  eventId: string;
+  eventType: NodeIdData;
+  sourceNode: NodeIdData;
+  sourceName: string;
 
-export type UINotificationStatistic = {
-  level: NotificationLevel;
-  total: number;
-  lastDelta: number;
-  currentDelta: number;
-};
+  time: string;
+  message: LocalizedTextData;
+  severity: number;
+}
 
 export const NOTIFICATION_MAX_COUNT = 999;
 
 export const useNotificationStore = defineStore("notification", {
-  state: () => {
+  state: (): {
+    notificationContent: {
+      info: NotificationEvent[];
+      warning: NotificationEvent[];
+      error: NotificationEvent[];
+    };
+
+    tickIntervalHandle: ReturnType<typeof setInterval> | null;
+
+    animate: {
+      info: ReturnType<typeof setTimeout> | null;
+      warning: ReturnType<typeof setTimeout> | null;
+      error: ReturnType<typeof setTimeout> | null;
+    };
+  } => {
     return {
       notificationContent: {
-        info: [] as UINotification[],
-        warning: [] as UINotification[],
-        error: [] as UINotification[],
-      } as { [key: string]: UINotification[] },
-
-      notificationInput: {
-        info: [] as UINotification[],
-        warning: [] as UINotification[],
-        error: [] as UINotification[],
+        info: [] as NotificationEvent[],
+        warning: [] as NotificationEvent[],
+        error: [] as NotificationEvent[],
       },
 
-      // used to manage the deltas of the stats
-      // which basically show how many new messages came in
-      // in the last period
-      deltaIntervalHandle: 0,
-      deltaIntervalRunning: false,
+      // used for a basic tick. If null, the tick is not active
+      tickIntervalHandle: null,
 
-      // which tab is currently shown on the NotificationPage
-      currentTab: "info" as string,
-
-      // this is used to batch incoming messages to only be rendered
-      // at 100ms intervals (roughly)
-      batchingIntervalHandle: 0,
-      batchingIntervalRunning: false,
-
-      notificationStatistics: {
-        info: {
-          level: "info",
-          total: 0,
-          lastDelta: 0,
-          currentDelta: 0,
-        } as UINotificationStatistic,
-        warning: {
-          level: "warning",
-          total: 0,
-          lastDelta: 0,
-          currentDelta: 0,
-        } as UINotificationStatistic,
-        error: {
-          level: "error",
-          total: 0,
-          lastDelta: 0,
-          currentDelta: 0,
-        } as UINotificationStatistic,
-      } as { [key: string]: UINotificationStatistic },
+      animate: {
+        info: null,
+        warning: null,
+        error: null,
+      },
     };
   },
   actions: {
-    addNotification(
-      level: NotificationLevel,
-      message: string,
-      debugMessage = "",
-    ) {
-      let listToUse: UINotification[] | null = null;
-      let statToUse: UINotificationStatistic | null = null;
-      let listKeyToUse: string | null = null;
-      switch (level) {
-        case "warning":
-          statToUse = this.notificationStatistics.warning!;
-          listToUse = this.notificationContent.warning!;
-          listKeyToUse = "warning";
-          break;
-        case "error":
-          statToUse = this.notificationStatistics.error!;
-          listToUse = this.notificationContent.error!;
-          listKeyToUse = "error";
-          break;
+    attachToSocketClient(socketClient: SocketClient) {
+      socketClient.addChannelListener("Notification", this.handleNotification);
+    },
+    handleNotification(notification: any) {
+      for (const list of [
+        this.notificationContent.info,
+        this.notificationContent.warning,
+        this.notificationContent.error,
+      ]) {
+        if (list.length >= MAX_NOTIFICATION_COUNT - 1) {
+          const excess = list.length - MAX_NOTIFICATION_COUNT;
+          list.splice(0, excess);
+        }
+      }
+
+      let level: "info" | "warning" | "error";
+      switch (notification.severity) {
+        case 555:
+          level = "warning";
+        case 999:
+          level = "error";
         default:
-          statToUse = this.notificationStatistics.info!;
-          listToUse = this.notificationContent.info!;
-          listKeyToUse = "info";
-          break;
+          level = "info";
       }
 
-      if (listToUse == null || statToUse == null || listKeyToUse == null) {
-        return;
-      }
-
-      listToUse.push({
-        level,
-        message,
-        debugMessage,
-        createTime: new Date().toLocaleString(navigator.language, {
-          dateStyle: "medium",
-          timeStyle: "medium",
-          hour12: false,
-        }),
-        createTimeStamp: Date.now(),
-      });
-
-      if (listToUse.length >= NOTIFICATION_MAX_COUNT) {
-        this.notificationContent[listKeyToUse] = listToUse.slice(
-          listToUse.length - NOTIFICATION_MAX_COUNT + 1,
-          listToUse.length,
-        );
-      }
-
-      statToUse.total = listToUse.length;
-      statToUse.currentDelta++;
-    },
-    updateDeltas() {
-      for (const statItemKey in this.notificationStatistics) {
-        this.notificationStatistics[statItemKey]!.lastDelta =
-          this.notificationStatistics[statItemKey]!.currentDelta;
-        this.notificationStatistics[statItemKey]!.currentDelta = 0;
+      this.notificationContent[level].push(notification);
+      if (this.animate[level] === null) {
+        this.animate[level] = setTimeout(() => {
+          this.animate[level] = null;
+        }, 1000);
       }
     },
-    startDeltaInterval() {
-      if (!this.deltaIntervalRunning) {
-        this.deltaIntervalHandle = setInterval(() => {
-          this.updateDeltas();
-        }, 5000);
-        this.updateDeltas();
-        this.deltaIntervalRunning = true;
+    tick() {
+      // not used right now
+    },
+    startTickInterval() {
+      if (this.tickIntervalHandle !== null) {
+        this.tickIntervalHandle = setInterval(this.tick, 1000);
       }
     },
     stopDeltaInterval() {
-      if (this.deltaIntervalRunning) {
-        clearInterval(this.deltaIntervalHandle);
-        this.deltaIntervalRunning = false;
+      if (this.tickIntervalHandle !== null) {
+        clearInterval(this.tickIntervalHandle);
+        this.tickIntervalHandle = null;
       }
     },
   },

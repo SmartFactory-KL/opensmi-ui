@@ -27,7 +27,7 @@ watch(
         <MainNavigation />
 
         <div
-            class="overflow-x-auto overflow-y-scroll border-t-4 border-t-slate-500 bg-slate-50"
+            class="overflow-x-auto overflow-y-auto border-t-4 border-t-slate-500 bg-slate-50"
         >
             <!-- Request error -->
             <BasicError :error="pageStore.requestData.error"></BasicError>
@@ -58,16 +58,23 @@ watch(
                 </div>
             </div>
 
-            <div v-else>
+            <div
+                v-else
+                class="flex h-[calc(100vh-4rem-4px)]"
+            >
                 <ServerDropdown
                     class="absolute top-17 w-screen h-[calc(100vh-4.25rem)] transition"
                 ></ServerDropdown>
 
                 <!-- Page content -->
-                <RouterView :key="$route.fullPath" />
+                <RouterView
+                    class="h-full w-screen"
+                    :key="$route.fullPath"
+                />
 
                 <!-- Always add some spacing for that funky on-screen-display on the touchscreens -->
-                <div class="on-screen-placeholder" style="height: 25vh"></div>
+                <!-- UPDATE: Moved to the individual pages as some have different backgrounds -->
+                <!-- <div class="on-screen-placeholder" style="height: 25vh"></div> -->
             </div>
 
             <Toaster></Toaster>

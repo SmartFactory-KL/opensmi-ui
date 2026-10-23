@@ -13,6 +13,7 @@ from opensmi_ui.opc_model.model_node import (
     FeatureSubscribeRequest,
 )
 from opensmi_ui.opc_model.opc_node import OPCNode
+from opensmi_ui.opc_subscriber.notification import read_notification
 
 logger = get_module_logger("opc_model.features.notification")
 
@@ -32,6 +33,8 @@ class NotificationFeatureNode(FeatureNode):
     def request_subscription(
         self, event_bus: EventBus
     ) -> FeatureSubscribeRequest | None:
+        self.event_bus = event_bus
+
         req = FeatureSubscribeRequest(subscriptions=[])
 
         req.subscriptions.append(
@@ -43,4 +46,14 @@ class NotificationFeatureNode(FeatureNode):
         return req
 
     def on_notification(self, evt: Event):
-        print(evt)
+        if self.event_bus is None:
+            return
+
+        try:
+            notification = read_notification(evt)
+            if notification is None:
+                return
+
+            self.event_bus.publish(notification)
+        except Exception:
+            logger.exception("Failed to convert OpcEvent to Notification")

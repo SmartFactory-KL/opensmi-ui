@@ -4,7 +4,9 @@ import { createPinia } from "pinia";
 import App from "./App.vue";
 import router from "./router";
 
+import '@fontsource-variable/inter';
 import "./main.css";
+
 import SocketClient from "./socket/SocketClient";
 import { usePageStore } from "./stores/PageStore";
 import { usePinGuardStore } from "./stores/PinGuardStore";
@@ -38,7 +40,8 @@ async function compose() {
   serverStore.attachToSocketClient(socketClient);
 
   const notificationStore = useNotificationStore();
-
+  notificationStore.attachToSocketClient(socketClient)
+  notificationStore.startTickInterval()
 
   const modelStore = useModelStore();
   modelStore.attachToSocketClient(socketClient);

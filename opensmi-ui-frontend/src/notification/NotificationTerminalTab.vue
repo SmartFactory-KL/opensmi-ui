@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 defineProps<{
     level: string;
-    isActive: boolean;
+    isActive?: boolean;
 }>();
 </script>
 

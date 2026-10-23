@@ -21,6 +21,7 @@ class Channel(StrEnum):
     """Usable channels for message. Note, that 'batch' is also a channel, reserved for batches with messages of these channels"""
     SERVER = "Server"
     MODEL = "Model"
+    NOTIFICATION = "Notification"
     PIN_GUARD = "PinGuard"
 
 

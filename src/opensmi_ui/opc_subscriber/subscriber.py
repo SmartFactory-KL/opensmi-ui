@@ -4,6 +4,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from time import perf_counter
 
+from asyncua import ua
 from asyncua.client.ua_client import UaClientState
 from asyncua.common.events import Event
 from asyncua.common.node import Node
@@ -13,12 +14,12 @@ from asyncua.common.subscription import (
     StatusChangeEvent,
     Subscription,
 )
-from asyncua.ua import NodeId, StatusCode
 from asyncua.ua.attribute_ids import AttributeIds
 
 from opensmi_ui.logger import get_module_logger
 from opensmi_ui.opc_session.session import OPCSession
 from opensmi_ui.opc_session.task import StoppableTask, wait_or_stop
+from opensmi_ui.opc_subscriber.notification import read_notification
 
 logger = get_module_logger("opc_subscriber")
 
@@ -30,14 +31,14 @@ SUBSCRIPTION_REMOVE_CHUNK_SIZE = 200
 
 @dataclass
 class SubscribeDataRequest:
-    node_id: NodeId
+    node_id: ua.NodeId
     attr: AttributeIds
     handler: Callable[[Node, DataChangeEvent], None]
 
 
 @dataclass
 class SubscribeEventRequest:
-    node_id: NodeId
+    node_id: ua.NodeId
     handler: Callable[[Event], None]
 
 
@@ -54,8 +55,8 @@ class OPCSubscriber:
 
     handler_task: StoppableTask
 
-    data_handlers: dict[NodeId, Callable[[Node, DataChangeEvent], None]]
-    event_handlers: dict[NodeId, Callable[[Event], None]]
+    data_handlers: dict[ua.NodeId, Callable[[Node, DataChangeEvent], None]]
+    event_handlers: dict[ua.NodeId, Callable[[Event], None]]
 
     def __init__(self, opc_session: OPCSession):
         self.opc_session = opc_session
@@ -115,7 +116,7 @@ class OPCSubscriber:
 
                 # check results and add handler it status code is ok
                 for req, result in zip(reqs, results):
-                    if isinstance(result, StatusCode):
+                    if isinstance(result, ua.StatusCode):
                         logger.warning(
                             "Data subscription for %s (%s) failed: %s",
                             req.node_id,
@@ -131,8 +132,9 @@ class OPCSubscriber:
             for req in event_requests:
                 try:
                     evt_handle = await self.subscription.subscribe_events(
-                        self.opc_session.opc_client.get_node(req.node_id)
+                        sourcenode=self.opc_session.opc_client.get_node(req.node_id)
                     )
+                    logger.info(f"Added Event Subscription with handler {evt_handle}")
                     handles.event_handles.append(evt_handle)
                 except Exception:
                     logger.exception("Event subscription for %s failed", req.node_id)
@@ -194,20 +196,42 @@ class OPCSubscriber:
                     break
 
                 match event:
-                    case DataChangeEvent(node=node):
-                        if node.nodeid in self.data_handlers:
+                    case DataChangeEvent(node=source_node):
+                        if source_node.nodeid in self.data_handlers:
                             try:
-                                self.data_handlers[node.nodeid](node, event)
-                            except Exception:
-                                logger.exception("failed to handle data change event")
-                    case OpcEvent(event=event_data):
-                        if event.event.emitting_node in self.event_handlers:
-                            try:
-                                self.event_handlers[event.event.emitting_node](
-                                    event_data
+                                self.data_handlers[source_node.nodeid](
+                                    source_node, event
                                 )
                             except Exception:
                                 logger.exception("failed to handle data change event")
+                    case OpcEvent(event=event_data):
+                        # TODO: As of now, only notifications are expected as events.
+                        # TODO: Check whether other events are also possible
+                        # TODO: Because right now I would need to deserialize it twice
+                        # TODO: once here to read SourceNode (emitting_node is always the server)
+                        # TODO: and once in the handler because that is set to receive an Event,
+                        # TODO: not a notification.
+                        try:
+                            notification = read_notification(event_data)
+                            if notification is None:
+                                continue
+
+                            source_node = notification.source_node.to_ua()
+
+                            if source_node in self.event_handlers:
+                                try:
+                                    self.event_handlers[source_node](event_data)
+                                except Exception:
+                                    logger.exception(
+                                        "failed to handle opc event with dedicated handler"
+                                    )
+                            else:
+                                logger.info("Received unhandled notification")
+                                logger.info(notification)
+                        except Exception:
+                            logger.exception(
+                                "Failed to convert OpcEvent to Notification"
+                            )
                     case StatusChangeEvent(notification=notification):
                         logger.warning(
                             "Status of Subscription in Worker changed: %s",

@@ -1,1 +1,20 @@
 @import "tailwindcss";
+
+:root {
+    font-family: "Inter Variable", Inter, sans-serif;
+    font-synthesis: none;
+    font-optical-sizing: auto;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+}
+
+.data-value {
+    font-variant-numeric: tabular-nums;
+}

@@ -2,54 +2,55 @@
 import { useNotificationStore } from "@/stores/NotificationStore";
 import NotificationTerminal from "../notification/NotificationTerminal.vue";
 import NotificationTerminalTab from "../notification/NotificationTerminalTab.vue";
+import {
+    BugIcon,
+    MessageCircleIcon,
+    MessageSquareIcon,
+    TriangleAlertIcon,
+} from "@lucide/vue";
 
 const notificationStore = useNotificationStore();
 </script>
 
 <template>
-    <div class="w-full h-full flex flex-col justify-stretch items-stretch">
+    <main class="w-full h-full flex flex-col justify-stretch items-stretch">
         <div class="h-16 flex flex-row justify-around items-stretch w-full">
             <!-- Tabs -->
             <NotificationTerminalTab
                 level="info"
-                :is-active="notificationStore.currentTab == 'info'"
-                @click="notificationStore.currentTab = 'info'"
-                class="text-blue-200"
-                ><i class="fa-solid fa-info-circle fa-2xl"></i>
-                Info</NotificationTerminalTab
+                class="text-blue-200 flex flex-row justify-center items-center gap-x-2"
             >
-            <NotificationTerminalTab
-                level="warning"
-                :is-active="notificationStore.currentTab == 'warning'"
-                @click="notificationStore.currentTab = 'warning'"
-                class="text-amber-200"
-                ><i class="fa-solid fa-warning fa-2xl"></i>
-                Warning</NotificationTerminalTab
-            >
-            <NotificationTerminalTab
-                level="error"
-                :is-active="notificationStore.currentTab == 'error'"
-                @click="notificationStore.currentTab = 'error'"
-                class="text-red-200"
-                ><i class="fa-solid fa-bug fa-2xl"></i>
-                Error</NotificationTerminalTab
-            >
+                <MessageCircleIcon
+                    :size="24"
+                    class="fill-blue-500 text-blue-600"
+                >
+                </MessageCircleIcon>
+                Info
+            </NotificationTerminalTab>
+            <NotificationTerminalTab level="warning" class="text-amber-200">
+                <TriangleAlertIcon
+                    :size="24"
+                    class="fill-amber-400 text-amber-600"
+                ></TriangleAlertIcon>
+                Warning
+            </NotificationTerminalTab>
+            <NotificationTerminalTab level="error" class="text-red-200">
+                <BugIcon :size="24" class="fill-red-400 text-red-600"></BugIcon>
+                Error
+            </NotificationTerminalTab>
         </div>
 
         <div style="height: calc(100% - 4rem)">
             <!-- Terminal -->
             <NotificationTerminal
-                v-if="notificationStore.currentTab === 'info'"
                 :notifications="notificationStore.notificationContent.info!"
             ></NotificationTerminal>
-            <NotificationTerminal
-                v-if="notificationStore.currentTab === 'warning'"
+            <!-- <NotificationTerminal
                 :notifications="notificationStore.notificationContent.warning!"
             ></NotificationTerminal>
             <NotificationTerminal
-                v-if="notificationStore.currentTab === 'error'"
                 :notifications="notificationStore.notificationContent.error!"
-            ></NotificationTerminal>
+            ></NotificationTerminal> -->
         </div>
-    </div>
+    </main>
 </template>

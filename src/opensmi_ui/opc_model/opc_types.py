@@ -1,5 +1,5 @@
 import math
-from base64 import b64encode
+from base64 import b64decode, b64encode
 from collections.abc import Sequence
 from datetime import UTC, datetime
 from typing import Any, Literal, Union
@@ -59,6 +59,25 @@ class NodeIdData(JsonOutModel):
             identifier=identifier,
             namespace_index=value.NamespaceIndex,
             identifier_type=value.NodeIdType.name,
+        )
+
+    def to_ua(self) -> ua.NodeId:
+        node_id_type = ua.NodeIdType[self.identifier_type]
+        identifier = self.identifier
+
+        if node_id_type == ua.NodeIdType.Guid:
+            identifier = UUID(str(identifier))
+        elif node_id_type == ua.NodeIdType.ByteString:
+            if not isinstance(identifier, str):
+                raise ValueError("ByteString NodeId identifier must be a Base64 string")
+            identifier = b64decode(identifier, validate=True)
+        elif node_id_type == ua.NodeIdType.Numeric:
+            identifier = int(identifier)
+
+        return ua.NodeId(
+            Identifier=identifier,
+            NamespaceIndex=self.namespace_index,
+            NodeIdType=node_id_type,
         )
 
 
@@ -136,6 +155,11 @@ class VariantData(JsonOutModel):
 
     @classmethod
     def from_ua(cls, value: ua.Variant) -> "VariantData":
+        if not isinstance(value, ua.Variant):
+            raise TypeError(
+                f"VariantData.from_ua cannot handle input of type {type(value)}"
+            )
+
         source_variant_type = value.VariantType
         source_value = value.Value
         source_dimensions = list(value.Dimensions) if value.Dimensions else None
