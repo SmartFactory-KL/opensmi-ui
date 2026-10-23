@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import {
+    ArrowDownLeftFromSquareIcon,
     CircleAlert,
     CircleCheck,
     CirclePause,
@@ -8,20 +9,26 @@ import {
     CircleStop,
     Clock,
     LoaderCircle,
+    PauseCircleIcon,
+    PlayCircleIcon,
     RotateCcw,
     ShieldAlert,
+    StopCircleIcon,
     Timer,
     type LucideIcon,
 } from "@lucide/vue";
 
-import type { SkillStateEntityData } from "@/types/EntityTypes";
+import type { SkillControlEntityData } from "@/types/EntityTypes";
 import type { FeatureNode } from "@/types/NodeFeatureTypes";
+import type { SkillControlAction } from "@/types/UpdateTypes";
+import { simplyPostToText } from "@/fetch/simplyFetch";
+import IconButton from "@/components/IconButton.vue";
 
 const props = defineProps<{
     feature: FeatureNode;
 }>();
 
-const entity = computed(() => props.feature.entity as SkillStateEntityData);
+const entity = computed(() => props.feature.entity as SkillControlEntityData);
 
 const SkillState = {
     HALTED: 11,
@@ -181,6 +188,24 @@ const lastChangeTitle = computed(() => {
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
 });
+
+async function requestAction(
+    requestedAction: SkillControlAction["requestedAction"],
+) {
+    try {
+        const action = {
+            entityId: props.feature.entityId,
+            actionType: "SkillControlAction",
+            action: {
+                requestedAction: requestedAction,
+            } as SkillControlAction,
+        };
+
+        await simplyPostToText("/api/opc-model/action", action);
+    } catch (e) {
+        console.error(e);
+    }
+}
 </script>
 
 <template>
@@ -197,6 +222,23 @@ const lastChangeTitle = computed(() => {
                 </p>
                 <p class="mt-0.5 text-xs text-slate-500">Skill state</p>
             </div>
+
+            <IconButton @click="requestAction('Start')">
+                <PlayCircleIcon></PlayCircleIcon> Start
+            </IconButton>
+
+            <IconButton @click="requestAction('Halt')">
+                <StopCircleIcon></StopCircleIcon> Halt
+            </IconButton>
+
+            <IconButton @click="requestAction('Reset')">
+                <ArrowDownLeftFromSquareIcon></ArrowDownLeftFromSquareIcon>
+                Reset
+            </IconButton>
+
+            <IconButton @click="requestAction('Suspend')">
+                <PauseCircleIcon></PauseCircleIcon> Suspend
+            </IconButton>
 
             <Clock class="size-4 shrink-0 text-slate-400" />
         </header>

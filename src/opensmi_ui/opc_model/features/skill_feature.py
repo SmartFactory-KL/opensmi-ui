@@ -3,7 +3,7 @@ from asyncua import ua
 from opensmi_ui.logger import get_module_logger
 from opensmi_ui.opc_model.entities.skill_entity import SkillEntity
 from opensmi_ui.opc_model.features.dependency_feature import DependencyFeatureNode
-from opensmi_ui.opc_model.features.skill_state_feature import SkillStateFeatureNode
+from opensmi_ui.opc_model.features.skill_control_feature import SkillControlFeatureNode
 from opensmi_ui.opc_model.features.variable_container_feature import (
     VariableContainerFeatureNode,
 )
@@ -22,6 +22,8 @@ logger = get_module_logger("opc_model.features.skill")
 
 class SkillFeatureNode(FeatureNode):
     _init_step: int
+
+    action_nodes: dict[str, OPCNode]
 
     def __init__(
         self,
@@ -70,7 +72,7 @@ class SkillFeatureNode(FeatureNode):
                     )
                 case "StateMachine":
                     self.features.append(
-                        SkillStateFeatureNode(
+                        SkillControlFeatureNode(
                             opc_node=child,
                             parent_component_node=parent_component_node,
                             parent_feature_node=self,

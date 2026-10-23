@@ -44,6 +44,12 @@ export interface LockLockingClientUpdate {
   newClient: string;
 }
 
+export interface SkillControlStateUpdate {
+  entityId: string;
+  newState: string | number;
+  timestamp: string;
+}
+
 // ACTIONS
 export interface GenericAction {
   entityId: string;
@@ -53,4 +59,8 @@ export interface GenericAction {
 
 export interface LockAction {
   requestedAction: "InitLock" | "BreakLock" | "ExitLock";
+}
+
+export interface SkillControlAction {
+  requestedAction: "Start" | "Halt" | "Reset" | "Suspend";
 }

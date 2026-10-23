@@ -1,13 +1,17 @@
+from enum import StrEnum
+
 from asyncua import ua
 from asyncua.common.node import Node
 from asyncua.common.subscription import DataChangeEvent
 
 from opensmi_ui.event.bus import EventBus
 from opensmi_ui.logger import get_module_logger
+from opensmi_ui.model.json import JsonInModel
 from opensmi_ui.opc_model.entities.skill_state_entity import (
-    SkillStateEntity,
-    SkillStateStateUpdate,
+    SkillControlEntity,
+    SkillControlStateUpdate,
 )
+from opensmi_ui.opc_model.features.lock_feature import GenericAction
 from opensmi_ui.opc_model.model_node import (
     ComponentNode,
     FeatureInitRequest,
@@ -26,7 +30,18 @@ from opensmi_ui.opc_model.value_read import (
 logger = get_module_logger("opc_model.features.skill_state")
 
 
-class SkillStateFeatureNode(FeatureNode):
+class PossibleSkillControlActions(StrEnum):
+    START = "Start"
+    HALT = "Halt"
+    RESET = "Reset"
+    SUSPEND = "Suspend"
+
+
+class SkillControlAction(JsonInModel):
+    requested_action: PossibleSkillControlActions
+
+
+class SkillControlFeatureNode(FeatureNode):
     _init_step: int
 
     def __init__(
@@ -37,11 +52,14 @@ class SkillStateFeatureNode(FeatureNode):
     ):
         super().__init__(opc_node, parent_component_node, parent_feature_node)
         self._init_step = 0
-        self.entity_type = "SkillState"
+        self.entity_type = "SkillControl"
 
-        # create features
-        for child in opc_node.children:
-            ...
+        # save available action nodes
+        self.action_nodes = {}
+        for child_node in opc_node.children:
+            match child_node.browse_name.Name:
+                case "Start" | "Halt" | "Reset" | "Suspend":
+                    self.action_nodes[child_node.browse_name.Name] = child_node
 
     def subscribe(self) -> FeatureSubscribeRequest | None:
         return None
@@ -92,7 +110,7 @@ class SkillStateFeatureNode(FeatureNode):
                         raise ValueError("Failed to read skill state")
 
                     self.opc_node.attributes["Value"] = val.Value
-                    self.entity = SkillStateEntity(opc_node=self.opc_node)
+                    self.entity = SkillControlEntity(opc_node=self.opc_node)
 
                     self._init_step += 1
                     self.init_state = FeatureInitState.DONE
@@ -108,6 +126,7 @@ class SkillStateFeatureNode(FeatureNode):
     def request_subscription(
         self, event_bus: EventBus
     ) -> FeatureSubscribeRequest | None:
+        self.event_bus = event_bus
 
         try:
             req = FeatureSubscribeRequest(subscriptions=[])
@@ -128,7 +147,7 @@ class SkillStateFeatureNode(FeatureNode):
             return None
 
     def on_state_update(self, node: Node, evt: DataChangeEvent):
-        if not isinstance(self.entity, SkillStateEntity):
+        if not isinstance(self.entity, SkillControlEntity):
             return
 
         try:
@@ -149,7 +168,7 @@ class SkillStateFeatureNode(FeatureNode):
             else:
                 value = variant_value_to_string(value)
 
-            update = SkillStateStateUpdate(
+            update = SkillControlStateUpdate(
                 entity_id=self.entity_id,
                 new_state=value,
                 timestamp=data_value.SourceTimestamp,
@@ -162,3 +181,27 @@ class SkillStateFeatureNode(FeatureNode):
         except Exception:
             logger.exception("Failed to handle Update due to an Exception")
             return
+
+    async def handle_action(self, action: GenericAction) -> None:
+        logger.info("action")
+        logger.info(action)
+
+        method_node_to_call: OPCNode | None = None
+        match action.action_type:
+            case "SkillControlAction":
+                data = SkillControlAction.model_validate(action.action)
+                method_node_to_call = self.action_nodes.get(
+                    data.requested_action.value, None
+                )
+            case _:
+                logger.warning(
+                    f"received unsupported Action of type {action.action_type} on SkillFeature"
+                )
+                return
+
+        if method_node_to_call is None:
+            raise RuntimeError(
+                f"Cannot complete Action {action.action_type} because the desired Node is not present"
+            )
+
+        await self.opc_node.ua_node.call_method(methodid=method_node_to_call.node_id)

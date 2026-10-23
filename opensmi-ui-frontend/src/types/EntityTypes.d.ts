@@ -68,8 +68,13 @@ export interface LockEntityData {
   lockingClientLastChange: string;
 }
 
-export interface SkillStateEntityData {
+export interface SkillControlEntityData {
   name: string;
   currentState: string | number;
   currentStateLastChange: string;
+}
+
+export interface SkillEntityData {
+  name: string;
+  minAccessLevel: number;
 }

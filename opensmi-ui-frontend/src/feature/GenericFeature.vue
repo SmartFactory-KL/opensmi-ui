@@ -8,7 +8,8 @@ import UserContainerFeature from "./UserContainerFeature.vue";
 import UserFeature from "./UserFeature.vue";
 import VariableFeature from "./VariableFeature.vue";
 import LockFeature from "./LockFeature.vue";
-import SkillStateFeature from "./SkillStateFeature.vue";
+import SkillControlFeature from "./SkillControlFeature.vue";
+import SkillFeature from "./SkillFeature.vue";
 
 const props = defineProps<{
     feature: FeatureNode;
@@ -22,8 +23,10 @@ const featureComponent = computed(() => {
         case "Lock":
             return LockFeature;
 
-        case "SkillState":
-            return SkillStateFeature;
+        case "Skill":
+            return SkillFeature;
+        case "SkillControl":
+            return SkillControlFeature;
 
         case "UserContainer":
             return UserContainerFeature;

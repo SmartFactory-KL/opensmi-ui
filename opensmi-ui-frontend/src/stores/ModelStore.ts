@@ -1,12 +1,17 @@
 import { simplyGetToText, simplyGetToJSON } from "@/fetch/simplyFetch";
 import type SocketClient from "@/socket/SocketClient";
 import Toaster from "@/toast/Toaster";
-import type { LockEntityData, VariableEntityData } from "@/types/EntityTypes";
+import type {
+  LockEntityData,
+  SkillControlEntityData,
+  VariableEntityData,
+} from "@/types/EntityTypes";
 import type { ComponentNode, FeatureNode } from "@/types/NodeFeatureTypes";
 import type {
   LockIsLockedUpdate,
   LockLockingClientUpdate,
   LockLockingUserUpdate,
+  SkillControlStateUpdate,
   VariableValueUpdate,
 } from "@/types/UpdateTypes";
 import { defineStore } from "pinia";
@@ -245,7 +250,17 @@ export const useModelStore = defineStore("model", {
             typedEntity.lockingClientLastChange = typedUpdate.timestamp;
           }
           break;
+        case "SkillControlStateUpdate":
+          {
+            const typedUpdate = update.updateContent as SkillControlStateUpdate;
+            const typedEntity = targetFeature.entity as SkillControlEntityData;
 
+            console.log(typedUpdate);
+
+            typedEntity.currentState = typedUpdate.newState;
+            typedEntity.currentStateLastChange = typedUpdate.timestamp;
+          }
+          break;
         default:
           console.warn("unknown updateType", update.updateType);
           break;
