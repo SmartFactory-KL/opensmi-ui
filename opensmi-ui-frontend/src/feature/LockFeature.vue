@@ -84,7 +84,7 @@ async function requestAction(requestedAction: LockAction["requestedAction"]) {
 
 <template>
     <article
-        class="flex flex-col gap-4 shadow-sm border p-4 transition-colors duration-150"
+        class="flex flex-col gap-4 shadow-sm border px-4 py-2 transition-colors duration-150"
         :class="{
             'bg-red-50 border-red-600 text-red-800': lockingState === 'open',
             'bg-amber-50 border-amber-600 text-amber-800':
@@ -113,7 +113,7 @@ async function requestAction(requestedAction: LockAction["requestedAction"]) {
                     </div>
 
                     <div>
-                        {{ isLocked ? "Locked" : "Unlocked" }}
+                        {{ isLocked ? "Locked" : "Open" }}
                     </div>
                 </div>
 

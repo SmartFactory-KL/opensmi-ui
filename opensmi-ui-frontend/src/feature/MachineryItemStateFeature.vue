@@ -13,5 +13,5 @@ const entity = computed(() => {
 </script>
 
 <template>
-    <div class="p-2 bg-white border">{{ entity.currentState }}</div>
+    <span>{{ entity.currentState }}</span>
 </template>

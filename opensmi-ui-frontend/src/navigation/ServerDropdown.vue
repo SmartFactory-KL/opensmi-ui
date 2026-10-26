@@ -5,9 +5,13 @@ import MachineComponentTree from "@/tree/MachineComponentTree.vue";
 import ServerStateIndicator from "./ServerStateIndicator.vue";
 import MachineOverviewCard from "./DropdownMachineOverviewCard.vue";
 import QuickConnectButton from "./QuickConnectButton.vue";
+import { ref } from "vue";
+import type { ComponentNode } from "@/types/NodeFeatureTypes";
 
 const dropdownStore = useDropdownStore();
 const modelStore = useModelStore();
+
+const currentMachine = ref<ComponentNode | null>(null);
 </script>
 
 <template>
@@ -20,78 +24,88 @@ const modelStore = useModelStore();
         leave-to-class="max-h-0 -translate-y-2 opacity-0"
     >
         <div
-            v-if="dropdownStore.isVisible"
-            class="flex items-start px-24 pt-3 bg-stone-200/50 z-10"
+            v-show="dropdownStore.isVisible"
+            class="flex items-start px-24 pt-3 bg-stone-100/60 z-10"
             @click.self.prevent="dropdownStore.closeDropdown()"
         >
             <div
-                class="z-20 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-300 shadow-2xl shadow-slate-900/10 backdrop-blur-sm"
+                class="z-20 w-full overflow-hidden bg-slate-800 shadow-2xl border rounded-3xl"
             >
-                <div class="my-3 max-h-[calc(80vh-2rem)] overflow-y-auto px-4">
-                    <div class="dropdown-grid">
-                        <!-- Root Component Trees -->
+                <!-- Inner Part -->
+                <div class="my-4 max-h-[calc(80vh-2rem)] overflow-y-auto px-4">
+                    <div class="flex flex-row justify-between">
                         <div
-                            class="dropdown-tree overflow-auto max-h-[calc(80vh-2rem)] bg-slate-200 border-4 border-slate-400 p-4"
+                            class="flex flex-col justify-start items-start max-w-96 min-w-96"
                         >
-                            <span
-                                v-show="modelStore.isWorking"
-                                class="text-center text-pink-500 text-xs"
-                            >
-                                Laden...
-                            </span>
+                            <!-- State and Connection Stuff -->
                             <div
-                                v-for="rootComponent in modelStore.rootComponents.values()"
-                                class="mb-10 border-b border-b-pink-500"
+                                class="w-full flex flex-col gap-4 justify-center items-center"
                             >
-                                <MachineComponentTree
-                                    :component="rootComponent"
-                                ></MachineComponentTree>
+                                <!-- Current state -->
+                                <ServerStateIndicator
+                                    @click="dropdownStore.closeDropdown()"
+                                ></ServerStateIndicator>
+
+                                <!-- Connect/Disconnect -->
+                                <QuickConnectButton></QuickConnectButton>
                             </div>
-                        </div>
-                        <!-- State and Connection Stuff -->
-                        <div
-                            class="dropdown-state bg-slate-50 border-4 border-slate-400 flex flex-row gap-x-4 justify-center items-center"
-                        >
-                            <!-- Current state -->
-                            <ServerStateIndicator
-                                @click="dropdownStore.closeDropdown()"
-                            ></ServerStateIndicator>
 
-                            <!-- Connect/Disconnect -->
-                            <QuickConnectButton></QuickConnectButton>
-                        </div>
+                            <!-- Root Component and Locking Overview -->
+                            <div
+                                class="w-full mt-4 flex flex-col justify-start items-stretch gap-4"
+                            >
+                                <span
+                                    v-show="modelStore.isWorking"
+                                    class="text-center text-pink-500 text-xs"
+                                >
+                                    Laden...
+                                </span>
+                                <span
+                                    v-show="
+                                        !modelStore.isWorking &&
+                                        modelStore.rootComponents?.size == 0
+                                    "
+                                    class="text-center text-stone-400 text-xs"
+                                >
+                                    Nothing to show
+                                </span>
 
-                        <!-- Root Component and Locking Overview -->
-                        <div
-                            class="dropdown-overview px-4 py-4 flex flex-col gap-3"
-                        >
-                            <span
-                                v-show="modelStore.isWorking"
-                                class="text-center text-pink-500 text-xs"
-                            >
-                                Laden...
-                            </span>
-                            <span
-                                v-show="
-                                    !modelStore.isWorking &&
-                                    modelStore.rootComponents?.size == 0
-                                "
-                                class="text-center text-stone-400 text-xs"
-                            >
-                                Nothing to show
-                            </span>
-
-                            <section
-                                class="flex flex-row flex-wrap justify-start items-start gap-2"
-                            >
-                                <div
-                                    v-for="component in modelStore.rootComponents.values()"
+                                <section
+                                    class="flex flex-col justify-start items-stretch gap-8"
                                 >
                                     <MachineOverviewCard
+                                        v-for="component in modelStore.rootComponents.values()"
+                                        :key="component.entityId"
                                         :component="component"
+                                        :active="currentMachine == component"
+                                        :class="{
+                                            'machine-tab-active':
+                                                currentMachine == component,
+                                        }"
+                                        @click="currentMachine = component"
+                                        class="cursor-pointer rounded-l-xl"
                                     ></MachineOverviewCard>
+                                </section>
+                            </div>
+                        </div>
+                        <!-- Root Component Trees -->
+                        <div class="grow bg-slate-300 p-4 pr-0 rounded-2xl">
+                            <div class="overflow-auto max-h-[calc(80vh-4rem)]">
+                                <span
+                                    v-show="modelStore.isWorking"
+                                    class="text-center text-pink-500 text-xs"
+                                >
+                                    Laden...
+                                </span>
+                                <div
+                                    v-if="currentMachine"
+                                    class="mb-4 pl-2 pt-2"
+                                >
+                                    <MachineComponentTree
+                                        :component="currentMachine"
+                                    ></MachineComponentTree>
                                 </div>
-                            </section>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -101,24 +115,42 @@ const modelStore = useModelStore();
 </template>
 
 <style scoped>
-.dropdown-grid {
-    display: grid;
-    grid-template-rows: 6rem 1fr;
-    grid-template-columns: 1fr 60%;
-    grid-template-areas:
-        "tree state"
-        "tree overview";
+.machine-tab-active {
+    --join-radius: 0.75rem;
+    --join-color: var(
+        --color-slate-300,
+        #cbd5e1
+    ); /* must match the panel's bg */
+    position: relative;
 }
 
-.dropdown-tree {
-    grid-area: tree;
+.machine-tab-active::before,
+.machine-tab-active::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    width: var(--join-radius);
+    height: var(--join-radius);
+    pointer-events: none;
 }
 
-.dropdown-state {
-    grid-area: state;
+/* curve above the card */
+.machine-tab-active::before {
+    top: calc(var(--join-radius) * -1);
+    background: radial-gradient(
+        circle at top left,
+        transparent calc(var(--join-radius) - 0.5px),
+        var(--join-color) var(--join-radius)
+    );
 }
 
-.dropdown-overview {
-    grid-area: overview;
+/* curve below the card */
+.machine-tab-active::after {
+    bottom: calc(var(--join-radius) * -1);
+    background: radial-gradient(
+        circle at bottom left,
+        transparent calc(var(--join-radius) - 0.5px),
+        var(--join-color) var(--join-radius)
+    );
 }
 </style>
