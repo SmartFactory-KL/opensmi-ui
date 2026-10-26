@@ -172,7 +172,31 @@ async function copyJson() {
 
             <OPCNodeInfo :node="item.opcNode"></OPCNodeInfo>
 
+            <template v-if="'children' in item">
+                <SectionBar>Contained Components</SectionBar>
+
+                <span v-show="!item.children?.length" class="text-stone-500"
+                    >No Components</span
+                >
+
+                <div
+                    v-for="component in item.children ?? []"
+                    class="flex flex-row justify-start items-center gap-x-2"
+                >
+                    {{ component.entity.name }}
+
+                    <GenericEntityPageLink
+                        :entityId="component.entityId"
+                        :entityType="component.entityType"
+                    ></GenericEntityPageLink>
+                </div>
+            </template>
+
             <SectionBar>Contained Features</SectionBar>
+
+            <span v-show="!item.features?.length" class="text-stone-500"
+                >No Features</span
+            >
 
             <div
                 class="flex flex-col flex-wrap gap-2 justify-start items-start"
