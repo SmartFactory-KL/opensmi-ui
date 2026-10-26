@@ -1,7 +1,11 @@
 import { simplyGetToJSON, simplyPostToText } from "@/fetch/simplyFetch";
 import type SocketClient from "@/socket/SocketClient";
 import type { GenericUpdateMessage } from "@/types/GenericTypes";
-import type { OPCClientState, ServerStateUpdate, ServerTimeUpdate } from "@/types/UpdateTypes";
+import type {
+  OPCClientState,
+  ServerSessionUpdate,
+  ServerTimeUpdate,
+} from "@/types/UpdateTypes";
 import { defineStore } from "pinia";
 import { usePageStore } from "./PageStore";
 import Toaster from "@/toast/Toaster";
@@ -84,8 +88,15 @@ export const useServerStore = defineStore("server", {
     isDisconnected(data) {
       return data.sessionData.state === "disconnected";
     },
-    getState(data) {
+    sessionState(data) {
       return data.sessionData.state;
+    },
+    currentUsername(data): string | null {
+      if (!this.isConnected) {
+        return null;
+      }
+
+      return data.sessionData.username;
     },
   },
   actions: {
@@ -186,16 +197,22 @@ export const useServerStore = defineStore("server", {
         return;
       }
 
-      let content: any;
       switch (update.updateType) {
-        case "ServerStateUpdate":
-          content = update.updateContent as ServerStateUpdate;
-          this.sessionData.state = content.newState;
-          break;
-        case "ServerTimeUpdate":
-          content = update.updateContent as ServerTimeUpdate;
-          this.serverTime = content.newTime.substring(11, 19);
-          break;
+        case "ServerSessionUpdate": {
+          {
+            const content = update.updateContent as ServerSessionUpdate;
+            this.sessionData = content.newSession;
+            console.log(content);
+            break;
+          }
+        }
+        case "ServerTimeUpdate": {
+          {
+            const content = update.updateContent as ServerTimeUpdate;
+            this.serverTime = content.newTime.substring(11, 19);
+            break;
+          }
+        }
         default:
           console.warn("invalid update type for server");
           console.warn(update);

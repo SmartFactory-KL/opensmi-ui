@@ -15,7 +15,7 @@ from opensmi_ui.opc_model.opc_node import OPCNode
 logger = get_module_logger("opc_model.features.skill_container")
 
 
-class SkillContainerFeatureNode(FeatureNode):
+class SkillGroupContainerFeatureNode(FeatureNode):
     def __init__(
         self,
         opc_node: OPCNode,

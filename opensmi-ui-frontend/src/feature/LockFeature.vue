@@ -2,170 +2,171 @@
 <script setup lang="ts">
 import type { FeatureNode } from "@/types/NodeFeatureTypes";
 import type { LockEntityData } from "@/types/EntityTypes";
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import {
-    LockKeyhole,
-    LockKeyholeOpen,
-    UserRound,
-    Monitor,
-    ShieldCheck,
+    LockKeyholeIcon,
+    LockKeyholeOpenIcon,
+    UserIcon,
+    LaptopIcon,
 } from "@lucide/vue";
-import type { GenericAction, LockAction } from "@/types/UpdateTypes";
+import type { LockAction } from "@/types/UpdateTypes";
 import { simplyPostToText } from "@/fetch/simplyFetch";
 import IconButton from "@/components/IconButton.vue";
+import { useServerStore } from "@/stores/ServerSessionStore";
+import Toaster from "@/toast/Toaster";
 
 const props = defineProps<{
     feature: FeatureNode;
 }>();
 
+const serverStore = useServerStore();
+
+type LOCKING_STATE = "open" | "lockedByUs" | "lockedByOthers";
+
 const entity = computed(() => props.feature.entity as LockEntityData);
+const isWorking = ref(false);
 
 const isLocked = computed(() => entity.value.isLocked);
 
 const lockingUser = computed(() => entity.value.lockingUser?.trim() || null);
-
 const lockingClient = computed(
     () => entity.value.lockingClient?.trim() || null,
 );
 
-function requestInitLock() {
-    const action = {
-        entityId: props.feature.entityId,
-        actionType: "LockAction",
-        action: {
-            requestedAction: "InitLock",
-        } as LockAction,
-    };
+const lockingState = computed<LOCKING_STATE>(() => {
+    if (!isLocked.value) {
+        return "open";
+    } else {
+        if (lockingUser.value === serverStore.currentUsername) {
+            return "lockedByUs";
+        } else {
+            return "lockedByOthers";
+        }
+    }
+});
 
-    requestAction(action);
+function requestInitLock() {
+    requestAction("InitLock");
 }
 
 function requestBreakLock() {
-    const action = {
-        entityId: props.feature.entityId,
-        actionType: "LockAction",
-        action: {
-            requestedAction: "BreakLock",
-        } as LockAction,
-    };
-
-    requestAction(action);
+    requestAction("BreakLock");
 }
 
 function requestExitLock() {
-    const action = {
-        entityId: props.feature.entityId,
-        actionType: "LockAction",
-        action: {
-            requestedAction: "ExitLock",
-        } as LockAction,
-    };
-
-    requestAction(action);
+    requestAction("ExitLock");
 }
 
-async function requestAction(action: GenericAction) {
+async function requestAction(requestedAction: LockAction["requestedAction"]) {
     try {
+        if (isWorking.value === true) {
+            return;
+        }
+        isWorking.value = true;
+
+        const action = {
+            entityId: props.feature.entityId,
+            actionType: "LockAction",
+            action: {
+                requestedAction: requestedAction,
+            } as LockAction,
+        };
+
         await simplyPostToText("/api/opc-model/action", action);
     } catch (e) {
-        console.error(e);
+      console.error(e);
+      Toaster.error("Failed to request Lock Action: " + e)
+    } finally {
+        isWorking.value = false;
     }
 }
 </script>
 
 <template>
     <article
-        class="flex w-full flex-col gap-4 shadow-sm border bg-white p-4 text-gray-900 transition-colors"
-        :class="
-            isLocked
-                ? 'border-amber-200 hover:border-amber-300'
-                : 'border-gray-200 hover:border-gray-300'
-        "
+        class="flex flex-col gap-4 shadow-sm border p-4 transition-colors"
+        :class="{
+            'bg-red-50 border-red-600 text-red-800': lockingState === 'open',
+            'bg-amber-50 border-amber-600 text-amber-800':
+                lockingState === 'lockedByOthers',
+            'bg-green-50 border-green-600 text-green-800':
+                lockingState === 'lockedByUs',
+        }"
     >
         <!-- Header -->
-        <div class="flex items-center gap-3">
-            <div
-                class="flex size-11 shrink-0 items-center justify-center rounded-lg"
-                :class="
-                    isLocked
-                        ? 'bg-amber-50 text-amber-600'
-                        : 'bg-gray-100 text-gray-500'
-                "
-            >
-                <LockKeyhole v-if="isLocked" :size="22" :stroke-width="1.8" />
-                <LockKeyholeOpen v-else :size="22" :stroke-width="1.8" />
-            </div>
+        <div class="flex items-center gap-2">
+            <div class="min-w-40 flex flex-col justify-between items-start">
+                <div
+                    class="flex flex-row justify-start items-center gap-x-2 text-sm"
+                >
+                    <div>
+                        <LockKeyholeIcon
+                            v-if="isLocked"
+                            :size="16"
+                            :stroke-width="1.6"
+                        />
+                        <LockKeyholeOpenIcon
+                            v-else
+                            :size="16"
+                            :stroke-width="1.6"
+                        />
+                    </div>
 
-            <div class="min-w-0 flex-1">
-                <h3 class="truncate text-sm font-semibold tracking-tight">
-                    {{ feature.entityType }}
-                </h3>
-            </div>
-
-            <div class="min-w-0 flex-1">
-                <IconButton @click="requestInitLock">Init Lock</IconButton>
-                <IconButton @click="requestBreakLock">Break Lock</IconButton>
-                <IconButton @click="requestExitLock">Exit Lock</IconButton>
-            </div>
-
-            <span
-                class="inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium"
-                :class="
-                    isLocked
-                        ? 'bg-amber-50 text-amber-700'
-                        : 'bg-gray-100 text-gray-600'
-                "
-            >
-                {{ isLocked ? "Locked" : "Unlocked" }}
-            </span>
-        </div>
-
-        <div class="text-xs text-stone-400">
-            since: {{ entity.isLockedLastChange }}
-        </div>
-
-        <!-- Lock details -->
-        <div class="flex flex-col gap-3 border-t border-gray-100 pt-4">
-            <div class="flex items-start gap-3">
-                <div class="mt-0.5 text-gray-400">
-                    <UserRound :size="16" />
+                    <div>
+                        {{ isLocked ? "Locked" : "Unlocked" }}
+                    </div>
                 </div>
 
-                <div class="min-w-0 flex-1">
-                    <p class="text-xs font-medium text-gray-500">
-                        Locking user
-                    </p>
+                <div
+                    class="flex flex-row justify-start items-center gap-x-2 text-sm"
+                >
+                    <div>
+                        <UserIcon :size="16" :stroke-width="1.6" />
+                    </div>
 
-                    <p
-                        class="mt-1 wrap-break-word text-sm font-medium text-gray-800"
-                    >
-                        {{ lockingUser || "-" }}
-                    </p>
-                    <span class="text-xs text-stone-500">
-                        since {{ entity.lockingUserLastChange }}
-                    </span>
+                    <div>
+                        {{ lockingUser?.length ? lockingUser : "-" }}
+                    </div>
+                </div>
+
+                <div
+                    class="flex flex-row justify-start items-center gap-x-2 text-sm"
+                >
+                    <div>
+                        <LaptopIcon :size="16" :stroke-width="1.6" />
+                    </div>
+
+                    <div>
+                        {{ lockingClient?.length ? lockingClient : "-" }}
+                    </div>
                 </div>
             </div>
 
-            <div class="flex items-start gap-3">
-                <div class="mt-0.5 text-gray-400">
-                    <Monitor :size="16" />
-                </div>
-
-                <div class="min-w-0 flex-1">
-                    <p class="text-xs font-medium text-gray-500">
-                        Locking client
-                    </p>
-
-                    <p
-                        class="mt-1 wrap-break-word text-sm font-medium text-gray-800"
-                    >
-                        {{ lockingClient || "-" }}
-                    </p>
-                    <span class="text-xs text-stone-500">
-                        since {{ entity.lockingClientLastChange }}
-                    </span>
-                </div>
+            <div class="">
+                <IconButton
+                    @click="requestInitLock"
+                    :disabled="isWorking"
+                    :class="[isWorking ? 'animate-spin' : '']"
+                    v-show="lockingState === 'open'"
+                >
+                    <LockKeyholeIcon></LockKeyholeIcon>
+                </IconButton>
+                <IconButton
+                    @click="requestBreakLock"
+                    :disabled="isWorking"
+                    :class="[isWorking ? 'animate-spin' : '']"
+                    v-show="lockingState === 'lockedByOthers'"
+                >
+                    <LockKeyholeIcon></LockKeyholeIcon>
+                </IconButton>
+                <IconButton
+                    @click="requestExitLock"
+                    :disabled="isWorking"
+                    :class="[isWorking ? 'animate-spin' : '']"
+                    v-show="lockingState === 'lockedByUs'"
+                >
+                    <LockKeyholeOpenIcon></LockKeyholeOpenIcon>
+                </IconButton>
             </div>
         </div>
     </article>

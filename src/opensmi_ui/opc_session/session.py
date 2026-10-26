@@ -21,6 +21,7 @@ from opensmi_ui.opc_session.task import StoppableTask, wait_or_stop
 logger = get_module_logger("opc_session")
 
 ConnectionStateChangedHandler = Callable[[UaClientState], None]
+ConnectionSessionChangedHandler = Callable[["OPCSessionData"], None]
 TimeChangedHandler = Callable[[datetime], None]
 
 
@@ -99,6 +100,9 @@ class OPCSession:
         self._connection_state_changed_handler: set[ConnectionStateChangedHandler] = (
             set()
         )
+        self._connection_session_changed_handler: set[
+            ConnectionSessionChangedHandler
+        ] = set()
         self._time_changed_handler: set[TimeChangedHandler] = set()
 
     async def start(self) -> None:
@@ -136,6 +140,12 @@ class OPCSession:
         await self._connection_monitor_task.start()
 
         try:
+            self._session_data.username = username
+            self._session_data.url = url
+
+            self._ns_idx_uri.clear()
+            self._ns_uri_idx.clear()
+
             await self.opc_client.connect(
                 auto_reconnect=settings.auto_reconnect,
                 reconnect_max_delay=settings.reconnect_max_delay,
@@ -178,11 +188,7 @@ class OPCSession:
             logger.exception("Failed to connect")
             raise
 
-        self._session_data.username = username
-
         self._namespaces = await self.opc_client.get_namespace_array()
-        self._ns_idx_uri.clear()
-        self._ns_uri_idx.clear()
 
         for idx, _ns in enumerate(self._namespaces):
             self._ns_idx_uri[idx] = _ns
@@ -229,6 +235,17 @@ class OPCSession:
                     except Exception as e:  # noqa: BLE001
                         # warning disabled because handlers are user defined and could raise anything
                         logger.warning(f"failed to handle connection state change: {e}")
+
+                # broadcast new session data when connected
+                if state is UaClientState.CONNECTED:
+                    for handler in self._connection_session_changed_handler:
+                        try:
+                            handler(self._session_data)
+                        except Exception as e:  # noqa: BLE001
+                            # warning disabled because handlers are user defined and could raise anything
+                            logger.warning(
+                                f"failed to handle connection session change: {e}"
+                            )
 
     async def _time_change_worker(self, stop_event: asyncio.Event) -> None:
         if self.opc_client is None:
@@ -278,11 +295,17 @@ class OPCSession:
                         if notification.Status.is_bad():
                             break
 
-    def on_connection_state_changed(self, handler):
+    def on_connection_state_changed(self, handler: ConnectionStateChangedHandler):
         self._connection_state_changed_handler.add(handler)
 
-    def off_connection_state_changed(self, handler):
-        self._connection_state_changed_handler.remove(handler)
+    def off_connection_state_changed(self, handler: ConnectionStateChangedHandler):
+        self._connection_state_changed_handler.discard(handler)
+
+    def on_connection_session_changed(self, handler: ConnectionSessionChangedHandler):
+        self._connection_session_changed_handler.add(handler)
+
+    def off_connection_session_changed(self, handler: ConnectionSessionChangedHandler):
+        self._connection_session_changed_handler.discard(handler)
 
     def on_time_changed(self, handler: TimeChangedHandler):
         self._time_changed_handler.add(handler)

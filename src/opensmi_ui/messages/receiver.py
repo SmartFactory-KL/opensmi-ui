@@ -3,7 +3,6 @@ from datetime import UTC, datetime
 from typing import Protocol, TypeGuard
 from uuid import UUID
 
-from asyncua.client.ua_client import UaClientState
 from pydantic import BaseModel
 
 from opensmi_ui.logger import get_module_logger
@@ -15,14 +14,15 @@ from opensmi_ui.messages.types import (
     SimpleUpdateMessage,
 )
 from opensmi_ui.model.json import JsonBaseModel, JsonOutModel
+from opensmi_ui.opc_session.session import OPCSessionData
 from opensmi_ui.opc_subscriber.notification import NotificationEvent
 
 logger = get_module_logger("messages.receiver")
 
 
 @dataclass(frozen=True)
-class ServerStateUpdate:
-    new_state: str
+class ServerSessionUpdate:
+    new_session: OPCSessionData
 
 
 @dataclass(frozen=True)
@@ -45,11 +45,11 @@ class MessageReceiver:
         self.funnel = funnel
 
     # server channel
-    def receive_server_state(self, new_state: UaClientState) -> None:
+    def receive_server_session(self, new_session: OPCSessionData) -> None:
         msg = ChanneledMessage(
             channel=Channel.SERVER,
-            data=SimpleUpdateMessage[ServerStateUpdate](
-                update_content=ServerStateUpdate(new_state=str(new_state.value))
+            data=SimpleUpdateMessage[ServerSessionUpdate](
+                update_content=ServerSessionUpdate(new_session=new_session)
             ),
         )
 

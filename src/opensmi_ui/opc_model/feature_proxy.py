@@ -10,8 +10,8 @@ from opensmi_ui.opc_model.features.notification_feature import NotificationFeatu
 from opensmi_ui.opc_model.features.resource_container_feature import (
     ResourceContainerFeatureNode,
 )
-from opensmi_ui.opc_model.features.skill_container_feature import (
-    SkillContainerFeatureNode,
+from opensmi_ui.opc_model.features.skill_group_container_feature import (
+    SkillGroupContainerFeatureNode,
 )
 from opensmi_ui.opc_model.features.variable_container_feature import (
     VariableContainerFeatureNode,
@@ -81,7 +81,7 @@ def create_features_for_node(
             ]
         case "SkillSet":
             feature_list = [
-                SkillContainerFeatureNode(
+                SkillGroupContainerFeatureNode(
                     opc_node=opc_node, parent_component_node=parent_component_node
                 )
             ]

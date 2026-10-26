@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { HousePlugIcon, SatelliteIcon } from "@lucide/vue";
+import { HouseHeartIcon, HousePlugIcon, SatelliteIcon } from "@lucide/vue";
 import LocalClock from "./LocalClock.vue";
 import { useServerStore } from "@/stores/ServerSessionStore";
 
@@ -25,7 +25,7 @@ const serverStore = useServerStore();
         <div
             class="local-clock font-mono text-sm text-blue-400 flex flex-row justify-center items-center gap-x-1"
         >
-            <HousePlugIcon :size="16"></HousePlugIcon>
+            <HouseHeartIcon :size="16"></HouseHeartIcon>
             <LocalClock></LocalClock>
         </div>
     </div>

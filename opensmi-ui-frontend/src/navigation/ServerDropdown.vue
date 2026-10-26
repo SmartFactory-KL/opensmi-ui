@@ -3,7 +3,8 @@ import { useDropdownStore } from "@/stores/DropdownStore";
 import { useModelStore } from "@/stores/ModelStore";
 import MachineComponentTree from "@/tree/MachineComponentTree.vue";
 import ServerStateIndicator from "./ServerStateIndicator.vue";
-import ComponentCard from "@/card/ComponentCard.vue";
+import MachineOverviewCard from "./DropdownMachineOverviewCard.vue";
+import QuickConnectButton from "./QuickConnectButton.vue";
 
 const dropdownStore = useDropdownStore();
 const modelStore = useModelStore();
@@ -28,6 +29,7 @@ const modelStore = useModelStore();
             >
                 <div class="my-3 max-h-[calc(80vh-2rem)] overflow-y-auto px-4">
                     <div class="dropdown-grid">
+                        <!-- Root Component Trees -->
                         <div
                             class="dropdown-tree overflow-auto max-h-[calc(80vh-2rem)] bg-slate-200 border-4 border-slate-400 p-4"
                         >
@@ -46,14 +48,22 @@ const modelStore = useModelStore();
                                 ></MachineComponentTree>
                             </div>
                         </div>
+                        <!-- State and Connection Stuff -->
                         <div
-                            class="dropdown-state flex flex-row justify-center items-center"
+                            class="dropdown-state bg-slate-50 border-4 border-slate-400 flex flex-row gap-x-4 justify-center items-center"
                         >
                             <!-- Current state -->
-                            <ServerStateIndicator @click="dropdownStore.closeDropdown()"></ServerStateIndicator>
+                            <ServerStateIndicator
+                                @click="dropdownStore.closeDropdown()"
+                            ></ServerStateIndicator>
+
+                            <!-- Connect/Disconnect -->
+                            <QuickConnectButton></QuickConnectButton>
                         </div>
+
+                        <!-- Root Component and Locking Overview -->
                         <div
-                            class="dropdown-overview px-4 py-0 flex flex-col gap-3"
+                            class="dropdown-overview px-4 py-4 flex flex-col gap-3"
                         >
                             <span
                                 v-show="modelStore.isWorking"
@@ -70,11 +80,18 @@ const modelStore = useModelStore();
                             >
                                 Nothing to show
                             </span>
-                            <!-- <ComponentCard
-                                v-for="machine in modelStore.rootComponents.values()"
-                                :component="machine"
+
+                            <section
+                                class="flex flex-row flex-wrap justify-start items-start gap-2"
                             >
-                            </ComponentCard> -->
+                                <div
+                                    v-for="component in modelStore.rootComponents.values()"
+                                >
+                                    <MachineOverviewCard
+                                        :component="component"
+                                    ></MachineOverviewCard>
+                                </div>
+                            </section>
                         </div>
                     </div>
                 </div>
@@ -87,7 +104,7 @@ const modelStore = useModelStore();
 .dropdown-grid {
     display: grid;
     grid-template-rows: 6rem 1fr;
-    grid-template-columns: 1fr 50%;
+    grid-template-columns: 1fr 60%;
     grid-template-areas:
         "tree state"
         "tree overview";

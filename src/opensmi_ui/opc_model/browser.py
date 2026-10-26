@@ -17,6 +17,7 @@ from opensmi_ui.opc_model.model_node import (
     FeatureInitRequest,
     FeatureInitResult,
     FeatureNode,
+    print_component_trees,
     visit_tree_features,
 )
 from opensmi_ui.opc_model.opc_node import OPCNode
@@ -254,7 +255,7 @@ class OPCBrowser:
         tree_convert_duration = perf_counter() - tree_convert_start
         logger.info("Tree Conversion took %.6f seconds", tree_convert_duration)
 
-        # print_component_trees(component_trees)
+        print_component_trees(component_trees)
 
         # create features for nodes
         feature_create_start = perf_counter()

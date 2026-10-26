@@ -1,9 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import {
-    CheckCircle2Icon,
-    CircleAlertIcon,
-    CircleOffIcon,
     EyeIcon,
     EyeOffIcon,
     KeyRoundIcon,
@@ -14,7 +11,6 @@ import {
     LogOutIcon,
     MessageSquareWarningIcon,
     RotateCcwIcon,
-    ServerIcon,
     ShieldCheckIcon,
     Trash2Icon,
     UserIcon,

@@ -8,6 +8,8 @@ import {
     CircleOffIcon,
     CircleAlertIcon,
     RotateCwIcon,
+    User2Icon,
+    UserIcon,
 } from "@lucide/vue";
 
 const props = withDefaults(
@@ -136,8 +138,13 @@ const stateConfig = computed(() => {
                 {{ stateConfig.label }}
             </p>
 
-            <p class="mt-0.5 text-xs opacity-75">
-                {{ stateConfig.description }}
+            <p class="mt-0.5 text-xs opacity-75 flex gap-x-1">
+                <UserIcon :size="16"></UserIcon>
+                {{
+                    serverStore.currentUsername?.length
+                        ? serverStore.currentUsername
+                        : "-"
+                }}
             </p>
         </div>
     </section>

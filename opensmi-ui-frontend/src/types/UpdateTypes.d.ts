@@ -1,3 +1,4 @@
+import type { OPCSessionData } from "@/stores/ServerSessionStore";
 import type { GenericUpdateMessage } from "./GenericTypes";
 
 type OPCClientState =
@@ -11,8 +12,8 @@ type OPCClientState =
 
 // SERVER
 
-export interface ServerStateUpdate {
-  newState: OPCClientState;
+export interface ServerSessionUpdate {
+  newSession: OPCSessionData;
 }
 
 export interface ServerTimeUpdate {

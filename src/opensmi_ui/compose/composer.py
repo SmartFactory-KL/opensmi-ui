@@ -91,7 +91,7 @@ class Composer:
             # session
             opc_session = OPCSession(settings=OPCSessionSettings())
 
-            opc_session.on_connection_state_changed(msg_receiver.receive_server_state)
+            opc_session.on_connection_session_changed(msg_receiver.receive_server_session)
             opc_session.on_time_changed(msg_receiver.receive_server_time)
 
             self.startables.append(opc_session)

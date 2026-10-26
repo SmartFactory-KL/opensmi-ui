@@ -10,6 +10,8 @@ import VariableFeature from "./VariableFeature.vue";
 import LockFeature from "./LockFeature.vue";
 import SkillControlFeature from "./SkillControlFeature.vue";
 import SkillFeature from "./SkillFeature.vue";
+import SkillGroupFeature from "./SkillGroupFeature.vue";
+import SkillSetFeature from "./SkillSetFeature.vue";
 
 const props = defineProps<{
     feature: FeatureNode;
@@ -23,6 +25,10 @@ const featureComponent = computed(() => {
         case "Lock":
             return LockFeature;
 
+        case "SkillGroupContainer":
+            return SkillSetFeature;
+        case "SkillGroup":
+            return SkillGroupFeature;
         case "Skill":
             return SkillFeature;
         case "SkillControl":

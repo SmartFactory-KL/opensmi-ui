@@ -2,7 +2,7 @@ import type SocketClient from "@/socket/SocketClient";
 import type { LocalizedTextData, NodeIdData } from "@/types/NodeFeatureTypes";
 import { defineStore } from "pinia";
 
-export const MAX_NOTIFICATION_COUNT = 15;
+export const MAX_NOTIFICATION_COUNT = 1000;
 
 export type NotificationLevel = "info" | "error" | "warning";
 
@@ -34,6 +34,8 @@ export const useNotificationStore = defineStore("notification", {
       warning: ReturnType<typeof setTimeout> | null;
       error: ReturnType<typeof setTimeout> | null;
     };
+
+    currentTab: NotificationLevel;
   } => {
     return {
       notificationContent: {
@@ -50,6 +52,8 @@ export const useNotificationStore = defineStore("notification", {
         warning: null,
         error: null,
       },
+
+      currentTab: "info",
     };
   },
   actions: {
@@ -82,11 +86,16 @@ export const useNotificationStore = defineStore("notification", {
       if (this.animate[level] === null) {
         this.animate[level] = setTimeout(() => {
           this.animate[level] = null;
-        }, 1000);
+        }, 350);
       }
     },
     tick() {
       // not used right now
+    },
+    setTab(newTab: NotificationLevel) {
+      if (newTab !== this.currentTab) {
+        this.currentTab = newTab;
+      }
     },
     startTickInterval() {
       if (this.tickIntervalHandle !== null) {

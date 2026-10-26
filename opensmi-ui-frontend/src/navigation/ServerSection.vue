@@ -36,7 +36,7 @@ const modelStore = useModelStore();
 
             <ServerState></ServerState>
 
-            <QuickConnectButton></QuickConnectButton>
+            <QuickConnectButton tiny></QuickConnectButton>
         </div>
     </div>
 </template>

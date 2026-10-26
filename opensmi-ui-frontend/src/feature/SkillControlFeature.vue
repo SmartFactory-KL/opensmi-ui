@@ -50,24 +50,63 @@ type StateConfig = {
     color: string;
     iconColor: string;
     barColor: string;
+    isBusy: boolean;
 };
+
+const controls: {
+    action: SkillControlAction["requestedAction"];
+    label: string;
+    icon: LucideIcon;
+    classes: string;
+}[] = [
+    {
+        action: "Reset",
+        label: "Reset",
+        icon: ArrowDownLeftFromSquareIcon,
+        classes:
+            "text-violet-600 bg-violet-50 hover:text-violet-700 focus-visible:ring-violet-500",
+    },
+    {
+        action: "Start",
+        label: "Start",
+        icon: PlayCircleIcon,
+        classes:
+            "text-emerald-600 bg-emerald-50 hover:text-emerald-700 focus-visible:ring-emerald-500",
+    },
+    {
+        action: "Suspend",
+        label: "Suspend",
+        icon: PauseCircleIcon,
+        classes:
+            "text-amber-600 bg-amber-50 hover:text-amber-700 focus-visible:ring-amber-500",
+    },
+    {
+        action: "Halt",
+        label: "Halt",
+        icon: StopCircleIcon,
+        classes:
+            "text-red-600 bg-red-50 hover:text-red-700 focus-visible:ring-red-500",
+    },
+];
 
 const states: Record<number, StateConfig> = {
     [SkillState.HALTED]: {
         label: "Halted",
         description: "Stopped · Reset required",
-        icon: ShieldAlert,
+        icon: StopCircleIcon,
         color: "bg-red-50 text-red-800 border-red-200",
         iconColor: "text-red-600",
         barColor: "bg-red-500",
+        isBusy: false,
     },
     [SkillState.READY]: {
         label: "Ready",
         description: "Ready to start",
         icon: CircleCheck,
-        color: "bg-emerald-50 text-emerald-800 border-emerald-200",
-        iconColor: "text-emerald-600",
-        barColor: "bg-emerald-500",
+        color: "bg-violet-50 text-violet-800 border-violet-200",
+        iconColor: "text-violet-600",
+        barColor: "bg-violet-500",
+        isBusy: false,
     },
     [SkillState.RUNNING]: {
         label: "Running",
@@ -76,6 +115,7 @@ const states: Record<number, StateConfig> = {
         color: "bg-blue-50 text-blue-800 border-blue-200",
         iconColor: "text-blue-600",
         barColor: "bg-blue-500",
+        isBusy: true,
     },
     [SkillState.SUSPENDED]: {
         label: "Suspended",
@@ -84,6 +124,7 @@ const states: Record<number, StateConfig> = {
         color: "bg-amber-50 text-amber-800 border-amber-200",
         iconColor: "text-amber-600",
         barColor: "bg-amber-500",
+        isBusy: false,
     },
     [SkillState.COMPLETED]: {
         label: "Completed",
@@ -92,6 +133,7 @@ const states: Record<number, StateConfig> = {
         color: "bg-teal-50 text-teal-800 border-teal-200",
         iconColor: "text-teal-600",
         barColor: "bg-teal-500",
+        isBusy: false,
     },
     [SkillState.STARTING]: {
         label: "Starting",
@@ -100,6 +142,7 @@ const states: Record<number, StateConfig> = {
         color: "bg-sky-50 text-sky-800 border-sky-200",
         iconColor: "text-sky-600",
         barColor: "bg-sky-500",
+        isBusy: true,
     },
     [SkillState.HALTING]: {
         label: "Halting",
@@ -108,6 +151,7 @@ const states: Record<number, StateConfig> = {
         color: "bg-orange-50 text-orange-800 border-orange-200",
         iconColor: "text-orange-600",
         barColor: "bg-orange-500",
+        isBusy: true,
     },
     [SkillState.COMPLETING]: {
         label: "Completing",
@@ -116,6 +160,7 @@ const states: Record<number, StateConfig> = {
         color: "bg-teal-50 text-teal-800 border-teal-200",
         iconColor: "text-teal-600",
         barColor: "bg-teal-500",
+        isBusy: true,
     },
     [SkillState.RESETTING]: {
         label: "Resetting",
@@ -124,6 +169,7 @@ const states: Record<number, StateConfig> = {
         color: "bg-violet-50 text-violet-800 border-violet-200",
         iconColor: "text-violet-600",
         barColor: "bg-violet-500",
+        isBusy: true,
     },
     [SkillState.SUSPENDING]: {
         label: "Suspending",
@@ -132,6 +178,7 @@ const states: Record<number, StateConfig> = {
         color: "bg-amber-50 text-amber-800 border-amber-200",
         iconColor: "text-amber-600",
         barColor: "bg-amber-500",
+        isBusy: true,
     },
 };
 
@@ -213,36 +260,6 @@ async function requestAction(
         class="w-full border border-slate-200 bg-white text-slate-900"
         :aria-label="`${entity.name} state`"
     >
-        <header
-            class="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3"
-        >
-            <div class="min-w-0">
-                <p class="truncate text-sm font-semibold">
-                    {{ entity.name }}
-                </p>
-                <p class="mt-0.5 text-xs text-slate-500">Skill state</p>
-            </div>
-
-            <IconButton @click="requestAction('Start')">
-                <PlayCircleIcon></PlayCircleIcon> Start
-            </IconButton>
-
-            <IconButton @click="requestAction('Halt')">
-                <StopCircleIcon></StopCircleIcon> Halt
-            </IconButton>
-
-            <IconButton @click="requestAction('Reset')">
-                <ArrowDownLeftFromSquareIcon></ArrowDownLeftFromSquareIcon>
-                Reset
-            </IconButton>
-
-            <IconButton @click="requestAction('Suspend')">
-                <PauseCircleIcon></PauseCircleIcon> Suspend
-            </IconButton>
-
-            <Clock class="size-4 shrink-0 text-slate-400" />
-        </header>
-
         <div class="flex items-stretch">
             <div
                 class="w-1 shrink-0"
@@ -253,13 +270,17 @@ async function requestAction(
                 <template v-if="state">
                     <div class="flex items-center gap-3">
                         <div
-                            class="flex size-11 shrink-0 items-center justify-center border"
+                            class="flex size-11 shrink-0 items-center justify-center border rounded-full"
                             :class="state.color"
                         >
                             <component
                                 :is="state.icon"
                                 class="size-6"
-                                :class="state.iconColor"
+                                :class="[
+                                    state.iconColor,
+                                    state.isBusy &&
+                                        'animate-spin motion-reduce:animate-none',
+                                ]"
                                 :aria-label="state.label"
                             />
                         </div>
@@ -267,20 +288,28 @@ async function requestAction(
                         <div class="min-w-0 flex-1">
                             <div class="flex flex-wrap items-center gap-2">
                                 <h3 class="text-lg font-semibold leading-tight">
-                                    {{ state.label }}
-                                </h3>
-
-                                <span
-                                    class="border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
-                                    :class="state.color"
-                                >
                                     {{ entity.currentState }}
-                                </span>
+                                </h3>
                             </div>
 
                             <p class="mt-1 text-sm text-slate-500">
                                 {{ state.description }}
                             </p>
+                        </div>
+
+                        <div
+                            class="flex flex-row justify-start items-center gap-x-2"
+                        >
+                            <IconButton
+                                v-for="control in controls"
+                                :key="control.action"
+                                :class="control.classes"
+                                :title="control.label"
+                                :aria-label="control.label"
+                                @click="requestAction(control.action)"
+                            >
+                                <component :is="control.icon" />
+                            </IconButton>
                         </div>
                     </div>
                 </template>
