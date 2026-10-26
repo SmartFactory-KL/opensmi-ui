@@ -1,6 +1,7 @@
 from asyncua import ua
 
 from opensmi_ui.logger import get_module_logger
+from opensmi_ui.model.action import GenericAction
 from opensmi_ui.opc_model.entities.method_entity import MethodEntity
 from opensmi_ui.opc_model.features.dependency_feature import DependencyFeatureNode
 from opensmi_ui.opc_model.features.variable_container_feature import (
@@ -21,6 +22,7 @@ logger = get_module_logger("opc_model.features.method")
 
 class MethodFeatureNode(FeatureNode):
     _init_step: int
+    action_nodes: dict[str, OPCNode]
 
     def __init__(
         self,
@@ -64,9 +66,16 @@ class MethodFeatureNode(FeatureNode):
                         DependencyFeatureNode(
                             opc_node=child,
                             parent_component_node=parent_component_node,
-                            parent_feature_node=self
+                            parent_feature_node=self,
                         )
                     )
+
+        # look for action nodes
+        self.action_nodes = {}
+        for child in opc_node.children:
+            match child.browse_name.Name:
+                case "Call":
+                    self.action_nodes[child.browse_name.Name] = child
 
     def subscribe(self) -> FeatureSubscribeRequest | None:
         return None
@@ -122,3 +131,11 @@ class MethodFeatureNode(FeatureNode):
 
             case _:
                 return None
+
+    async def handle_action(self, action: GenericAction) -> None:
+        node_to_call = self.action_nodes.get("Call", None)
+
+        if node_to_call is None:
+            raise RuntimeError("Cannot call Method because the Call node is missing")
+
+        await self.opc_node.ua_node.call_method(methodid=node_to_call.node_id)

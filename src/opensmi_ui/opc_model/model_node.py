@@ -175,7 +175,7 @@ class FeatureNode:
     @abstractmethod
     async def handle_action(self, action: GenericAction) -> None:
         """handle_action() is called whenever any action has been received for the entityId of this feature"""
-        ...
+        raise NotImplementedError("This feature does not support actions")
 
     def get_data(self) -> FeatureNodeData:
         return FeatureNodeData(

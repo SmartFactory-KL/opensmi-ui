@@ -22,17 +22,15 @@ const skillControlFeature = computed(() => {
     return null;
 });
 
-const monitoringFeature = computed(() => {
+const variableContainers = computed(() => {
+    const result: FeatureNode[] = [];
     for (const feature of props.feature.features) {
-        if (
-            feature.entityType === "VariableContainer" &&
-            feature.entity.name == "FinalResultData"
-        ) {
-            return feature;
+        if (feature.entityType === "VariableContainer") {
+            result.push(feature);
         }
     }
 
-    return null;
+    return result;
 });
 </script>
 
@@ -60,8 +58,9 @@ const monitoringFeature = computed(() => {
 
         <div>
             <VariableContainerFeature
-                :feature="monitoringFeature"
-                v-if="monitoringFeature !== null"
+                :feature="container"
+                :key="container.entityId"
+                v-for="container in variableContainers"
             ></VariableContainerFeature>
         </div>
     </section>

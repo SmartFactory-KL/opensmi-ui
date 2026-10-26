@@ -11,9 +11,11 @@ import LockFeature from "./LockFeature.vue";
 import SkillControlFeature from "./SkillControlFeature.vue";
 import SkillFeature from "./SkillFeature.vue";
 import SkillGroupFeature from "./SkillGroupFeature.vue";
-import SkillSetFeature from "./SkillSetFeature.vue";
+import SkillGroupContainerFeature from "./SkillGroupContainerFeature.vue";
 import ComponentFeature from "./ComponentFeature.vue";
 import GenericEntityPageLink from "@/link/GenericEntityPageLink.vue";
+import MethodContainerFeature from "./MethodContainerFeature.vue";
+import MethodFeature from "./MethodFeature.vue";
 
 const props = defineProps<{
     feature: FeatureNode | ComponentNode;
@@ -28,13 +30,18 @@ const featureComponent = computed(() => {
             return LockFeature;
 
         case "SkillGroupContainer":
-            return SkillSetFeature;
+            return SkillGroupContainerFeature;
         case "SkillGroup":
             return SkillGroupFeature;
         case "Skill":
             return SkillFeature;
         case "SkillControl":
             return SkillControlFeature;
+
+        case "MethodContainer":
+            return MethodContainerFeature;
+        case "Method":
+            return MethodFeature;
 
         case "UserContainer":
             return UserContainerFeature;

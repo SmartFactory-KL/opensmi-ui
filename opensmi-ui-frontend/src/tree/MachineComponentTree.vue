@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { ComponentEntityDto, MachineDto } from '@/types/NodeFeatureTypes';
+import type { ComponentNode } from '@/types/NodeFeatureTypes';
 import MachineComponentTreeElement from './MachineComponentTreeElement.vue';
 
 defineProps<{
-    component: ComponentEntityDto;
+    component: ComponentNode;
 }>();
 </script>
 

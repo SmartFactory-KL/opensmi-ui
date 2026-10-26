@@ -43,6 +43,7 @@ class SkillControlAction(JsonInModel):
 
 class SkillControlFeatureNode(FeatureNode):
     _init_step: int
+    action_nodes: dict[str, OPCNode]
 
     def __init__(
         self,

@@ -7,12 +7,10 @@ import {
     CirclePause,
     CirclePlay,
     CircleStop,
-    Clock,
     LoaderCircle,
     PauseCircleIcon,
     PlayCircleIcon,
     RotateCcw,
-    ShieldAlert,
     StopCircleIcon,
     Timer,
     type LucideIcon,
@@ -23,6 +21,7 @@ import type { FeatureNode } from "@/types/NodeFeatureTypes";
 import type { SkillControlAction } from "@/types/UpdateTypes";
 import { simplyPostToText } from "@/fetch/simplyFetch";
 import IconButton from "@/components/IconButton.vue";
+import Toaster from "@/toast/Toaster";
 
 const props = defineProps<{
     feature: FeatureNode;
@@ -251,6 +250,7 @@ async function requestAction(
         await simplyPostToText("/api/opc-model/action", action);
     } catch (e) {
         console.error(e);
+        Toaster.error("Failed to call skill action: " + e);
     }
 }
 </script>

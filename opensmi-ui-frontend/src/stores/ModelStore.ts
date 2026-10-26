@@ -185,33 +185,33 @@ export const useModelStore = defineStore("model", {
           }
         }
 
-//         // append actual object references for all parent entity ids
-//         for (const component of this.entityIdComponentNodeMap.values()) {
-//           const parentComponentId = component.parentComponentNodeEntityId;
-//
-//           if (parentComponentId === null) {
-//             continue;
-//           }
-//
-//           component.parentComponentNode =
-//             this.entityIdComponentNodeMap.get(parentComponentId) ?? null;
-//         }
-//
-//         for (const feature of this.entityIdFeatureNodeMap.values()) {
-//           const parentComponentId = feature.parentComponentNodeEntityId;
-//
-//           if (parentComponentId !== null) {
-//             feature.parentComponentNode =
-//               this.entityIdComponentNodeMap.get(parentComponentId) ?? null;
-//           }
-//
-//           const parentFeatureId = feature.parentFeatureNodeEntityId;
-//
-//           if (parentFeatureId !== null) {
-//             feature.parentFeatureNode =
-//               this.entityIdFeatureNodeMap.get(parentFeatureId) ?? null;
-//           }
-//         }
+        //         // append actual object references for all parent entity ids
+        //         for (const component of this.entityIdComponentNodeMap.values()) {
+        //           const parentComponentId = component.parentComponentNodeEntityId;
+        //
+        //           if (parentComponentId === null) {
+        //             continue;
+        //           }
+        //
+        //           component.parentComponentNode =
+        //             this.entityIdComponentNodeMap.get(parentComponentId) ?? null;
+        //         }
+        //
+        //         for (const feature of this.entityIdFeatureNodeMap.values()) {
+        //           const parentComponentId = feature.parentComponentNodeEntityId;
+        //
+        //           if (parentComponentId !== null) {
+        //             feature.parentComponentNode =
+        //               this.entityIdComponentNodeMap.get(parentComponentId) ?? null;
+        //           }
+        //
+        //           const parentFeatureId = feature.parentFeatureNodeEntityId;
+        //
+        //           if (parentFeatureId !== null) {
+        //             feature.parentFeatureNode =
+        //               this.entityIdFeatureNodeMap.get(parentFeatureId) ?? null;
+        //           }
+        //         }
 
         console.log(`Received ${this.rootComponents.size} root components`);
         Toaster.success(`Received ${this.rootComponents.size} root components`);
@@ -282,8 +282,6 @@ export const useModelStore = defineStore("model", {
           {
             const typedUpdate = update.updateContent as SkillControlStateUpdate;
             const typedEntity = targetFeature.entity as SkillControlEntityData;
-
-            console.log(typedUpdate);
 
             typedEntity.currentState = typedUpdate.newState;
             typedEntity.currentStateLastChange = typedUpdate.timestamp;

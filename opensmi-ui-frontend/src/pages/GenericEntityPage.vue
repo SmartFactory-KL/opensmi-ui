@@ -102,115 +102,126 @@ async function copyJson() {
         entity-type="Entity"
         v-slot="{ item }"
     >
-        <div class="flex flex-col justify-start items-start p-10 gap-4">
-            <EntityBreadcrumbs :node="item"></EntityBreadcrumbs>
+        <div class="flex flex-col justify-start items-start">
+            <EntityBreadcrumbs
+                :node="item"
+                class="sticky top-0 bg-slate-200 h-10 w-full pl-2"
+            ></EntityBreadcrumbs>
 
-            <SectionBar
-                >Rendered Feature
-                <span class="text-stone-400">(might not work)</span></SectionBar
-            >
-            <GenericFeature :feature="item" flat></GenericFeature>
+            <section class="flex flex-col p-4 justify-start items-start w-full gap-4">
+                <SectionBar
+                    >Rendered Feature
+                    <span class="text-stone-400"
+                        >(might not work)</span
+                    ></SectionBar
+                >
+                <GenericFeature :feature="item" flat></GenericFeature>
 
-            <SectionBar>Raw JSON Content</SectionBar>
+                <SectionBar>Raw JSON Content</SectionBar>
 
-            <div class="w-full">
-                <div class="flex items-center justify-center gap-2">
-                    <button
-                        type="button"
-                        class="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-indigo-500"
-                        :aria-expanded="showJSON"
-                        @click="toggleJson"
+                <div class="w-full">
+                    <div class="flex items-center justify-center gap-2">
+                        <button
+                            type="button"
+                            class="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-indigo-500"
+                            :aria-expanded="showJSON"
+                            @click="toggleJson"
+                        >
+                            <ChevronDownIcon
+                                class="size-4 transition-transform duration-200"
+                                :class="showJSON && 'rotate-180'"
+                                aria-hidden="true"
+                            />
+                            {{ showJSON ? "Hide JSON" : "Show JSON" }}
+                        </button>
+
+                        <button
+                            v-if="showJSON"
+                            type="button"
+                            class="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-indigo-500"
+                            @click="takeSnapshot"
+                        >
+                            <RefreshCwIcon class="size-4" aria-hidden="true" />
+                            Refresh
+                        </button>
+
+                        <button
+                            type="button"
+                            class="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-indigo-500"
+                            @click="copyJson"
+                        >
+                            <CheckIcon
+                                v-if="copied"
+                                class="size-4 text-emerald-600"
+                                aria-hidden="true"
+                            />
+                            <CopyIcon
+                                v-else
+                                class="size-4"
+                                aria-hidden="true"
+                            />
+                            {{ copied ? "Copied" : "Copy JSON" }}
+                        </button>
+                    </div>
+
+                    <p
+                        v-if="showJSON && snapshotTime"
+                        class="mt-2 text-center text-xs text-slate-400"
                     >
-                        <ChevronDownIcon
-                            class="size-4 transition-transform duration-200"
-                            :class="showJSON && 'rotate-180'"
-                            aria-hidden="true"
-                        />
-                        {{ showJSON ? "Hide JSON" : "Show JSON" }}
-                    </button>
+                        Snapshot taken {{ snapshotTime.toLocaleTimeString() }}
+                    </p>
 
-                    <button
-                        v-if="showJSON"
-                        type="button"
-                        class="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-indigo-500"
-                        @click="takeSnapshot"
+                    <pre
+                        v-if="showJSON && snapshot !== null"
+                        class="mt-2 max-h-96 overflow-auto rounded-md bg-slate-200 p-4 text-xs leading-relaxed text-slate-800 shadow-inner"
+                        >{{ snapshot }}</pre
                     >
-                        <RefreshCwIcon class="size-4" aria-hidden="true" />
-                        Refresh
-                    </button>
-
-                    <button
-                        type="button"
-                        class="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-indigo-500"
-                        @click="copyJson"
-                    >
-                        <CheckIcon
-                            v-if="copied"
-                            class="size-4 text-emerald-600"
-                            aria-hidden="true"
-                        />
-                        <CopyIcon v-else class="size-4" aria-hidden="true" />
-                        {{ copied ? "Copied" : "Copy JSON" }}
-                    </button>
                 </div>
 
-                <p
-                    v-if="showJSON && snapshotTime"
-                    class="mt-2 text-center text-xs text-slate-400"
-                >
-                    Snapshot taken {{ snapshotTime.toLocaleTimeString() }}
-                </p>
+                <SectionBar>OPC Node Data</SectionBar>
 
-                <pre
-                    v-if="showJSON && snapshot !== null"
-                    class="mt-2 max-h-96 overflow-auto rounded-md bg-slate-900 p-4 font-mono text-xs leading-relaxed text-slate-100 shadow-inner"
-                    >{{ snapshot }}</pre
-                >
-            </div>
+                <OPCNodeInfo :node="item.opcNode"></OPCNodeInfo>
 
-            <SectionBar>OPC Node Data</SectionBar>
+                <template v-if="'children' in item">
+                    <SectionBar>Contained Components</SectionBar>
 
-            <OPCNodeInfo :node="item.opcNode"></OPCNodeInfo>
+                    <span v-show="!item.children?.length" class="text-stone-500"
+                        >No Components</span
+                    >
 
-            <template v-if="'children' in item">
-                <SectionBar>Contained Components</SectionBar>
+                    <div
+                        v-for="component in item.children ?? []"
+                        class="flex flex-row justify-start items-center gap-x-2"
+                    >
+                        {{ component.entity.name }}
 
-                <span v-show="!item.children?.length" class="text-stone-500"
-                    >No Components</span
+                        <GenericEntityPageLink
+                            :entityId="component.entityId"
+                            :entityType="component.entityType"
+                        ></GenericEntityPageLink>
+                    </div>
+                </template>
+
+                <SectionBar>Contained Features</SectionBar>
+
+                <span v-show="!item.features?.length" class="text-stone-500"
+                    >No Features</span
                 >
 
                 <div
-                    v-for="component in item.children ?? []"
-                    class="flex flex-row justify-start items-center gap-x-2"
+                    class="flex flex-col flex-wrap gap-2 justify-start items-start"
                 >
-                    {{ component.entity.name }}
-
-                    <GenericEntityPageLink
-                        :entityId="component.entityId"
-                        :entityType="component.entityType"
-                    ></GenericEntityPageLink>
+                    <GenericFeature
+                        v-for="feature in item.features"
+                        :feature="feature"
+                        :key="feature.entityId"
+                    >
+                    </GenericFeature>
                 </div>
-            </template>
 
-            <SectionBar>Contained Features</SectionBar>
-
-            <span v-show="!item.features?.length" class="text-stone-500"
-                >No Features</span
-            >
-
-            <div
-                class="flex flex-col flex-wrap gap-2 justify-start items-start"
-            >
-                <GenericFeature
-                    v-for="feature in item.features"
-                    :feature="feature"
-                    :key="feature.entityId"
-                >
-                </GenericFeature>
-            </div>
-
-            <!-- Always add some spacing for that funky on-screen-display on the touchscreens -->
-            <div class="on-screen-placeholder" style="height: 25vh"></div>
+                <!-- Always add some spacing for that funky on-screen-display on the touchscreens -->
+                <div class="on-screen-placeholder" style="height: 25vh"></div>
+            </section>
         </div>
     </NullablePage>
 </template>

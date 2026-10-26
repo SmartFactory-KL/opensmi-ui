@@ -38,9 +38,14 @@ const component = computed(() => {
         entity-type="Component"
         v-slot="{ item }"
     >
-        <div class="p-4">
-            <div class="flex flex-row justify-between items-center">
-                <EntityBreadcrumbs :node="item"></EntityBreadcrumbs>
+        <div class="flex flex-col justify-start items-start">
+            <div
+                class="sticky top-0 flex flex-row justify-between items-center w-full h-10 bg-slate-200 pr-4 pl-2"
+            >
+                <EntityBreadcrumbs
+                    :node="item"
+                    class="grow"
+                ></EntityBreadcrumbs>
 
                 <GenericEntityPageLink
                     tiny
@@ -48,8 +53,12 @@ const component = computed(() => {
                 ></GenericEntityPageLink>
             </div>
 
-            <!-- Always add some spacing for that funky on-screen-display on the touchscreens -->
-            <div class="on-screen-placeholder" style="height: 25vh"></div>
+            <section>
+                {{ item.entityId }}
+
+                <!-- Always add some spacing for that funky on-screen-display on the touchscreens -->
+                <div class="on-screen-placeholder" style="height: 25vh"></div>
+            </section>
         </div>
     </NullablePage>
 </template>
