@@ -35,11 +35,13 @@ export interface EntityNode {
   initState: FeatureInitState;
   initError: string | null;
   parentComponentNodeEntityId: string | null;
+  parentComponentNode: ComponentNode | null;
   features: FeatureNode[];
 }
 
 export interface FeatureNode extends EntityNode {
   parentFeatureNodeEntityId: string | null;
+  parentFeatureNode: FeatureNode | null;
 }
 
 export interface ComponentNode extends EntityNode {

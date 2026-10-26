@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import EntityBreadcrumbs from "@/components/EntityBreadcrumbs.vue";
 import NullablePage from "@/components/NullablePage.vue";
 import OPCNodeInfo from "@/components/OPCNodeInfo.vue";
 import SectionBar from "@/components/SectionBar.vue";
 import GenericFeature from "@/feature/GenericFeature.vue";
+import GenericEntityPageLink from "@/link/GenericEntityPageLink.vue";
 import { useModelStore } from "@/stores/ModelStore";
+import type { ComponentNode, FeatureNode } from "@/types/NodeFeatureTypes";
 import {
     CheckIcon,
     ChevronDownIcon,
@@ -20,7 +23,7 @@ const routeEntityId = computed(() => {
     return route.params.entityId;
 });
 
-const entity = computed(() => {
+const entity = computed<FeatureNode | ComponentNode | null>(() => {
     const entityId = routeEntityId.value;
 
     if (!entityId || Array.isArray(entityId)) {
@@ -100,6 +103,8 @@ async function copyJson() {
         v-slot="{ item }"
     >
         <div class="flex flex-col justify-start items-start p-10 gap-4">
+            <EntityBreadcrumbs :node="item"></EntityBreadcrumbs>
+
             <SectionBar
                 >Rendered Feature
                 <span class="text-stone-400">(might not work)</span></SectionBar

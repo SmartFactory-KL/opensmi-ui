@@ -76,6 +76,9 @@ class VariableFeatureNode(FeatureNode):
         self._init_step = 0
         self.entity_type = "Variable"
 
+        logger.info("parent_feature_node")
+        logger.info(parent_feature_node)
+
     def advance(
         self, last_result: FeatureInitResult | None
     ) -> FeatureInitRequest | None:

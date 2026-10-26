@@ -39,7 +39,7 @@ class VariableContainerFeatureNode(FeatureNode):
         # handle all variables
         vars_to_process = deque(
             [
-                VariableProcessItem(opc_node=child_node, parent_feature=None)
+                VariableProcessItem(opc_node=child_node, parent_feature=self)
                 for child_node in opc_node.children
             ]
         )

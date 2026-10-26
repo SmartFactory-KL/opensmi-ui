@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import type { ComponentEntityData } from "@/types/EntityTypes";
-import type { FeatureNode } from "@/types/NodeFeatureTypes";
+import type { ComponentNode, FeatureNode } from "@/types/NodeFeatureTypes";
 import { computed } from "vue";
 
 const props = defineProps<{
-    feature: FeatureNode;
+    feature: FeatureNode | ComponentNode; // This is fine as this "Feature" is only a stub for the Entity Page
 }>();
 
 const entity = computed(() => {

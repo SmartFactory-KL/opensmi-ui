@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import EntityBreadcrumbs from "@/components/EntityBreadcrumbs.vue";
 import NullablePage from "@/components/NullablePage.vue";
 import GenericFeature from "@/feature/GenericFeature.vue";
 import GenericEntityPageLink from "@/link/GenericEntityPageLink.vue";
@@ -35,10 +36,20 @@ const component = computed(() => {
         :item="component"
         :entityId="entityId"
         entity-type="Component"
+        v-slot="{ item }"
     >
-        <GenericEntityPageLink tiny :entityId="entityId"></GenericEntityPageLink>
+        <div class="p-4">
+            <div class="flex flex-row justify-between items-center">
+                <EntityBreadcrumbs :node="item"></EntityBreadcrumbs>
 
-        <!-- Always add some spacing for that funky on-screen-display on the touchscreens -->
-        <div class="on-screen-placeholder" style="height: 25vh"></div>
+                <GenericEntityPageLink
+                    tiny
+                    :entityId="entityId"
+                ></GenericEntityPageLink>
+            </div>
+
+            <!-- Always add some spacing for that funky on-screen-display on the touchscreens -->
+            <div class="on-screen-placeholder" style="height: 25vh"></div>
+        </div>
     </NullablePage>
 </template>

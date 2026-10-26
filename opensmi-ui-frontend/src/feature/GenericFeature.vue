@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { FeatureNode } from "@/types/NodeFeatureTypes";
+import type { ComponentNode, FeatureNode } from "@/types/NodeFeatureTypes";
 import { computed } from "vue";
 import UnsupportedFeature from "./UnsupportedFeature.vue";
 import VariableContainerFeature from "./VariableContainerFeature.vue";
@@ -16,7 +16,7 @@ import ComponentFeature from "./ComponentFeature.vue";
 import GenericEntityPageLink from "@/link/GenericEntityPageLink.vue";
 
 const props = defineProps<{
-    feature: FeatureNode;
+    feature: FeatureNode | ComponentNode;
 }>();
 
 const featureComponent = computed(() => {
@@ -61,7 +61,9 @@ const featureComponent = computed(() => {
         class="flex flex-col justify-start items-start bg-white border border-slate-200 p-2"
     >
         <div class="flex flex-row justify-between items-center gap-x-2 mb-2">
-            <div class="bg-stone-200 text-stone-600 h-6 rounded-md text-xs flex items-center px-2">
+            <div
+                class="bg-stone-200 text-stone-600 h-6 rounded-md text-xs flex items-center px-2"
+            >
                 {{ feature.entityType }}
             </div>
             <div class="uppercase font-thin">Generic Feature View</div>
