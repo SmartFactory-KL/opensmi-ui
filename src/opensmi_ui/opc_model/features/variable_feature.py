@@ -60,8 +60,10 @@ class VariableValueUpdate(JsonOutModel):
     entity_id: UUID
     new_value: Any
 
+
 class VariableSetValueAction(JsonInModel):
     new_value: Any
+
 
 class VariableFeatureNode(FeatureNode):
     _init_step: int
@@ -75,9 +77,6 @@ class VariableFeatureNode(FeatureNode):
         super().__init__(opc_node, parent_component_node, parent_feature_node)
         self._init_step = 0
         self.entity_type = "Variable"
-
-        logger.info("parent_feature_node")
-        logger.info(parent_feature_node)
 
     def advance(
         self, last_result: FeatureInitResult | None
