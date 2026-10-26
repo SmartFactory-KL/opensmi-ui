@@ -33,7 +33,9 @@ class UserContainerFeatureNode(FeatureNode):
                 continue
 
             user_feature = UserFeatureNode(
-                opc_node=child, parent_component_node=parent_component_node
+                opc_node=child,
+                parent_component_node=parent_component_node,
+                parent_feature_node=self,
             )
 
             self.features.append(user_feature)

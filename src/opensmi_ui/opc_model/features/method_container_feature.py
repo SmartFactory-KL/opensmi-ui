@@ -33,7 +33,9 @@ class MethodContainerFeatureNode(FeatureNode):
                 continue
 
             method_feature = MethodFeatureNode(
-                opc_node=child, parent_component_node=parent_component_node
+                opc_node=child,
+                parent_component_node=parent_component_node,
+                parent_feature_node=self,
             )
 
             self.features.append(method_feature)

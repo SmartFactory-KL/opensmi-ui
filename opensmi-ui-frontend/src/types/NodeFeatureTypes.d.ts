@@ -27,27 +27,21 @@ export interface OPCNode {
 
 export type FeatureInitState = "open" | "pending" | "done" | "error";
 
-export interface FeatureNode {
+export interface EntityNode {
   opcNode: OPCNode;
-
   entity: any | null;
   entityId: string;
   entityType: string | null;
-
   initState: FeatureInitState;
   initError: string | null;
-
+  parentComponentNodeEntityId: string | null;
   features: FeatureNode[];
 }
 
-export interface ComponentNode {
-  opcNode: OPCNode;
+export interface FeatureNode extends EntityNode {
+  parentFeatureNodeEntityId: string | null;
+}
 
-  entity: any | null;
-  entityId: string;
-  entityType: string | null;
-
-  features: FeatureNode[];
-
+export interface ComponentNode extends EntityNode {
   children: ComponentNode[];
 }

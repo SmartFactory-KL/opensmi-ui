@@ -237,7 +237,7 @@ class OPCSession:
                         logger.warning(f"failed to handle connection state change: {e}")
 
                 # broadcast new session data when connected
-                if state is UaClientState.CONNECTED:
+                if state in [UaClientState.CONNECTED, UaClientState.DISCONNECTED]:
                     for handler in self._connection_session_changed_handler:
                         try:
                             handler(self._session_data)

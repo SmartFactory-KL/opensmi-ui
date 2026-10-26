@@ -35,7 +35,9 @@ class ResourceContainerFeatureNode(FeatureNode):
                 continue
 
             resource_feature = ResourceFeatureNode(
-                opc_node=child, parent_component_node=parent_component_node
+                opc_node=child,
+                parent_component_node=parent_component_node,
+                parent_feature_node=self,
             )
 
             self.features.append(resource_feature)

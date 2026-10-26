@@ -2,7 +2,7 @@ import math
 from base64 import b64decode, b64encode
 from collections.abc import Sequence
 from datetime import UTC, datetime
-from typing import Any, Literal, Union
+from typing import Any, Literal, Union, cast
 from uuid import UUID
 
 from asyncua import ua
@@ -63,20 +63,22 @@ class NodeIdData(JsonOutModel):
 
     def to_ua(self) -> ua.NodeId:
         node_id_type = ua.NodeIdType[self.identifier_type]
-        identifier = self.identifier
+        identifier: ua.Int32 | ua.String | ua.Guid | ua.ByteString
 
         if node_id_type == ua.NodeIdType.Guid:
-            identifier = UUID(str(identifier))
+            identifier = cast(ua.Guid, UUID(str(self.identifier)))
         elif node_id_type == ua.NodeIdType.ByteString:
-            if not isinstance(identifier, str):
+            if not isinstance(self.identifier, str):
                 raise ValueError("ByteString NodeId identifier must be a Base64 string")
-            identifier = b64decode(identifier, validate=True)
+            identifier = cast(ua.ByteString, b64decode(self.identifier, validate=True))
         elif node_id_type == ua.NodeIdType.Numeric:
-            identifier = int(identifier)
+            identifier = ua.Int32(int(self.identifier))
+        else:
+            identifier = ua.String(str(self.identifier))
 
         return ua.NodeId(
             Identifier=identifier,
-            NamespaceIndex=self.namespace_index,
+            NamespaceIndex=ua.Int16(self.namespace_index),
             NodeIdType=node_id_type,
         )
 

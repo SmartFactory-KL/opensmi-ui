@@ -72,18 +72,42 @@ class FeatureValueReadResult:
 
 
 class EntityNodeData(JsonOutModel):
+    """Base Model used for FeatureNode and ComponentNode"""
+
     opc_node: OPCNodeData
+    """Basic node data"""
 
     entity: Any | None
+    """The entity itself, containing the data used for frontend components"""
     entity_id: uuid.UUID
+    """Unique ID to identify a single entity. Not re-useable between reconnects."""
     entity_type: str | None
+    """String describing the entity_type. The frontend will choose the rendering component based on this."""
+
+    init_state: FeatureInitState
+    """Shows the init state. Should be 'done'."""
+    init_error: str | None
+    """Contains eventual error messages that happened during initialization"""
+
+    parent_component_node_entity_id: uuid.UUID | None
+    """EntityId of the parent component. Is None, if no parent component is present."""
+
+    features: list["FeatureNodeData"]
+    """List of features contained in this feature or component."""
 
 
 class FeatureNodeData(EntityNodeData):
-    init_state: FeatureInitState
-    init_error: str | None
+    """Data representation of a FeatureNode"""
 
-    features: list["FeatureNodeData"]
+    parent_feature_node_entity_id: uuid.UUID | None
+    """EntityId of the parent feature. Is None, if no parent feature is present."""
+
+
+class ComponentNodeData(EntityNodeData):
+    """Data representation of a ComponentNode."""
+
+    children: list["ComponentNodeData"]
+    """List of child components"""
 
 
 class FeatureNode:
@@ -155,19 +179,25 @@ class FeatureNode:
 
     def get_data(self) -> FeatureNodeData:
         return FeatureNodeData(
+            # basic node data
             opc_node=self.opc_node.get_data(),
+            # entity data
             entity=self.entity.get_data() if self.entity is not None else None,
             entity_id=self.entity_id,
             entity_type=self.entity_type if self.entity_type is not None else None,
+            # state information
             init_state=self.init_state,
             init_error=self.init_error,
+            # parent entities if exist
+            parent_component_node_entity_id=self.parent_component_node.entity_id
+            if self.parent_component_node is not None
+            else None,
+            parent_feature_node_entity_id=self.parent_feature_node.entity_id
+            if self.parent_feature_node is not None
+            else None,
+            # child features
             features=[feat.get_data() for feat in self.features],
         )
-
-
-class ComponentNodeData(EntityNodeData):
-    features: list[FeatureNodeData]
-    children: list["ComponentNodeData"]
 
 
 class ComponentNode:
@@ -178,6 +208,9 @@ class ComponentNode:
     entity_type: str | None
 
     parent_component_node: Union["ComponentNode", None]
+
+    init_state: FeatureInitState
+    init_error: str | None
 
     features: list[FeatureNode]
 
@@ -191,20 +224,34 @@ class ComponentNode:
         self.opc_node = opc_node
         self.entity = None
         self.entity_id = uuid.uuid4()
-        self.entity_type = None
+        self.entity_type = "Component"
 
         self.parent_component_node = parent_component_node
+
+        self.init_state = FeatureInitState.OPEN
+        self.init_error = None
 
         self.features = []
         self.children = []
 
     def get_data(self) -> ComponentNodeData:
         return ComponentNodeData(
+            # basic node data
             opc_node=self.opc_node.get_data(),
+            # entity data
             entity=self.entity.get_data() if self.entity is not None else None,
             entity_id=self.entity_id,
             entity_type=self.entity_type if self.entity_type is not None else None,
+            # state information
+            init_state=self.init_state,
+            init_error=self.init_error,
+            # parent component
+            parent_component_node_entity_id=self.parent_component_node.entity_id
+            if self.parent_component_node is not None
+            else None,
+            # features
             features=[feat.get_data() for feat in self.features],
+            # child components
             children=[child.get_data() for child in self.children],
         )
 
