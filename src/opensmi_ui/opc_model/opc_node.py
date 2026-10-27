@@ -10,36 +10,51 @@ from opensmi_ui.opc_model.opc_types import (
     LocalizedTextData,
     NodeIdData,
     QualifiedNameData,
+    ReferenceData,
 )
 
 logger = get_module_logger("opc_model.node")
+
+HAS_TYPE_DEFINITION = ua.NodeId(
+    ua.Int32(ua.object_ids.ObjectIds.HasTypeDefinition), ua.Int16(0)
+)
 
 
 class OPCNodeData(JsonOutModel):
     node_id: NodeIdData
     node_class: str
+
     browse_name: QualifiedNameData
     display_name: LocalizedTextData
-    type_definition_id: NodeIdData | None
+
+    opc_type: QualifiedNameData
+
+    type_definition: NodeIdData | None
     reference_type_id: NodeIdData | None
+
     attributes: Mapping[str, str]
     properties: Mapping[str, str]
+    references: list[ReferenceData]
 
 
 class OPCNode:
     node_id: ua.NodeId
-
     node_class: ua.NodeClass
+
     browse_name: ua.QualifiedName
     display_name: ua.LocalizedText
 
+    opc_type: ua.QualifiedName
+
     ua_node: Node
 
-    type_definition_id: ua.NodeId | None = None
-    reference_type_id: ua.NodeId | None = None
+    type_definition: ua.NodeId | None = None
+    reference_type: ua.NodeId | None = None
 
     attributes: dict[str, Any]
     properties: dict[str, Any]
+
+    references: list[ua.ReferenceDescription]
 
     children: list["OPCNode"]
 
@@ -50,29 +65,45 @@ class OPCNode:
         browse_name: ua.QualifiedName,
         display_name: ua.LocalizedText,
         ua_node: Node,
-        type_definition_id: ua.NodeId | None = None,
+        type_definition: ua.NodeId | None = None,
         reference_type_id: ua.NodeId | None = None,
         attributes: dict[str, Any] | None = None,
         properties: dict[str, Any] | None = None,
+        references: list[ua.ReferenceDescription] | None = None,
     ) -> None:
         self.node_id = node_id
         self.node_class = node_class
+
         self.browse_name = browse_name
         self.display_name = display_name
 
+        self.opc_type = ua.QualifiedName("Generic", 0)
+
         self.ua_node = ua_node
 
-        self.type_definition_id = type_definition_id
-        self.reference_type_id = reference_type_id
+        self.type_definition = type_definition
+        self.reference_type = reference_type_id
 
         self.attributes = attributes if attributes is not None else {}
         self.properties = properties if properties is not None else {}
+
+        self.references = references if references is not None else []
 
         self.children = []
 
     @property
     def node_class_name(self) -> str:
         return self.node_class.name
+
+    def set_references(self, references: list[ua.ReferenceDescription]) -> None:
+        self.references = references
+
+    def read_own_opc_type(self):
+        # try to read type info of first type definition
+        for ref in self.references:
+            if ref.IsForward and ref.ReferenceTypeId == HAS_TYPE_DEFINITION:
+                self.opc_type = ref.BrowseName
+                break
 
     def append_child(self, opc_node: "OPCNode"):
         self.children.append(opc_node)
@@ -97,6 +128,7 @@ class OPCNode:
             node_class=self.node_class_name,
             browse_name=QualifiedNameData.from_ua(self.browse_name),
             display_name=LocalizedTextData.from_ua(self.display_name),
+            opc_type=QualifiedNameData.from_ua(self.opc_type),
             attributes={
                 attr_key: str(attr_value)
                 for attr_key, attr_value in self.attributes.items()
@@ -105,11 +137,12 @@ class OPCNode:
                 prop_key: str(prop_value)
                 for prop_key, prop_value in self.properties.items()
             },
-            reference_type_id=NodeIdData.from_ua(self.reference_type_id)
-            if self.reference_type_id is not None
+            references=[ReferenceData.from_ua(r) for r in self.references],
+            reference_type_id=NodeIdData.from_ua(self.reference_type)
+            if self.reference_type is not None
             else None,
-            type_definition_id=NodeIdData.from_ua(self.type_definition_id)
-            if self.type_definition_id is not None
+            type_definition=NodeIdData.from_ua(self.type_definition)
+            if self.type_definition is not None
             else None,
         )
 
@@ -124,17 +157,20 @@ class OPCNode:
             f"display_name={self.display_name!r}",
         ]
 
-        if self.reference_type_id is not None:
-            fields.append(f"reference_type_id={self.reference_type_id!r}")
+        if self.reference_type is not None:
+            fields.append(f"reference_type_id={self.reference_type!r}")
 
-        if self.type_definition_id is not None:
-            fields.append(f"type_definition_id={self.type_definition_id!r}")
+        if self.type_definition is not None:
+            fields.append(f"type_definition_id={self.type_definition!r}")
 
         if self.attributes:
             fields.append(f"attributes={self.attributes!r}")
 
         if self.properties:
             fields.append(f"properties={self.properties!r}")
+
+        if self.references:
+            fields.append(f"references_count={len(self.references)}")
 
         if self.children:
             fields.append(f"children_count={len(self.children)}")

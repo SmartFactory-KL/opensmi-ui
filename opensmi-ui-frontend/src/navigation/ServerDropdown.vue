@@ -1,17 +1,11 @@
 <script setup lang="ts">
-import { useDropdownStore } from "@/stores/DropdownStore";
 import { useModelStore } from "@/stores/ModelStore";
 import MachineComponentTree from "@/tree/MachineComponentTree.vue";
 import ServerStateIndicator from "./ServerStateIndicator.vue";
 import MachineOverviewCard from "./DropdownMachineOverviewCard.vue";
 import QuickConnectButton from "./QuickConnectButton.vue";
-import { ref } from "vue";
-import type { ComponentNode } from "@/types/NodeFeatureTypes";
 
-const dropdownStore = useDropdownStore();
 const modelStore = useModelStore();
-
-const currentMachine = ref<ComponentNode | null>(null);
 </script>
 
 <template>
@@ -24,9 +18,9 @@ const currentMachine = ref<ComponentNode | null>(null);
         leave-to-class="max-h-0 -translate-y-2 opacity-0"
     >
         <div
-            v-show="dropdownStore.isVisible"
+            v-show="modelStore.isDropdownVisible"
             class="flex items-start px-24 pt-3 bg-stone-100/60 z-10"
-            @click.self.prevent="dropdownStore.closeDropdown()"
+            @click.self.prevent="modelStore.closeDropdown()"
         >
             <div
                 class="z-20 w-full overflow-hidden bg-slate-800 shadow-2xl border rounded-3xl"
@@ -43,7 +37,7 @@ const currentMachine = ref<ComponentNode | null>(null);
                             >
                                 <!-- Current state -->
                                 <ServerStateIndicator
-                                    @click="dropdownStore.closeDropdown()"
+                                    @click="modelStore.closeDropdown()"
                                 ></ServerStateIndicator>
 
                                 <!-- Connect/Disconnect -->
@@ -77,12 +71,12 @@ const currentMachine = ref<ComponentNode | null>(null);
                                         v-for="component in modelStore.rootComponents.values()"
                                         :key="component.entityId"
                                         :component="component"
-                                        :active="currentMachine == component"
+                                        :active="modelStore.currentMachine == component"
                                         :class="{
                                             'machine-tab-active':
-                                                currentMachine == component,
+                                                modelStore.currentMachine == component,
                                         }"
-                                        @click="currentMachine = component"
+                                        @click="modelStore.currentMachine = component"
                                         class="cursor-pointer rounded-l-xl"
                                     ></MachineOverviewCard>
                                 </section>
@@ -98,11 +92,11 @@ const currentMachine = ref<ComponentNode | null>(null);
                                     Laden...
                                 </span>
                                 <div
-                                    v-if="currentMachine"
+                                    v-if="modelStore.currentMachine"
                                     class="mb-4 pl-2 pt-2"
                                 >
                                     <MachineComponentTree
-                                        :component="currentMachine"
+                                        :component="modelStore.currentMachine"
                                     ></MachineComponentTree>
                                 </div>
                             </div>

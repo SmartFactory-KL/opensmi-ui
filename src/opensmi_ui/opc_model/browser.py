@@ -146,7 +146,7 @@ class OPCBrowser:
                         node_class=ref.NodeClass,
                         browse_name=ref.BrowseName,
                         display_name=ref.DisplayName,
-                        type_definition_id=ref.TypeDefinition,
+                        type_definition=ref.TypeDefinition,
                         reference_type_id=ref.ReferenceTypeId,
                     )
 
@@ -166,6 +166,40 @@ class OPCBrowser:
             next_level = deque[NodeReadItem]([])
 
         logger.info(f"Basic Node Reading found {node_count} Nodes")
+
+        logger.info("Reading further node information")
+        all_nodes: list[OPCNode] = []
+        stack = list(root_nodes)
+        while stack:
+            n = stack.pop()
+            all_nodes.append(n)
+            stack.extend(n.children)
+
+        descriptions = [
+            ua.BrowseDescription(
+                NodeId=n.node_id,
+                BrowseDirection=ua.BrowseDirection.Both,
+                ReferenceTypeId=ua.NodeId(
+                    ua.Int32(ua.object_ids.ObjectIds.NonHierarchicalReferences)
+                ),
+                IncludeSubtypes=True,
+                NodeClassMask=0,
+                ResultMask=ua.BrowseResultMask.All,
+            )
+            for n in all_nodes
+        ]
+
+        results = await self.browse_requests_in_chunks(browse_descriptions=descriptions)
+
+        for node, result in zip(all_nodes, results, strict=True):
+            refs = [r for r in result.References]
+            node.references.extend(refs)
+
+            node.read_own_opc_type()
+
+            # also fix up nodes (e.g. the root) that don't have it yet
+            if node.type_definition is None and refs:
+                node.type_definition = refs[0].NodeId
 
         return root_nodes
 

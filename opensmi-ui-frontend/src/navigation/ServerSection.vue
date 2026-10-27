@@ -11,6 +11,8 @@ const modelStore = useModelStore();
 
 <template>
     <div class="flex flex-row justify-center items-center gap-x-4">
+        <ServerState></ServerState>
+
         <ServerDropdownButton></ServerDropdownButton>
 
         <div
@@ -33,10 +35,6 @@ const modelStore = useModelStore();
                     :class="{ 'animate-spin': modelStore.isWorking }"
                 ></WorkflowIcon>
             </IconButton>
-
-            <ServerState></ServerState>
-
-            <QuickConnectButton tiny></QuickConnectButton>
         </div>
     </div>
 </template>

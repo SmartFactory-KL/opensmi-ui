@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import { useDropdownStore } from "@/stores/DropdownStore";
 import { useModelStore } from "@/stores/ModelStore";
 import { ArrowBigDownIcon } from "@lucide/vue";
 
 const modelStore = useModelStore();
-const dropdownStore = useDropdownStore();
 
 function toggleModelDropdown() {
-    dropdownStore.toggleDropdown();
+    modelStore.toggleDropdown();
 }
 </script>
 
@@ -21,7 +19,7 @@ function toggleModelDropdown() {
         </div>
         <div class="border-l border-l-slate-500 pl-2">
             <ArrowBigDownIcon
-                :class="{ 'rotate-180': dropdownStore.isVisible }"
+                :class="{ 'rotate-180': modelStore.isDropdownVisible }"
                 class="transition-transform duration-200 ease-out"
             ></ArrowBigDownIcon>
         </div>

@@ -49,7 +49,7 @@ class VariableContainerFeatureNode(FeatureNode):
         while vars_to_process:
             next_item = vars_to_process.popleft()
 
-            ref = next_item.opc_node.reference_type_id
+            ref = next_item.opc_node.reference_type
 
             # only use for components, ignore properties here for now
             if not ref or ref.Identifier != ua.object_ids.ObjectIds.HasComponent:

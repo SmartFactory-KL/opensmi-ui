@@ -36,6 +36,9 @@ export const useModelStore = defineStore("model", {
 
     isWorking: boolean;
 
+    isDropdownVisible: boolean;
+    currentMachine: ComponentNode | null;
+
     rootComponents: Map<string, ComponentNode>;
     entityIdComponentNodeMap: Map<string, ComponentNode>;
     entityIdFeatureNodeMap: Map<string, FeatureNode>;
@@ -48,6 +51,9 @@ export const useModelStore = defineStore("model", {
 
       isWorking: false,
 
+      isDropdownVisible: false,
+      currentMachine: null,
+
       rootComponents: new Map<string, ComponentNode>(),
       entityIdComponentNodeMap: new Map<string, ComponentNode>(),
       entityIdFeatureNodeMap: new Map<string, FeatureNode>(),
@@ -57,6 +63,15 @@ export const useModelStore = defineStore("model", {
   actions: {
     attachToSocketClient(socketClient: SocketClient) {
       socketClient.addChannelListener("Model", this.handleModelUpdate);
+    },
+    showDropdown() {
+      this.isDropdownVisible = true;
+    },
+    toggleDropdown() {
+      this.isDropdownVisible = !this.isDropdownVisible;
+    },
+    closeDropdown() {
+      this.isDropdownVisible = false;
     },
     async requestBrowsing() {
       if (this.requestData.isPending == true || this.isWorking == true) {
@@ -84,6 +99,13 @@ export const useModelStore = defineStore("model", {
         this.isWorking = false;
       }
     },
+    wipeModel() {
+      this.currentMachine = null;
+
+      this.rootComponents.clear();
+      this.entityIdComponentNodeMap.clear();
+      this.entityIdFeatureNodeMap.clear();
+    },
     async loadModel() {
       if (this.requestData.isPending == true || this.isWorking == true) {
         return;
@@ -95,9 +117,7 @@ export const useModelStore = defineStore("model", {
       this.requestData.error = null;
       this.isWorking = true;
 
-      this.rootComponents.clear();
-      this.entityIdComponentNodeMap.clear();
-      this.entityIdFeatureNodeMap.clear();
+      this.wipeModel();
 
       try {
         const rootComponentNodes = (await simplyGetToJSON(
@@ -185,33 +205,12 @@ export const useModelStore = defineStore("model", {
           }
         }
 
-        //         // append actual object references for all parent entity ids
-        //         for (const component of this.entityIdComponentNodeMap.values()) {
-        //           const parentComponentId = component.parentComponentNodeEntityId;
-        //
-        //           if (parentComponentId === null) {
-        //             continue;
-        //           }
-        //
-        //           component.parentComponentNode =
-        //             this.entityIdComponentNodeMap.get(parentComponentId) ?? null;
-        //         }
-        //
-        //         for (const feature of this.entityIdFeatureNodeMap.values()) {
-        //           const parentComponentId = feature.parentComponentNodeEntityId;
-        //
-        //           if (parentComponentId !== null) {
-        //             feature.parentComponentNode =
-        //               this.entityIdComponentNodeMap.get(parentComponentId) ?? null;
-        //           }
-        //
-        //           const parentFeatureId = feature.parentFeatureNodeEntityId;
-        //
-        //           if (parentFeatureId !== null) {
-        //             feature.parentFeatureNode =
-        //               this.entityIdFeatureNodeMap.get(parentFeatureId) ?? null;
-        //           }
-        //         }
+        if (this.rootComponents.size > 0) {
+          for (const firstMachine of this.rootComponents.values()) {
+            this.currentMachine = firstMachine;
+            break;
+          }
+        }
 
         console.log(`Received ${this.rootComponents.size} root components`);
         Toaster.success(`Received ${this.rootComponents.size} root components`);

@@ -27,7 +27,7 @@ class UserContainerFeatureNode(FeatureNode):
 
         # create child resources (recursive or not?)
         for child in opc_node.children:
-            ref = child.reference_type_id
+            ref = child.reference_type
 
             if not ref or ref.Identifier != ua.object_ids.ObjectIds.HasComponent:
                 continue

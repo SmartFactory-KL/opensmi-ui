@@ -14,15 +14,27 @@ export interface LocalizedTextData {
   locale: string | null;
 }
 
+export interface ReferenceData {
+  referenceTypeId: NodeIdData;
+  isForward: boolean;
+  nodeId: NodeIdData;
+  browseName: QualifiedNameData;
+  displayName: LocalizedTextData;
+  nodeClass: string;
+  typeDefinition: NodeIdData;
+}
+
 export interface OPCNode {
   nodeId: NodeIdData;
   nodeClass: string;
   browseName: QualifiedNameData;
   displayName: LocalizedTextData;
-  typeDefinitionId: string | null;
-  referenceTypeId: string | null;
+  opcType: QualifiedNameData;
+  typeDefinition: NodeIdData | null;
+  referenceTypeId: NodeIdData | null;
   attributes: { [key: string]: string };
   properties: { [key: string]: string };
+  references: ReferenceData[];
 }
 
 export type FeatureInitState = "open" | "pending" | "done" | "error";

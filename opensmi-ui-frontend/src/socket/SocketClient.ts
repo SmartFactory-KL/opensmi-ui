@@ -31,12 +31,12 @@ class SocketClient {
       SOCKET_CLIENT_INTERVAL_DELTA_MS,
     );
 
-    if (this.socket) {
-      if (this.socket.readyState != this.lastReadyState) {
-        this.lastReadyState = this.socket.readyState;
-        this.notifyConnectionHandler(this.socket.readyState);
-      }
-    }
+    // if (this.socket) {
+    //   if (this.socket.readyState != this.lastReadyState) {
+    //     this.lastReadyState = this.socket.readyState;
+    //     this.notifyConnectionHandler(this.socket.readyState);
+    //   }
+    // }
 
     this.messageCount = 0;
   }, SOCKET_CLIENT_INTERVAL_DELTA_MS);

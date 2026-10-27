@@ -13,7 +13,11 @@ import {
     ZapIcon,
     type LucideIcon,
 } from "@lucide/vue";
-import type { NodeIdData, OPCNode } from "@/types/NodeFeatureTypes";
+import type {
+    NodeIdData,
+    OPCNode,
+    QualifiedNameData,
+} from "@/types/NodeFeatureTypes";
 
 const props = defineProps<{
     node: OPCNode;
@@ -44,45 +48,57 @@ const typePrefix: Record<string, string> = {
 };
 
 // Standard OPC UA textual form, e.g. ns=1;s=SarahRobot
-function formatNodeId(id: NodeIdData | string | null): string | null {
-    if (id === null) return null;
-    if (typeof id === "string") return id;
-
+function formatNodeId(id: NodeIdData): string {
     const prefix = typePrefix[id.identifierType] ?? "?";
     const ns = id.namespaceIndex === 0 ? "" : `ns=${id.namespaceIndex};`;
     return `${ns}${prefix}=${id.identifier}`;
 }
 
-const nodeIdText = computed(() => formatNodeId(props.node.nodeId) ?? "");
+// Standard OPC UA textual form, e.g. 2:MachineryItemType
+function formatQualifiedName(name: QualifiedNameData | null): string | null {
+    if (!name) return null;
+    return `${name.namespaceIndex}:${name.name}`;
+}
 
-const references = computed(() => [
+const nodeIdText = computed(() => formatNodeId(props.node.nodeId));
+
+const rows = computed(() => [
+    {
+        label: "Browse name",
+        value: formatQualifiedName(props.node.browseName),
+        mono: true,
+    },
+    {
+        label: "Type",
+        value: formatQualifiedName(props.node.opcType),
+        mono: true,
+    },
     {
         label: "Type definition",
-        value: formatNodeId(props.node.typeDefinitionId),
+        value: props.node.typeDefinition,
+        mono: true,
     },
     {
         label: "Reference type",
-        value: formatNodeId(props.node.referenceTypeId),
-    },
-]);
-
-const facts = computed(() => [
-    {
-        label: "Browse name",
-        value: `${props.node.browseName.namespaceIndex}:${props.node.browseName.name}`,
+        value: props.node.referenceTypeId,
+        mono: true,
     },
     {
         label: "Namespace",
         value: String(props.node.nodeId.namespaceIndex),
+        mono: true,
     },
     {
         label: "Identifier type",
         value: props.node.nodeId.identifierType,
+        mono: false,
     },
 ]);
 
-const attributeEntries = computed(() => Object.entries(props.node.attributes));
-const propertyEntries = computed(() => Object.entries(props.node.properties));
+const groups = computed(() => [
+    { title: "Attributes", entries: Object.entries(props.node.attributes) },
+    { title: "Properties", entries: Object.entries(props.node.properties) },
+]);
 
 const copied = ref(false);
 
@@ -98,44 +114,47 @@ async function copyNodeId() {
 </script>
 
 <template>
-    <article
-        class="overflow-hidden rounded-lg border border-slate-200 bg-white text-slate-900 shadow-sm"
-    >
+    <article class="border border-slate-300 bg-white text-slate-900">
         <!-- Header -->
-        <header class="flex items-center gap-3 border-b border-slate-100 p-4">
+        <header
+            class="flex items-stretch border-b border-slate-300 bg-slate-50"
+        >
             <div
-                class="flex size-11 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600"
+                class="flex w-12 shrink-0 items-center justify-center bg-indigo-600 text-white"
             >
-                <component :is="classIcon" class="size-6" aria-hidden="true" />
+                <component :is="classIcon" class="size-5" aria-hidden="true" />
             </div>
 
-            <div class="min-w-0 flex-1">
-                <div class="flex flex-wrap items-center gap-2">
-                    <h3 class="truncate text-lg font-semibold leading-tight">
+            <div class="min-w-0 flex-1 px-3 py-2">
+                <div class="flex items-center gap-2">
+                    <h3
+                        class="truncate text-sm font-semibold leading-tight text-slate-900"
+                    >
                         {{ node.displayName.text }}
                     </h3>
                     <span
-                        class="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700"
+                        class="shrink-0 border border-indigo-200 bg-indigo-50 px-1.5 text-xs font-medium leading-5 text-indigo-700"
                     >
                         {{ node.nodeClass }}
                     </span>
                     <span
-                        class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500"
+                        v-if="node.displayName.locale"
+                        class="shrink-0 border border-slate-200 bg-white px-1.5 text-xs leading-5 text-slate-500"
                     >
-                        {{ node.displayName.locale ?? "no locale" }}
+                        {{ node.displayName.locale }}
                     </span>
                 </div>
 
-                <div class="mt-1 flex items-center gap-1">
+                <div class="mt-0.5 flex items-center gap-1">
                     <code
-                        class="truncate font-mono text-sm text-slate-500"
+                        class="truncate font-mono text-xs text-slate-500"
                         :title="nodeIdText"
                     >
                         {{ nodeIdText }}
                     </code>
                     <button
                         type="button"
-                        class="rounded p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-2 focus-visible:outline-indigo-500"
+                        class="p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 focus-visible:outline-2 focus-visible:outline-indigo-500"
                         :aria-label="copied ? 'Copied' : 'Copy node ID'"
                         :title="copied ? 'Copied' : 'Copy node ID'"
                         @click="copyNodeId"
@@ -150,65 +169,49 @@ async function copyNodeId() {
             </div>
         </header>
 
-        <!-- Quick facts -->
-        <dl
-            class="grid grid-cols-1 divide-y divide-slate-100 border-b border-slate-100 sm:grid-cols-3 sm:divide-x sm:divide-y-0"
-        >
-            <div v-for="fact in facts" :key="fact.label" class="px-4 py-3">
-                <dt class="text-xs uppercase tracking-wide text-slate-400">
-                    {{ fact.label }}
-                </dt>
-                <dd class="mt-0.5 truncate text-sm font-medium text-slate-700">
-                    {{ fact.value }}
-                </dd>
-            </div>
-        </dl>
-
-        <!-- References -->
-        <dl
-            class="grid grid-cols-1 divide-y divide-slate-100 border-b border-slate-100 bg-slate-50/60 sm:grid-cols-2 sm:divide-x sm:divide-y-0"
-        >
-            <div v-for="ref in references" :key="ref.label" class="px-4 py-3">
-                <dt class="text-xs uppercase tracking-wide text-slate-400">
-                    {{ ref.label }}
-                </dt>
-                <dd class="mt-0.5 truncate font-mono text-sm">
-                    <span v-if="ref.value" class="text-slate-700">{{
-                        ref.value
-                    }}</span>
-                    <span v-else class="font-sans text-slate-400">None</span>
+        <!-- Identity: dense key/value grid -->
+        <dl class="flex flex-col text-xs">
+            <div
+                v-for="row in rows"
+                :key="row.label"
+                class="flex items-baseline justify-between gap-3 border-b border-slate-200 px-3 py-1.5"
+            >
+                <dt class="shrink-0 text-slate-500">{{ row.label }}</dt>
+                <dd
+                    class="min-w-0 text-right font-medium text-xs text-slate-800"
+                    :class="{ 'font-mono': row.mono }"
+                >
+                    <template v-if="row.value">{{ row.value }}</template>
+                    <span v-else class="font-normal text-slate-400">none</span>
                 </dd>
             </div>
         </dl>
 
         <!-- Attributes & properties -->
-        <div
-            class="grid grid-cols-1 divide-y divide-slate-100 md:grid-cols-2 md:divide-x md:divide-y-0"
-        >
+        <div class="grid grid-cols-1 md:grid-cols-2">
             <section
-                v-for="group in [
-                    { title: 'Attributes', entries: attributeEntries },
-                    { title: 'Properties', entries: propertyEntries },
-                ]"
+                v-for="group in groups"
                 :key="group.title"
-                class="p-4"
+                class="min-w-0 border-b border-slate-300 last:border-b-0 md:border-b-0 md:border-r md:last:border-r-0"
             >
-                <div class="mb-2 flex items-center justify-between">
-                    <h4 class="text-sm font-semibold text-slate-700">
+                <div
+                    class="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-3 py-1"
+                >
+                    <h4 class="text-xs font-semibold text-slate-700">
                         {{ group.title }}
                     </h4>
                     <span
-                        class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500"
+                        class="min-w-5 bg-slate-200 px-1 text-center text-xs tabular-nums text-slate-600"
                     >
                         {{ group.entries.length }}
                     </span>
                 </div>
 
-                <dl v-if="group.entries.length" class="space-y-1.5 text-sm">
+                <dl v-if="group.entries.length" class="text-xs">
                     <div
                         v-for="[key, value] in group.entries"
                         :key="key"
-                        class="flex items-baseline justify-between gap-4"
+                        class="flex items-baseline justify-between gap-4 px-3 py-1 odd:bg-white even:bg-slate-50/70"
                     >
                         <dt class="shrink-0 text-slate-500">{{ key }}</dt>
                         <dd
@@ -219,7 +222,7 @@ async function copyNodeId() {
                     </div>
                 </dl>
 
-                <p v-else class="text-sm text-slate-400">
+                <p v-else class="px-3 py-2 text-xs text-slate-400">
                     No {{ group.title.toLowerCase() }}
                 </p>
             </section>

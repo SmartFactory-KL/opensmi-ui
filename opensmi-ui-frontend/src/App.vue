@@ -4,20 +4,20 @@ import BasicError from "./components/BasicError.vue";
 import MainNavigation from "./navigation/MainNavigation.vue";
 import { usePageStore } from "./stores/PageStore";
 import ServerDropdown from "./navigation/ServerDropdown.vue";
-import { useDropdownStore } from "./stores/DropdownStore";
 import { useRoute } from "vue-router";
 import { watch } from "vue";
 import Toaster from "./toast/Toaster.vue";
+import { useModelStore } from "./stores/ModelStore";
 
 const pageStore = usePageStore();
-const dropdownStore = useDropdownStore();
+const modelStore = useModelStore();
 
 const route = useRoute();
 
 watch(
     () => route.fullPath,
     () => {
-        dropdownStore.closeDropdown();
+        modelStore.closeDropdown();
     },
 );
 </script>
@@ -58,19 +58,13 @@ watch(
                 </div>
             </div>
 
-            <div
-                v-else
-                class="flex h-[calc(100vh-4rem-4px)]"
-            >
+            <div v-else class="flex h-[calc(100vh-4rem-4px)]">
                 <ServerDropdown
                     class="absolute top-17 w-screen h-[calc(100vh-4.25rem)] transition"
                 ></ServerDropdown>
 
                 <!-- Page content -->
-                <RouterView
-                    class="h-full w-screen"
-                    :key="$route.fullPath"
-                />
+                <RouterView class="h-full w-screen" :key="$route.fullPath" />
 
                 <!-- Always add some spacing for that funky on-screen-display on the touchscreens -->
                 <!-- UPDATE: Moved to the individual pages as some have different backgrounds -->

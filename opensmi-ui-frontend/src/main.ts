@@ -22,7 +22,6 @@ app.use(router);
 
 async function compose() {
   Toaster.attachStore();
-  Toaster.addMessage("info", "Hello World");
 
   const pageStore = usePageStore();
   await pageStore.requestPageInfo();
@@ -47,8 +46,6 @@ async function compose() {
   modelStore.attachToSocketClient(socketClient);
 
   pageStore.writeDefaultsToServerStore(serverStore);
-
-  serverStore.requestServerStatus();
 }
 
 app.mount("#app");

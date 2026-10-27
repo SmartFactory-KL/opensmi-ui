@@ -9,6 +9,7 @@ import type {
 import { defineStore } from "pinia";
 import { usePageStore } from "./PageStore";
 import Toaster from "@/toast/Toaster";
+import { useModelStore } from "./ModelStore";
 
 export interface OPCSessionSettings {
   timeout: number;
@@ -110,6 +111,8 @@ export const useServerStore = defineStore("server", {
         return;
       }
 
+      console.log("REQUESTING SERVER STATUS")
+
       this.requestData.isPending = true;
       this.requestData.error = null;
 
@@ -117,15 +120,23 @@ export const useServerStore = defineStore("server", {
         const sessionData = await simplyGetToJSON("/api/opc-session/info");
         this.sessionData = sessionData;
 
-        console.log(this.sessionData);
+        this.handleNewSession()
       } catch (e) {
         this.requestData.error = `Failed to connect: ${e}`;
       } finally {
         this.requestData.isPending = false;
       }
     },
-    handleRefresh() {
-      // TODO
+    handleNewSession() {
+      console.log("New Session Data received");
+      console.log(this.sessionData);
+      if (this.sessionData.state == "connected") {
+        // signal for machine refresh
+        useModelStore().loadModel();
+      } else if (this.sessionData.state == "disconnected") {
+        // signal for machine wiping maybe?
+        useModelStore().wipeModel();
+      }
     },
     writeUserInput(input: ServerStoreUserInput) {
       this.userInput.serverUrl = input.serverUrl;
@@ -202,7 +213,7 @@ export const useServerStore = defineStore("server", {
           {
             const content = update.updateContent as ServerSessionUpdate;
             this.sessionData = content.newSession;
-            console.log(content);
+            this.handleNewSession();
             break;
           }
         }

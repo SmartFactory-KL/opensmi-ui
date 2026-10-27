@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import EntityBreadcrumbs from "@/components/EntityBreadcrumbs.vue";
 import NullablePage from "@/components/NullablePage.vue";
-import GenericFeature from "@/feature/GenericFeature.vue";
 import GenericEntityPageLink from "@/link/GenericEntityPageLink.vue";
 import { useModelStore } from "@/stores/ModelStore";
 import { computed } from "vue";
