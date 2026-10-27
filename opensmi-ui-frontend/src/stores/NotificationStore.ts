@@ -1,5 +1,5 @@
 import type SocketClient from "@/socket/SocketClient";
-import type { LocalizedTextData, NodeIdData } from "@/types/NodeFeatureTypes";
+import type { NodeIdData, LocalizedTextData } from "@/types/OPCTypes";
 import { defineStore } from "pinia";
 
 export const MAX_NOTIFICATION_COUNT = 1000;

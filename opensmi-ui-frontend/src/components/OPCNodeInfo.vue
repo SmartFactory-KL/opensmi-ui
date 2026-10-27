@@ -13,11 +13,8 @@ import {
     ZapIcon,
     type LucideIcon,
 } from "@lucide/vue";
-import type {
-    NodeIdData,
-    OPCNode,
-    QualifiedNameData,
-} from "@/types/NodeFeatureTypes";
+import type { OPCNode } from "@/types/NodeFeatureTypes";
+import type { NodeIdData, QualifiedNameData } from "@/types/OPCTypes";
 
 const props = defineProps<{
     node: OPCNode;

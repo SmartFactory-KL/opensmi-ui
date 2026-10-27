@@ -1,29 +1,3 @@
-export interface NodeIdData {
-  identifier: string | number;
-  namespaceIndex: number;
-  identifierType: string;
-}
-
-export interface QualifiedNameData {
-  name: string;
-  namespaceIndex: number;
-}
-
-export interface LocalizedTextData {
-  text: string | null;
-  locale: string | null;
-}
-
-export interface ReferenceData {
-  referenceTypeId: NodeIdData;
-  isForward: boolean;
-  nodeId: NodeIdData;
-  browseName: QualifiedNameData;
-  displayName: LocalizedTextData;
-  nodeClass: string;
-  typeDefinition: NodeIdData;
-}
-
 export interface OPCNode {
   nodeId: NodeIdData;
   nodeClass: string;

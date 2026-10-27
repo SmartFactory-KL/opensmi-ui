@@ -21,7 +21,7 @@ class VariableEntityData(FeatureNodeEntityData):
 
     data_type: str
 
-    value: Any
+    value: VariantData | None
     last_updated_at: datetime | None
 
     rank: int
