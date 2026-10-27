@@ -3,6 +3,7 @@ import ConnectPage from "@/pages/ConnectPage.vue";
 import GenericEntityPage from "@/pages/GenericEntityPage.vue";
 import HomePage from "@/pages/HomePage.vue";
 import NotificationPage from "@/pages/NotificationPage.vue";
+import SkillPage from "@/pages/SkillPage.vue";
 import { createRouter, createWebHistory } from "vue-router";
 
 const router = createRouter({
@@ -27,6 +28,10 @@ const router = createRouter({
     {
       path: "/component/:entityId",
       component: ComponentPage,
+    },
+    {
+      path: "/skill/:entityId",
+      component: SkillPage,
     },
   ],
 });

@@ -2,7 +2,7 @@
 import { RabbitIcon } from "@lucide/vue";
 
 defineProps<{
-    item: T | null;
+    item: T | null | undefined;
     entityId?: unknown;
     entityType?: unknown;
 }>();
@@ -15,7 +15,7 @@ defineSlots<{
 <template>
     <main class="h-full">
         <section
-            v-if="item === null"
+            v-if="item === null || item === undefined"
             role="status"
             class="relative flex h-full min-h-[50vh] w-full select-none items-center justify-center overflow-hidden p-8 text-center"
         >
@@ -60,8 +60,6 @@ defineSlots<{
                         {{ entityId }}
                     </code>
                 </p>
-
-
             </div>
         </section>
 

@@ -25,11 +25,16 @@ const skillControlFeature = computed(() => {
 
 <template>
     <section class="bg-sky-800 text-slate-200 shadow-lg">
-        <div class="p-2 flex flex-row justify-between items-center">
+        <div
+            class="p-2 flex flex-row justify-between items-center cursor-pointer"
+            @click="$router.push('/skill/' + feature.entityId)"
+        >
             <div class="font-normal">
                 {{ name?.length ? name : "Generic Skill Name" }}
             </div>
-            <div class="bg-sky-950 text-slate-300 rounded-full px-2 py-0 text-xs">
+            <div
+                class="bg-sky-950 text-slate-300 rounded-full px-2 py-0 text-xs"
+            >
                 {{ entity.name }}
             </div>
         </div>
