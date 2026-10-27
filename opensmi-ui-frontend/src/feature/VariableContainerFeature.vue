@@ -8,16 +8,12 @@ defineProps<{
 </script>
 
 <template>
-    <div
-        class="border border-gray-200 bg-white p-2 shadow-sm flex flex-col gap-y-1"
-    >
-        <div class="text-stone-800 text-xs">
-           {{ feature.entity.name }}
+    <div class="p-2 flex flex-col gap-y-1">
+        <div class="text-xs">
+            {{ feature.entity.name }}
         </div>
         <div>
-            <span
-                class="text-stone-300 text-xs"
-                v-show="feature.features?.length == 0"
+            <span class="text-xs" v-show="feature.features?.length == 0"
                 >-empty-</span
             >
 

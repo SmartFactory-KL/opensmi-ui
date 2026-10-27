@@ -8,7 +8,7 @@ import ServerSection from "./ServerSection.vue";
 
 <template>
     <div
-        class="flex flex-row flex-wrap justify-stretch items-center bg-slate-600 h-16 gap-x-2"
+        class="flex flex-row flex-wrap justify-stretch items-center bg-slate-800 h-16 gap-x-2"
     >
         <NavigationBrand class="h-16 w-36"></NavigationBrand>
 

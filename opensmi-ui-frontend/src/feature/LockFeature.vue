@@ -1,4 +1,3 @@
-```vue
 <script setup lang="ts">
 import type { FeatureNode } from "@/types/NodeFeatureTypes";
 import type { LockEntityData } from "@/types/EntityTypes";
@@ -11,17 +10,45 @@ import {
 } from "@lucide/vue";
 import type { LockAction } from "@/types/UpdateTypes";
 import { simplyPostToText } from "@/fetch/simplyFetch";
-import IconButton from "@/components/IconButton.vue";
 import { useServerStore } from "@/stores/ServerSessionStore";
 import Toaster from "@/toast/Toaster";
 
-const props = defineProps<{
-    feature: FeatureNode;
-}>();
+const props = withDefaults(
+    defineProps<{
+        feature: FeatureNode;
+        dark?: boolean;
+    }>(),
+    {
+        dark: false,
+    },
+);
 
 const serverStore = useServerStore();
 
 type LOCKING_STATE = "open" | "lockedByUs" | "lockedByOthers";
+
+// Neutral container, independent of the locking state
+const CONTAINER_CLASSES = {
+    light: "bg-gray-50 border-gray-200 text-gray-700",
+    dark: "bg-gray-900 border-gray-700 text-gray-200",
+};
+
+// Only the circle carries the state color
+const BUTTON_CLASSES: Record<LOCKING_STATE, string> = {
+    open: "bg-red-500 hover:bg-red-600 focus-visible:ring-red-300",
+    lockedByOthers:
+        "bg-amber-500 hover:bg-amber-600 focus-visible:ring-amber-300",
+    lockedByUs: "bg-green-500 hover:bg-green-600 focus-visible:ring-green-300",
+};
+
+const ACTIONS: Record<
+    LOCKING_STATE,
+    { action: LockAction["requestedAction"]; label: string }
+> = {
+    open: { action: "InitLock", label: "Lock" },
+    lockedByOthers: { action: "BreakLock", label: "Break lock" },
+    lockedByUs: { action: "ExitLock", label: "Release lock" },
+};
 
 const entity = computed(() => props.feature.entity as LockEntityData);
 const isWorking = ref(false);
@@ -45,16 +72,14 @@ const lockingState = computed<LOCKING_STATE>(() => {
     }
 });
 
-function requestInitLock() {
-    requestAction("InitLock");
-}
+const containerClasses = computed(
+    () => CONTAINER_CLASSES[props.dark ? "dark" : "light"],
+);
+const buttonClasses = computed(() => BUTTON_CLASSES[lockingState.value]);
+const currentAction = computed(() => ACTIONS[lockingState.value]);
 
-function requestBreakLock() {
-    requestAction("BreakLock");
-}
-
-function requestExitLock() {
-    requestAction("ExitLock");
+function requestCurrentAction() {
+    requestAction(currentAction.value.action);
 }
 
 async function requestAction(requestedAction: LockAction["requestedAction"]) {
@@ -74,8 +99,8 @@ async function requestAction(requestedAction: LockAction["requestedAction"]) {
 
         await simplyPostToText("/api/opc-model/action", action);
     } catch (e) {
-      console.error(e);
-      Toaster.error("Failed to request Lock Action: " + e)
+        console.error(e);
+        Toaster.error("Failed to request Lock Action: " + e);
     } finally {
         isWorking.value = false;
     }
@@ -84,91 +109,54 @@ async function requestAction(requestedAction: LockAction["requestedAction"]) {
 
 <template>
     <article
-        class="flex flex-col gap-4 shadow-sm border px-4 py-2 transition-colors duration-150"
-        :class="{
-            'bg-red-50 border-red-600 text-red-800': lockingState === 'open',
-            'bg-amber-50 border-amber-600 text-amber-800':
-                lockingState === 'lockedByOthers',
-            'bg-green-50 border-green-600 text-green-800':
-                lockingState === 'lockedByUs',
-        }"
+        class="flex h-16 w-fit items-center gap-3 rounded-full border p-1 pl-5 shadow-sm transition-colors duration-150"
+        :class="containerClasses"
     >
-        <!-- Header -->
-        <div class="flex items-center gap-2">
-            <div class="min-w-40 flex flex-col justify-between items-start">
-                <div
-                    class="flex flex-row justify-start items-center gap-x-2 text-sm"
-                >
-                    <div>
-                        <LockKeyholeIcon
-                            v-if="isLocked"
-                            :size="16"
-                            :stroke-width="1.6"
-                        />
-                        <LockKeyholeOpenIcon
-                            v-else
-                            :size="16"
-                            :stroke-width="1.6"
-                        />
-                    </div>
-
-                    <div>
-                        {{ isLocked ? "Locked" : "Open" }}
-                    </div>
-                </div>
-
-                <div
-                    class="flex flex-row justify-start items-center gap-x-2 text-sm"
-                >
-                    <div>
-                        <UserIcon :size="16" :stroke-width="1.6" />
-                    </div>
-
-                    <div>
-                        {{ lockingUser?.length ? lockingUser : "-" }}
-                    </div>
-                </div>
-
-                <div
-                    class="flex flex-row justify-start items-center gap-x-2 text-sm"
-                >
-                    <div>
-                        <LaptopIcon :size="16" :stroke-width="1.6" />
-                    </div>
-
-                    <div>
-                        {{ lockingClient?.length ? lockingClient : "-" }}
-                    </div>
-                </div>
+        <!-- Lock Information -->
+        <div class="flex min-w-32 flex-col items-start justify-center">
+            <div class="flex flex-row items-center gap-x-2 text-xs leading-4">
+                <LockKeyholeIcon
+                    v-if="isLocked"
+                    :size="14"
+                    :stroke-width="1.6"
+                />
+                <LockKeyholeOpenIcon v-else :size="14" :stroke-width="1.6" />
+                <span>{{ isLocked ? "Locked" : "Open" }}</span>
             </div>
 
-            <div class="">
-                <IconButton
-                    @click="requestInitLock"
-                    :disabled="isWorking"
-                    :class="[isWorking ? 'animate-spin' : '']"
-                    v-show="lockingState === 'open'"
-                >
-                    <LockKeyholeIcon></LockKeyholeIcon>
-                </IconButton>
-                <IconButton
-                    @click="requestBreakLock"
-                    :disabled="isWorking"
-                    :class="[isWorking ? 'animate-spin' : '']"
-                    v-show="lockingState === 'lockedByOthers'"
-                >
-                    <LockKeyholeIcon></LockKeyholeIcon>
-                </IconButton>
-                <IconButton
-                    @click="requestExitLock"
-                    :disabled="isWorking"
-                    :class="[isWorking ? 'animate-spin' : '']"
-                    v-show="lockingState === 'lockedByUs'"
-                >
-                    <LockKeyholeOpenIcon></LockKeyholeOpenIcon>
-                </IconButton>
+            <div class="flex flex-row items-center gap-x-2 text-xs leading-4">
+                <UserIcon :size="14" :stroke-width="1.6" />
+                <span>{{ lockingUser?.length ? lockingUser : "-" }}</span>
+            </div>
+
+            <div class="flex flex-row items-center gap-x-2 text-xs leading-4">
+                <LaptopIcon :size="14" :stroke-width="1.6" />
+                <span>{{ lockingClient?.length ? lockingClient : "-" }}</span>
             </div>
         </div>
+
+        <!-- Lock action: circle fits the pill's right end -->
+        <button
+            type="button"
+            class="flex size-14 shrink-0 items-center justify-center rounded-full text-white shadow-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer"
+            :class="buttonClasses"
+            :disabled="isWorking"
+            :title="currentAction.label"
+            :aria-label="currentAction.label"
+            @click="requestCurrentAction"
+        >
+            <LockKeyholeOpenIcon
+                v-if="lockingState === 'lockedByUs'"
+                :size="22"
+                :stroke-width="1.8"
+                :class="{ 'animate-spin': isWorking }"
+            />
+            <LockKeyholeIcon
+                v-else
+                :size="22"
+                :stroke-width="1.8"
+                :class="{ 'animate-spin': isWorking }"
+            />
+        </button>
     </article>
 </template>
-```

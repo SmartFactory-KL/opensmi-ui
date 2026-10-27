@@ -2,7 +2,9 @@
 import type { UserEntityData } from "@/types/EntityTypes";
 import type { FeatureNode } from "@/types/NodeFeatureTypes";
 import { computed } from "vue";
-import { ShieldCheck, CircleCheck, CircleX, LockKeyhole } from "@lucide/vue";
+import { ShieldCheck, LockKeyhole } from "@lucide/vue";
+import { UsersIcon, CheckIcon, XIcon } from "@lucide/vue";
+import AllowMultipleIcon from "@/components/AllowMultipleIcon.vue";
 
 const props = defineProps<{
     feature: FeatureNode;
@@ -14,73 +16,51 @@ const isPresent = computed(() => entity.value.isPresent);
 const allowsMultiple = computed(() => entity.value.allowMultiple === true);
 
 const accessLevel = computed(() => entity.value.currentAccessLevel);
-
 const maxAccessLevel = computed(() => entity.value.maxAccessLevel);
 </script>
 
 <template>
     <article
-        class="w-full shadow-sm max-w-64 border border-gray-200 bg-white p-4 text-gray-900 transition-colors hover:border-gray-300"
+        class="flex w-full items-center gap-3 border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-900 shadow-sm transition-colors hover:border-gray-300"
     >
-        <!-- Header -->
-        <div class="flex items-start gap-3">
-            <div class="min-w-0 flex-1">
-                <h3 class="truncate text-sm font-semibold tracking-tight">
-                    {{ entity.name || "Unnamed user" }}
-                </h3>
+        <!-- Presence + name -->
+        <div class="flex min-w-0 flex-1 items-center gap-3">
+            <!-- Multi-user indicator with check / cross badge -->
+            <AllowMultipleIcon
+                :allows-multiple="allowsMultiple"
+            ></AllowMultipleIcon>
 
-                <div class="mt-1 flex items-center gap-1.5">
-                    <span
-                        class="size-2 rounded-full"
-                        :class="isPresent ? 'bg-emerald-500' : 'bg-gray-300'"
-                    />
-
-                    <span class="text-xs text-gray-500">
-                        {{ isPresent ? "Present" : "Not present" }}
-                    </span>
-                </div>
-            </div>
-
+            <!-- is present -->
             <span
-                v-if="allowsMultiple"
-                class="inline-flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium"
-                :class="
-                    allowsMultiple
-                        ? 'bg-emerald-50 text-emerald-700'
-                        : 'bg-gray-100 text-gray-500'
-                "
+                class="size-2 shrink-0 rounded-full"
+                :class="isPresent ? 'bg-emerald-500' : 'bg-gray-300'"
+                :title="isPresent ? 'Present' : 'Not present'"
+            />
+
+            <!-- name -->
+            <span
+                class="truncate font-semibold tracking-tight grow"
+                :title="entity.name"
             >
-                <CircleCheck :size="13" /> Multi-User
+                {{ entity.name || "Unnamed user" }}
             </span>
         </div>
 
-        <!-- Access information -->
-        <div class="mt-5 border-t border-gray-100 pt-4">
-            <div class="mb-3 flex items-center justify-between gap-4">
-                <span
-                    class="flex items-center gap-2 text-xs font-medium text-gray-500"
-                >
-                    <ShieldCheck :size="15" />
-                    Current access
-                </span>
-
-                <span class="text-right text-sm font-semibold text-gray-900">
+        <!-- Access info -->
+        <div class="flex shrink-0 items-center gap-3 text-xs text-gray-500">
+            <span class="flex items-center gap-1" title="Current access">
+                <ShieldCheck :size="14" />
+                <span class="font-semibold text-gray-900">
                     {{ accessLevel }}
                 </span>
-            </div>
+            </span>
 
-            <div class="flex items-center justify-between gap-4">
-                <span
-                    class="flex items-center gap-2 text-xs font-medium text-gray-500"
-                >
-                    <LockKeyhole :size="15" />
-                    Maximum access
-                </span>
-
-                <span class="text-right text-sm font-medium text-gray-700">
+            <span class="flex items-center gap-1" title="Maximum access">
+                <LockKeyhole :size="14" />
+                <span class="font-medium text-gray-700">
                     {{ maxAccessLevel }}
                 </span>
-            </div>
+            </span>
         </div>
     </article>
 </template>

@@ -20,7 +20,6 @@ import type { SkillControlEntityData } from "@/types/EntityTypes";
 import type { FeatureNode } from "@/types/NodeFeatureTypes";
 import type { SkillControlAction } from "@/types/UpdateTypes";
 import { simplyPostToText } from "@/fetch/simplyFetch";
-import IconButton from "@/components/IconButton.vue";
 import Toaster from "@/toast/Toaster";
 
 const props = defineProps<{
@@ -257,7 +256,7 @@ async function requestAction(
 
 <template>
     <section
-        class="w-full border border-slate-200 bg-white text-slate-900"
+        class="w-full bg-white text-slate-900"
         :aria-label="`${entity.name} state`"
     >
         <div class="flex items-stretch">
@@ -266,80 +265,73 @@ async function requestAction(
                 :class="state?.barColor ?? 'bg-slate-400'"
             />
 
-            <div class="min-w-0 flex-1 p-4">
-                <template v-if="state">
-                    <div class="flex items-center gap-3">
-                        <div
-                            class="flex size-11 shrink-0 items-center justify-center border rounded-full"
-                            :class="state.color"
-                        >
-                            <component
-                                :is="state.icon"
-                                class="size-6"
-                                :class="[
-                                    state.iconColor,
-                                    state.isBusy &&
-                                        'animate-spin motion-reduce:animate-none',
-                                ]"
-                                :aria-label="state.label"
-                            />
-                        </div>
-
-                        <div class="min-w-0 flex-1">
-                            <div class="flex flex-wrap items-center gap-2">
-                                <h3 class="text-lg font-semibold leading-tight">
-                                    {{ entity.currentState }}
-                                </h3>
-                            </div>
-
-                            <p class="mt-1 text-sm text-slate-500">
-                                {{ state.description }}
-                            </p>
-                        </div>
-
-                        <div
-                            class="flex flex-row justify-start items-center gap-x-2"
-                        >
-                            <IconButton
-                                v-for="control in controls"
-                                :key="control.action"
-                                :class="control.classes"
-                                :title="control.label"
-                                :aria-label="control.label"
-                                @click="requestAction(control.action)"
-                            >
-                                <component :is="control.icon" />
-                            </IconButton>
-                        </div>
-                    </div>
-                </template>
-
-                <div v-else class="flex items-center gap-3">
-                    <div
-                        class="flex size-11 shrink-0 items-center justify-center border border-slate-200 bg-slate-50"
-                    >
-                        <CircleAlert class="size-6 text-slate-500" />
-                    </div>
-
-                    <div class="min-w-0">
-                        <h3 class="text-lg font-semibold">Unknown state</h3>
-                        <p class="mt-1 break-all text-sm text-slate-500">
-                            {{ entity.currentState }}
-                        </p>
-                    </div>
+            <div class="flex min-w-0 flex-1 items-center gap-2.5 px-3 py-2">
+                <!-- State icon -->
+                <div
+                    class="flex size-9 shrink-0 items-center justify-center rounded-full border"
+                    :class="
+                        state ? state.color : 'border-slate-200 bg-slate-50'
+                    "
+                >
+                    <component
+                        :is="state ? state.icon : CircleAlert"
+                        class="size-5"
+                        :class="
+                            state
+                                ? [
+                                      state.iconColor,
+                                      state.isBusy &&
+                                          'animate-spin motion-reduce:animate-none',
+                                  ]
+                                : 'text-slate-500'
+                        "
+                        :aria-label="state?.label ?? 'Unknown state'"
+                    />
                 </div>
 
-                <div
-                    class="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-xs"
-                >
-                    <span class="text-slate-500">Last state change</span>
-                    <time
-                        class="font-medium text-slate-700"
-                        :datetime="entity.currentStateLastChange || undefined"
-                        :title="lastChangeTitle"
+                <!-- Name, state, last change -->
+                <div class="min-w-0 flex-1">
+                    <p
+                        v-if="state"
+                        class="text-sm font-medium leading-snug"
+                        :class="state.iconColor"
                     >
-                        {{ lastChange }}
-                    </time>
+                        {{ state.label }}
+                    </p>
+                    <p
+                        v-else
+                        class="break-all text-sm leading-snug text-slate-500"
+                    >
+                        Unknown state: {{ entity.currentState }}
+                    </p>
+
+                    <p class="text-xs leading-snug text-slate-500">
+                        <time
+                            class="text-slate-700"
+                            :datetime="
+                                entity.currentStateLastChange || undefined
+                            "
+                            :title="lastChangeTitle"
+                        >
+                            {{ lastChange }}
+                        </time>
+                    </p>
+                </div>
+
+                <!-- Controls pill, upper right corner -->
+                <div class="flex shrink-0 items-center gap-2 self-start p-0.5">
+                    <button
+                        v-for="control in controls"
+                        :key="control.action"
+                        type="button"
+                        class="flex size-10 items-center justify-center border-2 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 cursor-pointer active:scale-95"
+                        :class="control.classes"
+                        :title="control.label"
+                        :aria-label="control.label"
+                        @click="requestAction(control.action)"
+                    >
+                        <component :is="control.icon" class="size-7" />
+                    </button>
                 </div>
             </div>
         </div>

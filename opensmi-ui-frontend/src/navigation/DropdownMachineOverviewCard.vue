@@ -33,7 +33,11 @@ const lockFeature = computed(() => {
 <template>
     <div
         class="flex flex-col justify-between items-stretch p-3 gap-x-1"
-        :class="active ? 'bg-slate-300 text-slate-800' : 'bg-slate-600 text-slate-50'"
+        :class="
+            active
+                ? 'bg-slate-300 text-slate-800'
+                : 'bg-slate-600 text-slate-50'
+        "
     >
         <div class="flex flex-col justify-between items-center mb-2 gap-x-2">
             <div class="font-semibold">
@@ -52,6 +56,7 @@ const lockFeature = computed(() => {
                 v-if="lockFeature !== null"
                 :feature="lockFeature"
                 @click.stop
+                :dark="!active"
             ></LockFeature>
         </div>
     </div>

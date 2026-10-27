@@ -4,8 +4,12 @@ import MachineComponentTree from "@/tree/MachineComponentTree.vue";
 import ServerStateIndicator from "./ServerStateIndicator.vue";
 import MachineOverviewCard from "./DropdownMachineOverviewCard.vue";
 import QuickConnectButton from "./QuickConnectButton.vue";
+import IconButton from "@/components/IconButton.vue";
+import { RefreshCcwDotIcon, WorkflowIcon } from "@lucide/vue";
+import { useServerStore } from "@/stores/ServerSessionStore";
 
 const modelStore = useModelStore();
+const serverStore = useServerStore();
 </script>
 
 <template>
@@ -23,7 +27,7 @@ const modelStore = useModelStore();
             @click.self.prevent="modelStore.closeDropdown()"
         >
             <div
-                class="z-20 w-full overflow-hidden bg-slate-800 shadow-2xl border rounded-3xl"
+                class="z-20 w-full overflow-hidden bg-slate-800 shadow-2xl rounded-3xl"
             >
                 <!-- Inner Part -->
                 <div class="my-4 max-h-[calc(80vh-2rem)] overflow-y-auto px-4">
@@ -40,8 +44,50 @@ const modelStore = useModelStore();
                                     @click="modelStore.closeDropdown()"
                                 ></ServerStateIndicator>
 
-                                <!-- Connect/Disconnect -->
-                                <QuickConnectButton></QuickConnectButton>
+                                <!-- Controls -->
+                                <div
+                                    class="flex flex-row justify-around w-full"
+                                >
+                                    <!-- Connect/Disconnect -->
+                                    <QuickConnectButton></QuickConnectButton>
+
+                                    <!-- Browse/Load -->
+                                    <IconButton
+                                        class="bg-slate-700 hover:bg-slate-800 text-white"
+                                        @click="modelStore.requestBrowsing()"
+                                        :disabled="
+                                            serverStore.isDisconnected ||
+                                            modelStore.isWorking
+                                        "
+                                    >
+                                        <WorkflowIcon
+                                            :size="16"
+                                            :class="{
+                                                'animate-spin':
+                                                    modelStore.isWorking,
+                                            }"
+                                        />
+                                        Browse
+                                    </IconButton>
+
+                                    <IconButton
+                                        class="bg-slate-700 hover:bg-slate-800 text-white"
+                                        @click="modelStore.loadModel()"
+                                        :disabled="
+                                            serverStore.isDisconnected ||
+                                            modelStore.isWorking
+                                        "
+                                    >
+                                        <RefreshCcwDotIcon
+                                            :size="16"
+                                            :class="{
+                                                'animate-spin':
+                                                    modelStore.isWorking,
+                                            }"
+                                        />
+                                        Load Model
+                                    </IconButton>
+                                </div>
                             </div>
 
                             <!-- Root Component and Locking Overview -->
@@ -71,12 +117,19 @@ const modelStore = useModelStore();
                                         v-for="component in modelStore.rootComponents.values()"
                                         :key="component.entityId"
                                         :component="component"
-                                        :active="modelStore.currentMachine == component"
+                                        :active="
+                                            modelStore.currentMachine ==
+                                            component
+                                        "
                                         :class="{
                                             'machine-tab-active':
-                                                modelStore.currentMachine == component,
+                                                modelStore.currentMachine ==
+                                                component,
                                         }"
-                                        @click="modelStore.currentMachine = component"
+                                        @click="
+                                            modelStore.currentMachine =
+                                                component
+                                        "
                                         class="cursor-pointer rounded-l-xl"
                                     ></MachineOverviewCard>
                                 </section>

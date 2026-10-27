@@ -27,6 +27,7 @@ export const SkillStateByLabel: Record<string, SkillState> = {
 export interface ComponentEntityData {
   entityId: string;
   name: string;
+  componentType: string;
 }
 
 export interface VariableEntityData {

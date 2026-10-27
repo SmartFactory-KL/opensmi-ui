@@ -95,7 +95,7 @@ const stateConfig = computed(() => {
     <div
         v-if="tiny"
         :class="[
-            'flex size-9 items-center justify-center border shadow-sm rounded-full cursor-pointer active:scale-95',
+            'flex size-11 items-center justify-center border shadow-sm rounded-md cursor-pointer active:scale-95',
             'transition-colors duration-100',
             stateConfig.classes,
             { 'animate-spin': stateConfig.animate },

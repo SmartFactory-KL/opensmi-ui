@@ -27,7 +27,7 @@ watch(
         <MainNavigation />
 
         <div
-            class="overflow-x-auto overflow-y-auto border-t-4 border-t-slate-500 bg-slate-50"
+            class="overflow-x-auto overflow-y-auto border-t-4 border-t-emerald-800 bg-slate-50"
         >
             <!-- Request error -->
             <BasicError :error="pageStore.requestData.error"></BasicError>

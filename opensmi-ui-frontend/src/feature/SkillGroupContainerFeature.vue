@@ -11,7 +11,7 @@ defineProps<{
     <div>
         <div class="font-semibold">SkillSet</div>
 
-        <div class="flex flex-col flex-wrap justify-start items-start gap-4">
+        <div class="flex flex-row flex-wrap justify-start items-start gap-4">
             <SkillGroupFeature
                 v-for="feature in feature.features"
                 :feature="feature"

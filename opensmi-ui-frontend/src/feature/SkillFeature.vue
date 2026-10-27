@@ -3,8 +3,8 @@ import type { SkillEntityData } from "@/types/EntityTypes";
 import type { FeatureNode } from "@/types/NodeFeatureTypes";
 import { computed } from "vue";
 import SkillControlFeature from "./SkillControlFeature.vue";
-import MissingFeature from "@/components/MissingFeature.vue";
 import VariableContainerFeature from "./VariableContainerFeature.vue";
+import ExpectedFeature from "@/components/ExpectedFeature.vue";
 
 const props = defineProps<{
     feature: FeatureNode;
@@ -21,47 +21,30 @@ const skillControlFeature = computed(() => {
     }
     return null;
 });
-
-const variableContainers = computed(() => {
-    const result: FeatureNode[] = [];
-    for (const feature of props.feature.features) {
-        if (feature.entityType === "VariableContainer") {
-            result.push(feature);
-        }
-    }
-
-    return result;
-});
 </script>
 
 <template>
-    <section class="border border-slate-200 bg-white text-slate-900 shadow-lg">
-        <div class="p-2 text-xs flex flex-row justify-between items-center">
-            <div class="font-semibold">
+    <section class="bg-sky-800 text-slate-200 shadow-lg">
+        <div class="p-2 flex flex-row justify-between items-center">
+            <div class="font-normal">
                 {{ name?.length ? name : "Generic Skill Name" }}
             </div>
-            <div>
+            <div class="bg-sky-950 text-slate-300 rounded-full px-2 py-0 text-xs">
                 {{ entity.name }}
             </div>
         </div>
 
         <div>
-            <SkillControlFeature
-                :feature="skillControlFeature"
-                v-if="skillControlFeature !== null"
-            ></SkillControlFeature>
-            <MissingFeature
-                v-else
-                expected-feature-type="SkillControl"
-            ></MissingFeature>
-        </div>
-
-        <div>
-            <VariableContainerFeature
-                :feature="container"
-                :key="container.entityId"
-                v-for="container in variableContainers"
-            ></VariableContainerFeature>
+            <ExpectedFeature
+                :expectedFeature="skillControlFeature"
+                expectedFeatureType="SkillControl"
+                v-slot="{ feature }"
+            >
+                <SkillControlFeature
+                    :feature="feature"
+                    v-if="skillControlFeature !== null"
+                ></SkillControlFeature>
+            </ExpectedFeature>
         </div>
     </section>
 </template>

@@ -102,13 +102,19 @@ async function copyJson() {
         entity-type="Entity"
         v-slot="{ item }"
     >
-        <div class="flex flex-col justify-start items-start">
-            <EntityBreadcrumbs
-                :node="item"
-                class="sticky top-0 bg-slate-200 h-10 w-full pl-2"
-            ></EntityBreadcrumbs>
+        <main class="flex flex-col justify-start items-start">
+            <div
+                class="sticky top-0 flex flex-row justify-between items-center w-full bg-emerald-200 pr-4 pl-2"
+            >
+                <EntityBreadcrumbs
+                    :node="item"
+                    class="grow h-8"
+                ></EntityBreadcrumbs>
+            </div>
 
-            <section class="flex flex-col p-4 justify-start items-start w-full gap-4">
+            <section
+                class="flex flex-col p-4 justify-start items-start w-full gap-4"
+            >
                 <SectionBar
                     >Rendered Feature
                     <span class="text-stone-400"
@@ -222,6 +228,6 @@ async function copyJson() {
                 <!-- Always add some spacing for that funky on-screen-display on the touchscreens -->
                 <div class="on-screen-placeholder" style="height: 25vh"></div>
             </section>
-        </div>
+        </main>
     </NullablePage>
 </template>

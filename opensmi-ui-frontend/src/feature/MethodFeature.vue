@@ -44,22 +44,20 @@ async function callMethod() {
 </script>
 
 <template>
-    <section class="border border-slate-200 bg-white text-slate-900 shadow-lg">
-        <div class="p-2 text-xs flex flex-col justify-start items-start">
-            <div>Name: {{ entity.name }}</div>
-            <div>Minimum Access Level: {{ entity.minAccessLevel }}</div>
+    <section class="bg-white text-slate-900 shadow-lg">
+        <div
+            class="p-2 flex flex-col justify-start items-start bg-fuchsia-700 text-slate-200"
+        >
+            {{ entity.name }}
         </div>
 
-        <div class="p-2">
-            <IconButton @click="callMethod">
+        <div class="p-2 border-l-4 border-l-emerald-600">
+            <IconButton
+                @click="callMethod"
+                class="bg-emerald-50 text-emerald-600"
+            >
                 <PlayCircleIcon></PlayCircleIcon> Call
             </IconButton>
         </div>
-
-        <VariableContainerFeature
-            v-for="container in variableContainers"
-            :key="container.entityId"
-            :feature="container"
-        ></VariableContainerFeature>
     </section>
 </template>
