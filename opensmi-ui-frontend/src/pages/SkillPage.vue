@@ -2,6 +2,7 @@
 import EntityBreadcrumbs from "@/components/EntityBreadcrumbs.vue";
 import ExpectedFeature from "@/components/ExpectedFeature.vue";
 import NullablePage from "@/components/NullablePage.vue";
+import DependencyFeature from "@/feature/DependencyFeature.vue";
 import SkillControlFeature from "@/feature/SkillControlFeature.vue";
 import VariableContainerFeature from "@/feature/VariableContainerFeature.vue";
 import GenericEntityPageLink from "@/link/GenericEntityPageLink.vue";
@@ -42,6 +43,7 @@ const expectedFeatures = computed<Map<string, FeatureNode | null>>(() => {
 
     for (const feature of skillFeature.value.features) {
         switch (feature.entityType) {
+            case "Dependency":
             case "SkillControl":
                 featureMap.set(feature.entityType, feature);
                 break;
@@ -137,6 +139,18 @@ const skillGroupLabel = computed(() => {
                             <VariableContainerFeature
                                 :feature="feature"
                             ></VariableContainerFeature>
+                        </ExpectedFeature>
+
+                        <ExpectedFeature
+                            :expected-feature="
+                                expectedFeatures.get('Dependency')
+                            "
+                            expectedFeatureType="Dependency"
+                            v-slot="{ feature }"
+                        >
+                            <DependencyFeature
+                                :feature="feature"
+                            ></DependencyFeature>
                         </ExpectedFeature>
                     </div>
                 </header>

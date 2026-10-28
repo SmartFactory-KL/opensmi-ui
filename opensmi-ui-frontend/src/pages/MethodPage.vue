@@ -43,6 +43,9 @@ const expectedFeatures = computed<Map<string, FeatureNode | null>>(() => {
 
     for (const feature of methodFeature.value.features) {
         switch (feature.entityType) {
+            case "Dependency":
+                featureMap.set(feature.entityType, feature);
+                break;
             case "VariableContainer":
                 featureMap.set(feature.entity.name, feature);
                 break;
@@ -116,6 +119,18 @@ const expectedFeatures = computed<Map<string, FeatureNode | null>>(() => {
                             <VariableContainerFeature
                                 :feature="feature"
                             ></VariableContainerFeature>
+                        </ExpectedFeature>
+
+                        <ExpectedFeature
+                            :expected-feature="
+                                expectedFeatures.get('Dependency')
+                            "
+                            expectedFeatureType="Dependency"
+                            v-slot="{ feature }"
+                        >
+                            <DependencyFeature
+                                :feature="feature"
+                            ></DependencyFeature>
                         </ExpectedFeature>
                     </div>
                 </header>

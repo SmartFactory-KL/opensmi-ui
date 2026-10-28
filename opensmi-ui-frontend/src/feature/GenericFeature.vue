@@ -16,6 +16,7 @@ import ComponentFeature from "./ComponentFeature.vue";
 import GenericEntityPageLink from "@/link/GenericEntityPageLink.vue";
 import MethodContainerFeature from "./MethodContainerFeature.vue";
 import MethodFeature from "./MethodFeature.vue";
+import DependencyFeature from "./DependencyFeature.vue";
 
 const props = defineProps<{
     feature: FeatureNode | ComponentNode;
@@ -52,6 +53,9 @@ const featureComponent = computed(() => {
             return VariableContainerFeature;
         case "Variable":
             return VariableFeature;
+
+        case "Dependency":
+            return DependencyFeature;
 
         // mostly exist to show something in the entity view
         case "Component":

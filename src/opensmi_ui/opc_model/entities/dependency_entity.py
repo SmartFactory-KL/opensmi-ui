@@ -10,7 +10,7 @@ class DependencyEntityData(FeatureNodeEntityData):
     name: str
 
     depends_on: list[NodeIdData]
-    dependeny_of: list[NodeIdData]
+    dependency_of: list[NodeIdData]
 
 
 class DependencyEntity(FeatureNodeEntity):
@@ -25,7 +25,7 @@ class DependencyEntity(FeatureNodeEntity):
 
         self.content = DependencyEntityData(
             name=opc_node.browse_name.Name,
-            dependeny_of=[NodeIdData.from_ua(dep) for dep in dependency_of],
+            dependency_of=[NodeIdData.from_ua(dep) for dep in dependency_of],
             depends_on=[NodeIdData.from_ua(dep) for dep in depends_on],
         )
 
