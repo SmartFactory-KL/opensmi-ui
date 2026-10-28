@@ -51,7 +51,7 @@ async function setValue() {
         class="flex flex-col justify-start items-start bg-white border border-stone-200 text-emerald-900 p-1"
     >
         <div class="flex flex-row justify-around gap-x-2 items-center">
-            <ValueInput :variableValue="tempValue" class="grow"></ValueInput>
+            <ValueInput v-model="tempValue" class="grow"></ValueInput>
 
             <ArrowRightIcon
                 @click="setValue"

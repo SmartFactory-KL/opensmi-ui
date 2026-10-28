@@ -1,60 +1,25 @@
 <script setup lang="ts">
 import type { VariantData } from "@/types/OPCTypes";
-import { computed } from "vue";
+import ValueInputArray from "./ValueInputArray.vue";
+import ValueInputScalar from "./ValueInputScalar.vue";
 
-import ValueInputText from "./ValueInputText.vue";
+// Usage: <ValueInput v-model="tempValue" />
+const variant = defineModel<VariantData | null>({ required: true });
 
-const props = defineProps<{
-    variableValue: VariantData | null;
-}>();
-
-const inputComponent = computed(() => {
-    if (props.variableValue === null) {
-        return ValueInputText;
-    }
-
-    switch (props.variableValue.type) {
-        case "Null":
-        case "Boolean":
-        case "SByte":
-        case "Byte":
-        case "ByteString":
-        case "Int16":
-        case "UInt16":
-        case "Int32":
-        case "UInt32":
-        case "Int64":
-        case "UInt64":
-        case "Float":
-        case "Double":
-        case "String":
-        case "XmlElement":
-        case "DateTime":
-        case "Guid":
-        case "NodeId":
-        case "ExpandedNodeId":
-        case "StatusCode":
-        case "QualifiedName":
-        case "LocalizedText":
-        case "ExtensionObject":
-        case "DataValue":
-        case "Variant":
-        case "DiagnosticInfo":
-        default:
-            return ValueInputText;
-    }
-});
+function setScalar(value: unknown) {
+    if (variant.value === null) return;
+    variant.value = { ...variant.value, value };
+}
 </script>
 
 <template>
-    <!-- <ValueDisplayNull v-if="variableValue === null" :value="null" />
-    <ValueDisplayArray
-        v-else-if="variableValue.isArray"
-        :type="variableValue.type"
-        :value="variableValue.value"
+    <!-- without a VariantData there is no type to edit against -->
+    <span v-if="variant === null" class="text-sm text-stone-400">null</span>
+    <ValueInputArray v-else-if="variant.isArray" v-model="variant" />
+    <ValueInputScalar
+        v-else
+        :type="variant.type"
+        :model-value="variant.value"
+        @update:model-value="setScalar"
     />
-    <!-- null scalars (e.g. an empty String) are shown as "null" -->
-    <!-- <ValueDisplayNull v-else-if="variableValue.value === null" :value="null" /> -->
-    <!-- -->
-    <component :is="inputComponent" :value="variableValue" />
 </template>

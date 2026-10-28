@@ -9,7 +9,7 @@ from uuid import UUID
 
 from asyncua import ua
 
-from opensmi_ui.model.json import JsonOutModel
+from opensmi_ui.model.json import JsonBaseModel, JsonBaseModel
 
 VT = ua.VariantType
 
@@ -21,7 +21,7 @@ FLOAT_TYPES = {VT.Float, VT.Double}
 MAX_SAFE_INTEGER = 2**53 - 1
 
 
-class QualifiedNameData(JsonOutModel):
+class QualifiedNameData(JsonBaseModel):
     name: str
     namespace_index: int
 
@@ -36,7 +36,7 @@ class QualifiedNameData(JsonOutModel):
         return ua.QualifiedName(Name=self.name, NamespaceIndex=self.namespace_index)
 
 
-class LocalizedTextData(JsonOutModel):
+class LocalizedTextData(JsonBaseModel):
     text: str | None
     locale: str | None
 
@@ -51,7 +51,7 @@ class LocalizedTextData(JsonOutModel):
         return ua.LocalizedText(Text=self.text, Locale=self.locale)
 
 
-class NodeIdData(JsonOutModel):
+class NodeIdData(JsonBaseModel):
     identifier: str | int
     namespace_index: int
     identifier_type: str
@@ -93,7 +93,7 @@ class NodeIdData(JsonOutModel):
         )
 
 
-class ExpandedNodeIdData(JsonOutModel):
+class ExpandedNodeIdData(JsonBaseModel):
     node_id: NodeIdData
     namespace_uri: str | None = None
     server_index: int = 0
@@ -111,7 +111,7 @@ class ExpandedNodeIdData(JsonOutModel):
         return _to_expanded(self.node_id.to_ua(), self.namespace_uri, self.server_index)
 
 
-class ReferenceData(JsonOutModel):
+class ReferenceData(JsonBaseModel):
     reference_type_id: NodeIdData
     is_forward: bool
     node_id: NodeIdData
@@ -152,7 +152,7 @@ class ReferenceData(JsonOutModel):
         )
 
 
-class StatusCodeData(JsonOutModel):
+class StatusCodeData(JsonBaseModel):
     code: int
     name: str | None = None
     # derived from the code, ignored by to_ua()
@@ -179,7 +179,7 @@ class StatusCodeData(JsonOutModel):
         return ua.StatusCode(ua.UInt32(self.code))
 
 
-class DiagnosticInfoData(JsonOutModel):
+class DiagnosticInfoData(JsonBaseModel):
     """A ua.DiagnosticInfo. The first four fields are indexes into the string
     table of the response they came from, not strings."""
 
@@ -233,7 +233,7 @@ class DiagnosticInfoData(JsonOutModel):
         return ua.DiagnosticInfo(**kwargs)
 
 
-class ExtensionObjectData(JsonOutModel):
+class ExtensionObjectData(JsonBaseModel):
     """A ua.ExtensionObject, i.e. a structure.
 
     Decoded structures (asyncua has a class for them, e.g. Range, EUInformation,
@@ -319,7 +319,7 @@ class ExtensionObjectData(JsonOutModel):
         )
 
 
-class DataValueData(JsonOutModel):
+class DataValueData(JsonBaseModel):
     value: Union["VariantData", None] = None
     status: StatusCodeData | None = None
     source_timestamp: datetime | None = None
@@ -352,7 +352,7 @@ class DataValueData(JsonOutModel):
         return ua.DataValue(**kwargs)
 
 
-class VariantData(JsonOutModel):
+class VariantData(JsonBaseModel):
     """A ua.Variant with an explicit type tag.
 
     `value` depends on `type`; nested types hold the models above. Arrays are

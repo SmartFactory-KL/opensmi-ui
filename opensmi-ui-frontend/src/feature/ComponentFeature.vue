@@ -37,15 +37,11 @@ const children = computed<ComponentNode[]>(
             class="-mt-1 ml-2 flex max-w-full min-w-0 flex-col"
             aria-label="Child components"
         >
-            <li
-                v-for="child in children"
-                :key="child.entityId"
-                class="relative flex min-w-0 items-center py-1 pl-6 before:absolute before:left-0 before:top-0 before:h-full before:w-px before:bg-slate-300 after:absolute after:left-0 after:top-1/2 after:h-px after:w-4 after:bg-slate-300 last:before:h-1/2"
-            >
+            <li v-for="child in children" :key="child.entityId">
                 <RouterLink
                     :to="`/component/${encodeURIComponent(child.entityId)}`"
                     :title="child.entity.name"
-                    class="flex min-w-0 max-w-full items-center gap-1.5 rounded-md px-2 py-0.5 text-sm text-slate-300 transition-colors hover:border-slate-300 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 active:bg-slate-200"
+                    class="flex min-w-0 max-w-full items-center gap-1.5 rounded-md px-2 py-0.5 text-sm text-slate-300 hover:border-slate-300 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 active:bg-slate-200"
                 >
                     <FolderIcon
                         :size="12"
