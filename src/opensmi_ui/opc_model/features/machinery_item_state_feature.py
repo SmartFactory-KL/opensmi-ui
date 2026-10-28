@@ -82,12 +82,14 @@ class MachineryItemStateFeatureNode(FeatureNode):
     def _request_subscription(self) -> FeatureSubscribeRequest | None:
         req = FeatureSubscribeRequest(subscriptions=[])
 
+        current_state_node = self.opc_node.get_first_child_node_for_name("CurrentState")
+
         req.subscriptions.append(
             FeatureSubscribeDataRequest(
                 attr=ua.attribute_ids.AttributeIds.Value,
                 feature=self,
                 handler=self.on_state_update,
-                node_id=self.opc_node.node_id,
+                node_id=current_state_node.node_id,
             )
         )
 

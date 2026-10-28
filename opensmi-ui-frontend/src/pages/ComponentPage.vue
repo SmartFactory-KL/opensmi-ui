@@ -4,6 +4,7 @@ import ExpectedFeature from "@/components/ExpectedFeature.vue";
 import NullablePage from "@/components/NullablePage.vue";
 import ComponentFeature from "@/feature/ComponentFeature.vue";
 import LockFeature from "@/feature/LockFeature.vue";
+import MachineryItemStateFeature from "@/feature/MachineryItemStateFeature.vue";
 import MethodContainerFeature from "@/feature/MethodContainerFeature.vue";
 import SkillGroupContainerFeature from "@/feature/SkillGroupContainerFeature.vue";
 import UserContainerFeature from "@/feature/UserContainerFeature.vue";
@@ -95,7 +96,7 @@ const expectedFeatures = computed<Map<string, FeatureNode | null>>(() => {
                     <div class="flex flex-col">
                         <ComponentFeature :feature="item"></ComponentFeature>
                     </div>
-                    <div>
+                    <div class="flex flex-col justify-start items-center gap-y-2">
                         <ExpectedFeature
                             :expected-feature="expectedFeatures.get('Lock')"
                             expectedFeatureType="Lock"
@@ -103,6 +104,19 @@ const expectedFeatures = computed<Map<string, FeatureNode | null>>(() => {
                             v-slot="{ feature }"
                         >
                             <LockFeature :feature="feature"></LockFeature>
+                        </ExpectedFeature>
+
+                        <ExpectedFeature
+                            :expected-feature="
+                                expectedFeatures.get('MachineryItemState')
+                            "
+                            expectedFeatureType="MachineryItemState"
+                            optional
+                            v-slot="{ feature }"
+                        >
+                            <MachineryItemStateFeature
+                                :feature="feature"
+                            ></MachineryItemStateFeature>
                         </ExpectedFeature>
                     </div>
                     <div class="flex flex-col gap-y-4">
