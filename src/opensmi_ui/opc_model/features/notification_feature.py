@@ -1,9 +1,8 @@
 from asyncua.common.events import Event
 
-from opensmi_ui.event.bus import EventBus
 from opensmi_ui.logger import get_module_logger
 from opensmi_ui.opc_model.entities.notification_entity import NotificationEntity
-from opensmi_ui.opc_model.model_node import (
+from opensmi_ui.opc_model.feature_node import (
     ComponentNode,
     FeatureInitRequest,
     FeatureInitResult,
@@ -23,18 +22,14 @@ class NotificationFeatureNode(FeatureNode):
         super().__init__(opc_node=opc_node, parent_component_node=parent_component_node)
         self.entity_type = "Notification"
 
-    def advance(
+    def _populate_step(
         self, last_result: FeatureInitResult | None
     ) -> FeatureInitRequest | None:
         self.entity = NotificationEntity(opc_node=self.opc_node)
         self.init_state = FeatureInitState.DONE
         return None
 
-    def request_subscription(
-        self, event_bus: EventBus
-    ) -> FeatureSubscribeRequest | None:
-        self.event_bus = event_bus
-
+    def _request_subscription(self) -> FeatureSubscribeRequest | None:
         req = FeatureSubscribeRequest(subscriptions=[])
 
         req.subscriptions.append(

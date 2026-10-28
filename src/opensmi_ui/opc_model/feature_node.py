@@ -148,35 +148,90 @@ class FeatureNode:
 
         self.features = []
 
+    ## STEP POPULATION
     @abstractmethod
-    def advance(
+    def _populate_step(
         self, last_result: FeatureInitResult | None
     ) -> FeatureInitRequest | None:
-        """advance() is called by the model until no further requests are present. The initial last_result will contain empty lists."""
+        """_populate_step() is the internal method any feature needs to implement to populate itself.
+        It is usually called via next_populate_step()
+        """
         return None
 
+    def next_populate_step(
+        self, last_result: FeatureInitResult | None
+    ) -> FeatureInitRequest | None:
+        """next_populate_step() will continue the population process of a feature by providing the last result (initially it is None).
+        This will catch all exceptions and return an init_state of ERROR if anything raises."""
+        try:
+            return self._populate_step(last_result=last_result)
+        except Exception as e:  # noqa: BLE001 # catch all to prevent silent fails on features
+            self.init_state = FeatureInitState.ERROR
+            self.init_error = str(e)
+            return None
+
+    ## SUBSCRIPTION REQUEST
     @abstractmethod
+    def _request_subscription(self) -> FeatureSubscribeRequest | None:
+        """_request_subscription() is the internal method that any feature which needs subscriptions needs to implement.
+        The EventBus is available via self.event_bus."""
+        return None
+
     def request_subscription(
         self, event_bus: EventBus
     ) -> FeatureSubscribeRequest | None:
-        """subscribe() is called to gather all subscription requests. Returning None means no subscriptions are requested."""
+        """request_subscription() is called to gather all subscription requests.
+        This will call the internal _request_subscription() method of the actual feature.
+        Returning None means no subscriptions are requested.
+        The event bus is automatically added to the feature in this.
+        All exceptions are catched and result in ERROR state for the feature."""
+        try:
+            self.event_bus = event_bus
+            return self._request_subscription()
+        except Exception as e:  # noqa: BLE001 # catch all to prevent silent fails on features
+            self.init_state = FeatureInitState.ERROR
+            self.init_error = str(e)
+            return None
+
+    ## VALUE READ
+    @abstractmethod
+    def _request_value(self) -> FeatureValueReadRequest | None:
+        """_request_value() is the internal method a feature needs to implement if it wants to do a final read."""
         return None
 
-    @abstractmethod
     def request_value(self) -> FeatureValueReadRequest | None:
-        """request_value() is called to gather all final read requests to read value (or other attributes) after subscriptions have been established"""
-        return None
+        """request_value() is called to gather all final read requests to read value (or other attributes)
+        after subscriptions have been established. All exceptions are catched and result in ERROR state for the feature."""
+        try:
+            return self._request_value()
+        except Exception as e:  # noqa: BLE001 # catch all to prevent silent fails on features
+            self.init_state = FeatureInitState.ERROR
+            self.init_error = str(e)
+            return None
 
     @abstractmethod
-    def handle_value_result(self, result: FeatureValueReadResult) -> None:
+    def _handle_value_result(self, result: FeatureValueReadResult) -> None:
         """handle_value_result() is called to return the values requested by request_value()"""
-        ...
+        return
 
+    def handle_value_result(self, result: FeatureValueReadResult) -> None:
+        """handle_value_result() is called with the results of the request_value().
+        All exceptions are catched and result in ERROR state for the feature."""
+        try:
+            return self._handle_value_result(result)
+        except Exception as e:  # noqa: BLE001 # catch all to prevent silent fails on features
+            self.init_state = FeatureInitState.ERROR
+            self.init_error = str(e)
+            return None
+
+    ## ACTION
     @abstractmethod
     async def handle_action(self, action: GenericAction) -> None:
-        """handle_action() is called whenever any action has been received for the entityId of this feature"""
+        """handle_action() is called whenever any action has been received for the entityId of this feature.
+        This method does not catch exceptions, as this method is expected to raise up to FastAPI."""
         raise NotImplementedError("This feature does not support actions")
 
+    ## DATA
     def get_data(self) -> FeatureNodeData:
         return FeatureNodeData(
             # basic node data

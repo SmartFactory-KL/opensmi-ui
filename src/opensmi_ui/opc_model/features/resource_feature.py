@@ -4,15 +4,15 @@ from opensmi_ui.logger import get_module_logger
 from opensmi_ui.opc_model.entities.resource_container_entity import (
     ResourceContainerEntity,
 )
-from opensmi_ui.opc_model.features.variable_container_feature import (
-    VariableContainerFeatureNode,
-)
-from opensmi_ui.opc_model.model_node import (
+from opensmi_ui.opc_model.feature_node import (
     ComponentNode,
     FeatureInitRequest,
     FeatureInitResult,
     FeatureInitState,
     FeatureNode,
+)
+from opensmi_ui.opc_model.features.variable_container_feature import (
+    VariableContainerFeatureNode,
 )
 from opensmi_ui.opc_model.opc_node import OPCNode
 
@@ -44,10 +44,9 @@ class ResourceFeatureNode(FeatureNode):
 
             self.features.append(variable_container_feature)
 
-    def advance(
+    def _populate_step(
         self, last_result: FeatureInitResult | None
     ) -> FeatureInitRequest | None:
         self.entity = ResourceContainerEntity(opc_node=self.opc_node)
         self.init_state = FeatureInitState.DONE
-
         return None

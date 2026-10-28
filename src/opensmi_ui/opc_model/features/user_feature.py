@@ -2,7 +2,7 @@ from opensmi.client.remote_variable import ua
 
 from opensmi_ui.logger import get_module_logger
 from opensmi_ui.opc_model.entities.user_entity import UserEntity
-from opensmi_ui.opc_model.model_node import (
+from opensmi_ui.opc_model.feature_node import (
     ComponentNode,
     FeatureInitRequest,
     FeatureInitResult,
@@ -27,7 +27,7 @@ class UserFeatureNode(FeatureNode):
         self._init_step = 0
         self.entity_type = "User"
 
-    def advance(
+    def _populate_step(
         self, last_result: FeatureInitResult | None
     ) -> FeatureInitRequest | None:
         match self._init_step:
@@ -51,11 +51,9 @@ class UserFeatureNode(FeatureNode):
                 return req
             case 1:
                 if last_result is None:
-                    self.init_state = FeatureInitState.ERROR
-                    self.init_error = (
+                    raise ValueError(
                         f"Received Unexpected None Result for step {self._init_step}"
                     )
-                    return None
 
                 for idx, child in enumerate(self.opc_node.children):
                     match child.browse_name.Name:

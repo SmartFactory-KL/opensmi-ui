@@ -5,11 +5,10 @@ from asyncua import ua
 from asyncua.common.node import Node
 from asyncua.common.subscription import DataChangeEvent
 
-from opensmi_ui.event.bus import EventBus
 from opensmi_ui.logger import get_module_logger
 from opensmi_ui.model.json import JsonInModel, JsonOutModel
 from opensmi_ui.opc_model.entities.variable_entity import VariableEntity
-from opensmi_ui.opc_model.model_node import (
+from opensmi_ui.opc_model.feature_node import (
     ComponentNode,
     FeatureInitRequest,
     FeatureInitResult,
@@ -86,105 +85,18 @@ class VariableFeatureNode(FeatureNode):
 
         self.properties_to_read = []
 
-    def advance(
+    def _populate_step(
         self, last_result: FeatureInitResult | None
     ) -> FeatureInitRequest | None:
-        try:
-            match self._init_step:
-                case 0:
-                    return self._advance_step_0(last_result)
-                case 1:
-                    return self._advance_step_1(last_result)
-                case _:
-                    return None
-        except Exception as e:  # noqa: BLE001 # catch all to prevent silent fails on features
-            self.init_state = FeatureInitState.ERROR
-            self.init_error = str(e)
-            return None
+        match self._init_step:
+            case 0:
+                return self._read_attributes_and_properties(last_result)
+            case 1:
+                return self._apply_attributes_and_properties(last_result)
+            case _:
+                return None
 
-    def _advance_step_0(
-        self, last_result: FeatureInitResult | None
-    ) -> FeatureInitRequest | None:
-        self.init_state = FeatureInitState.PENDING
-
-        # first step is to read the attributes and browse properties that are available
-        req = FeatureInitRequest(browse_requests=[], read_requests=[], feature=self)
-
-        for attr_result in ATTRIBUTES_TO_READ:
-            req.read_requests.append(
-                ua.ReadValueId(NodeId=self.opc_node.node_id, AttributeId=attr_result)
-            )
-
-        # check for properties to read their value as well
-        self.properties_to_read = []
-        for child in self.opc_node.children:
-            if (
-                child.reference_type is not None
-                and child.reference_type == HAS_PROPERTY_REFERENCE
-            ):
-                self.properties_to_read.append(child)
-
-        # append read requests
-        for propertyNode in self.properties_to_read:
-            req.read_requests.append(
-                ua.ReadValueId(
-                    NodeId=propertyNode.node_id,
-                    AttributeId=ua.attribute_ids.AttributeIds.Value,
-                )
-            )
-
-        self._init_step += 1
-        return req
-
-    def _advance_step_1(
-        self, last_result: FeatureInitResult | None
-    ) -> FeatureInitRequest | None:
-        if last_result is None:
-            raise ValueError(
-                f"Received Unexpected None Result for step {self._init_step}"
-            )
-
-        results = last_result.read_results
-        attribute_count = len(ATTRIBUTES_TO_READ)
-
-        # split result into attribute and property results and apply them to the node
-        if len(results) != attribute_count + len(self.properties_to_read):
-            raise ValueError(
-                f"Expected {attribute_count + len(self.properties_to_read)} read results, got {len(results)}"
-            )
-
-        def is_usable(r: ua.DataValue) -> bool:
-            return r.StatusCode is not None and not r.StatusCode.is_bad()
-
-        self.opc_node.attributes = {
-            attr.name: (r.Value.Value if r.Value is not None else None)
-            for attr, r in zip(
-                ATTRIBUTES_TO_READ,
-                results[:attribute_count],
-                strict=True,
-            )
-            if is_usable(r)
-        }
-
-        self.opc_node.properties = {
-            node.browse_name.Name: r.Value
-            for node, r in zip(
-                self.properties_to_read,
-                results[attribute_count:],
-                strict=True,
-            )
-            if is_usable(r)
-        }
-
-        # done!
-        self.entity = VariableEntity(opc_node=self.opc_node)
-        self.init_state = FeatureInitState.DONE
-
-        return None
-
-    def request_subscription(
-        self, event_bus: EventBus
-    ) -> FeatureSubscribeRequest | None:
+    def _request_subscription(self) -> FeatureSubscribeRequest | None:
         req = FeatureSubscribeRequest(subscriptions=[])
 
         req.subscriptions.append(
@@ -195,11 +107,9 @@ class VariableFeatureNode(FeatureNode):
             )
         )
 
-        self.event_bus = event_bus
-
         return req
 
-    def request_value(self) -> FeatureValueReadRequest | None:
+    def _request_value(self) -> FeatureValueReadRequest | None:
         req = FeatureValueReadRequest(read_requests=[], feature=self)
 
         req.read_requests.append(
@@ -211,7 +121,7 @@ class VariableFeatureNode(FeatureNode):
 
         return req
 
-    def handle_value_result(self, result: FeatureValueReadResult) -> None:
+    def _handle_value_result(self, result: FeatureValueReadResult) -> None:
         if len(result.read_results) != 1:
             return
 
@@ -258,3 +168,83 @@ class VariableFeatureNode(FeatureNode):
 
         except VariantNormalizationFailedError:
             logger.exception("Failed to handle update on VariableFeature")
+
+    def _read_attributes_and_properties(
+        self, _: FeatureInitResult | None
+    ) -> FeatureInitRequest | None:
+        self.init_state = FeatureInitState.PENDING
+
+        # first step is to read the attributes and browse properties that are available
+        req = FeatureInitRequest(browse_requests=[], read_requests=[], feature=self)
+
+        for attr_result in ATTRIBUTES_TO_READ:
+            req.read_requests.append(
+                ua.ReadValueId(NodeId=self.opc_node.node_id, AttributeId=attr_result)
+            )
+
+        # check for properties to read their value as well
+        self.properties_to_read = []
+        for child in self.opc_node.children:
+            if (
+                child.reference_type is not None
+                and child.reference_type == HAS_PROPERTY_REFERENCE
+            ):
+                self.properties_to_read.append(child)
+
+        # append read requests
+        for propertyNode in self.properties_to_read:
+            req.read_requests.append(
+                ua.ReadValueId(
+                    NodeId=propertyNode.node_id,
+                    AttributeId=ua.attribute_ids.AttributeIds.Value,
+                )
+            )
+
+        self._init_step += 1
+        return req
+
+    def _apply_attributes_and_properties(
+        self, last_result: FeatureInitResult | None
+    ) -> FeatureInitRequest | None:
+        if last_result is None:
+            raise ValueError(
+                f"Received Unexpected None Result for step {self._init_step}"
+            )
+
+        results = last_result.read_results
+        attribute_count = len(ATTRIBUTES_TO_READ)
+
+        # split result into attribute and property results and apply them to the node
+        if len(results) != attribute_count + len(self.properties_to_read):
+            raise ValueError(
+                f"Expected {attribute_count + len(self.properties_to_read)} read results, got {len(results)}"
+            )
+
+        def is_usable(r: ua.DataValue) -> bool:
+            return r.StatusCode is not None and not r.StatusCode.is_bad()
+
+        self.opc_node.attributes = {
+            attr.name: (r.Value.Value if r.Value is not None else None)
+            for attr, r in zip(
+                ATTRIBUTES_TO_READ,
+                results[:attribute_count],
+                strict=True,
+            )
+            if is_usable(r)
+        }
+
+        self.opc_node.properties = {
+            node.browse_name.Name: r.Value
+            for node, r in zip(
+                self.properties_to_read,
+                results[attribute_count:],
+                strict=True,
+            )
+            if is_usable(r)
+        }
+
+        # done!
+        self.entity = VariableEntity(opc_node=self.opc_node)
+        self.init_state = FeatureInitState.DONE
+
+        return None

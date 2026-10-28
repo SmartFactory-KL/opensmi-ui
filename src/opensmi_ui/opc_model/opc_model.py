@@ -7,7 +7,7 @@ from opensmi_ui.event.bus import EventBus
 from opensmi_ui.logger import get_module_logger
 from opensmi_ui.model.action import GenericAction
 from opensmi_ui.opc_model.browser import OPCBrowser
-from opensmi_ui.opc_model.model_node import (
+from opensmi_ui.opc_model.feature_node import (
     ComponentNode,
     ComponentNodeData,
     FeatureNode,

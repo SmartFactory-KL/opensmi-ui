@@ -7,18 +7,18 @@ from asyncua.ua.uaprotocol_auto import ReferenceDescription
 
 from opensmi_ui.logger import get_module_logger
 from opensmi_ui.opc_model.entities.component_entity import ComponentEntity
-from opensmi_ui.opc_model.feature_proxy import (
-    FeatureNotKnownError,
-    FeatureSkippedError,
-    create_features_for_node,
-)
-from opensmi_ui.opc_model.model_node import (
+from opensmi_ui.opc_model.feature_node import (
     ComponentNode,
     FeatureInitRequest,
     FeatureInitResult,
     FeatureNode,
     print_component_trees,
     visit_tree_features,
+)
+from opensmi_ui.opc_model.feature_proxy import (
+    FeatureNotKnownError,
+    FeatureSkippedError,
+    create_features_for_node,
 )
 from opensmi_ui.opc_model.opc_node import OPCNode
 from opensmi_ui.opc_session.session import OPCSession, OPCSessionNotReadyError
@@ -304,7 +304,7 @@ class OPCBrowser:
         init_requests: list[FeatureInitRequest] = []
 
         def read_req(feature: FeatureNode, _) -> None:
-            req = feature.advance(None)
+            req = feature.next_populate_step(None)
             if req is not None:
                 init_requests.append(req)
 
@@ -362,7 +362,9 @@ class OPCBrowser:
 
             # advance all features using their results
             for idx, item in enumerate(init_requests):
-                next_req = item.feature.advance(last_result=init_results[idx])
+                next_req = item.feature.next_populate_step(
+                    last_result=init_results[idx]
+                )
 
                 if next_req is not None:
                     next_init_requests.append(next_req)

@@ -7,7 +7,6 @@ from asyncua import ua
 from asyncua.common.node import Node
 from asyncua.common.subscription import DataChangeEvent
 
-from opensmi_ui.event.bus import EventBus
 from opensmi_ui.logger import get_module_logger
 from opensmi_ui.model.action import GenericAction
 from opensmi_ui.model.json import JsonInModel, JsonOutModel
@@ -17,8 +16,7 @@ from opensmi_ui.opc_model.entities.lock_entity import (
     LockLockingClientUpdate,
     LockLockingUserUpdate,
 )
-from opensmi_ui.opc_model.features.machinery_item_state_feature import FeatureInitState
-from opensmi_ui.opc_model.model_node import (
+from opensmi_ui.opc_model.feature_node import (
     ComponentNode,
     FeatureInitRequest,
     FeatureInitResult,
@@ -26,6 +24,7 @@ from opensmi_ui.opc_model.model_node import (
     FeatureSubscribeDataRequest,
     FeatureSubscribeRequest,
 )
+from opensmi_ui.opc_model.features.machinery_item_state_feature import FeatureInitState
 from opensmi_ui.opc_model.opc_node import OPCNode
 from opensmi_ui.opc_model.opc_types import VariantData
 from opensmi_ui.opc_model.value_read import (
@@ -73,81 +72,62 @@ class LockFeatureNode(FeatureNode):
                 case "InitLock" | "BreakLock" | "ExitLock" | "RenewLock":
                     self.action_nodes[child_node.browse_name.Name] = child_node
 
-    def advance(
+    def _populate_step(
         self, last_result: FeatureInitResult | None
     ) -> FeatureInitRequest | None:
         match self._init_step:
             # Step 0
             case 0:
                 self.init_state = FeatureInitState.PENDING
+                nodes_to_read = [
+                    self.opc_node.get_first_child_node_for_name("Locked"),
+                    self.opc_node.get_first_child_node_for_name("LockingUser"),
+                    self.opc_node.get_first_child_node_for_name("LockingClient"),
+                ]
 
-                try:
-                    nodes_to_read = [
-                        self.opc_node.get_first_child_node_for_name("Locked"),
-                        self.opc_node.get_first_child_node_for_name("LockingUser"),
-                        self.opc_node.get_first_child_node_for_name("LockingClient"),
-                    ]
+                self._init_data.nodes_to_read = nodes_to_read
 
-                    self._init_data.nodes_to_read = nodes_to_read
+                req = FeatureInitRequest(
+                    browse_requests=[], read_requests=[], feature=self
+                )
 
-                    req = FeatureInitRequest(
-                        browse_requests=[], read_requests=[], feature=self
+                for node_to_read in nodes_to_read:
+                    req.read_requests.append(
+                        ua.ReadValueId(
+                            NodeId=node_to_read.node_id,
+                            AttributeId=ua.attribute_ids.AttributeIds.Value,
+                        )
                     )
 
-                    for node_to_read in nodes_to_read:
-                        req.read_requests.append(
-                            ua.ReadValueId(
-                                NodeId=node_to_read.node_id,
-                                AttributeId=ua.attribute_ids.AttributeIds.Value,
-                            )
-                        )
-
-                    self._init_step += 1
-                    return req
-
-                except KeyError as e:
-                    self.init_state = FeatureInitState.ERROR
-                    self.init_error = f"Missing node: {e!s}"
-
-                    return None
+                self._init_step += 1
+                return req
             # Step 1
             case 1:
-                try:
-                    if last_result is None:
-                        raise RuntimeError(
-                            "Got unexpected none for last_result in LockFeature"
-                        )
+                if last_result is None:
+                    raise ValueError(
+                        f"Received Unexpected None Result for step {self._init_step}"
+                    )
 
-                    for idx, target_node in enumerate(self._init_data.nodes_to_read):
-                        target_node.attributes["Value"] = last_result.read_results[
-                            idx
-                        ].Value
-                        target_node.attributes["LastChange"] = last_result.read_results[
-                            idx
-                        ].SourceTimestamp
+                for idx, target_node in enumerate(self._init_data.nodes_to_read):
+                    target_node.attributes["Value"] = last_result.read_results[
+                        idx
+                    ].Value
+                    target_node.attributes["LastChange"] = last_result.read_results[
+                        idx
+                    ].SourceTimestamp
 
-                    self.entity = LockEntity(opc_node=self.opc_node)
+                self.entity = LockEntity(opc_node=self.opc_node)
 
-                    self._init_step += 1
-                    self.init_state = FeatureInitState.DONE
-                    return None
-                except Exception as e:  # noqa: BLE001 # could be any exception
-                    self.init_state = FeatureInitState.ERROR
-                    self.init_error = str(e)
-                    return None
-            # catch all to always return None
+                self._init_step += 1
+                self.init_state = FeatureInitState.DONE
+                return None
             case _:
                 return None
 
-    def request_subscription(
-        self, event_bus: EventBus
-    ) -> FeatureSubscribeRequest | None:
-        self.event_bus = event_bus
-
+    def _request_subscription(self) -> FeatureSubscribeRequest | None:
         req = FeatureSubscribeRequest(subscriptions=[])
 
         try:
-            # locked_node = self.opc_node.get_first_child_node_for_name("Locked")
             items_to_sub_to = [
                 (
                     self.opc_node.get_first_child_node_for_name("Locked"),

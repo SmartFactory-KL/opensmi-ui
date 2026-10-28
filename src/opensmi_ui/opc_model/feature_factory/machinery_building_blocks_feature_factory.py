@@ -4,7 +4,7 @@ from opensmi_ui.opc_model.features.machinery_item_state_feature import (
 from opensmi_ui.opc_model.features.user_container_feature import (
     UserContainerFeatureNode,
 )
-from opensmi_ui.opc_model.model_node import ComponentNode, FeatureNode
+from opensmi_ui.opc_model.feature_node import ComponentNode, FeatureNode
 from opensmi_ui.opc_model.opc_node import OPCNode
 
 

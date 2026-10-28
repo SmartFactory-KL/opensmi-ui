@@ -3,17 +3,16 @@ from asyncua import ua
 from opensmi_ui.logger import get_module_logger
 from opensmi_ui.model.action import GenericAction
 from opensmi_ui.opc_model.entities.method_entity import MethodEntity
-from opensmi_ui.opc_model.features.dependency_feature import DependencyFeatureNode
-from opensmi_ui.opc_model.features.variable_container_feature import (
-    VariableContainerFeatureNode,
-)
-from opensmi_ui.opc_model.model_node import (
+from opensmi_ui.opc_model.feature_node import (
     ComponentNode,
     FeatureInitRequest,
     FeatureInitResult,
     FeatureInitState,
     FeatureNode,
-    FeatureSubscribeRequest,
+)
+from opensmi_ui.opc_model.features.dependency_feature import DependencyFeatureNode
+from opensmi_ui.opc_model.features.variable_container_feature import (
+    VariableContainerFeatureNode,
 )
 from opensmi_ui.opc_model.opc_node import OPCNode
 
@@ -77,10 +76,7 @@ class MethodFeatureNode(FeatureNode):
                 case "Call":
                     self.action_nodes[child.browse_name.Name] = child
 
-    def subscribe(self) -> FeatureSubscribeRequest | None:
-        return None
-
-    def advance(
+    def _populate_step(
         self, last_result: FeatureInitResult | None
     ) -> FeatureInitRequest | None:
         match self._init_step:
@@ -108,11 +104,9 @@ class MethodFeatureNode(FeatureNode):
                 return req
             case 1:
                 if last_result is None:
-                    self.init_state = FeatureInitState.ERROR
-                    self.init_error = (
+                    raise ValueError(
                         f"Received Unexpected None Result for step {self._init_step}"
                     )
-                    return None
 
                 for child in self.opc_node.children:
                     if child.browse_name.Name == "MinAccessLevel":

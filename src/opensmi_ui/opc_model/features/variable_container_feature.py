@@ -7,14 +7,14 @@ from opensmi_ui.logger import get_module_logger
 from opensmi_ui.opc_model.entities.variable_container_entity import (
     VariableContainerEntity,
 )
-from opensmi_ui.opc_model.features.variable_feature import VariableFeatureNode
-from opensmi_ui.opc_model.model_node import (
+from opensmi_ui.opc_model.feature_node import (
     ComponentNode,
     FeatureInitRequest,
     FeatureInitResult,
     FeatureInitState,
     FeatureNode,
 )
+from opensmi_ui.opc_model.features.variable_feature import VariableFeatureNode
 from opensmi_ui.opc_model.opc_node import OPCNode
 
 logger = get_module_logger("opc_model.features.variable_container")
@@ -77,7 +77,7 @@ class VariableContainerFeatureNode(FeatureNode):
 
         self.features.extend(variable_features)
 
-    def advance(
+    def _populate_step(
         self, last_result: FeatureInitResult | None
     ) -> FeatureInitRequest | None:
         self.entity = VariableContainerEntity(opc_node=self.opc_node)

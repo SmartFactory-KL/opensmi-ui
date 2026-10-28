@@ -16,7 +16,7 @@ from opensmi_ui.opc_model.features.skill_group_container_feature import (
 from opensmi_ui.opc_model.features.variable_container_feature import (
     VariableContainerFeatureNode,
 )
-from opensmi_ui.opc_model.model_node import ComponentNode, FeatureNode
+from opensmi_ui.opc_model.feature_node import ComponentNode, FeatureNode
 from opensmi_ui.opc_model.opc_node import OPCNode
 
 logger = get_module_logger("opc_model.feature")
