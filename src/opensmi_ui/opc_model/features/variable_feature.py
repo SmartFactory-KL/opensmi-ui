@@ -102,6 +102,7 @@ class VariableFeatureNode(FeatureNode):
         req.subscriptions.append(
             FeatureSubscribeDataRequest(
                 attr=ua.attribute_ids.AttributeIds.Value,
+                feature=self,
                 handler=self.on_value_update,
                 node_id=self.opc_node.node_id,
             )

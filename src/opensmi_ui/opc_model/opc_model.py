@@ -99,6 +99,7 @@ class OPCModel:
                             attr=sub.attr,
                             handler=sub.handler,
                             node_id=sub.node_id,
+                            on_fail=sub.feature.handle_subscription_failure,
                         )
                     )
                 elif isinstance(sub, FeatureSubscribeEventRequest):
@@ -106,6 +107,7 @@ class OPCModel:
                         SubscribeEventRequest(
                             handler=sub.handler,
                             node_id=sub.node_id,
+                            on_fail=sub.feature.handle_subscription_failure,
                         )
                     )
                 else:

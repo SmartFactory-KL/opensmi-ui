@@ -147,6 +147,7 @@ class LockFeatureNode(FeatureNode):
                 req.subscriptions.append(
                     FeatureSubscribeDataRequest(
                         attr=ua.attribute_ids.AttributeIds.Value,
+                        feature=self,
                         handler=item[1],
                         node_id=item[0].node_id,
                     )

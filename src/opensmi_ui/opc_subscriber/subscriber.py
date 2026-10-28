@@ -35,11 +35,15 @@ class SubscribeDataRequest:
     attr: AttributeIds
     handler: Callable[[Node, DataChangeEvent], None]
 
+    on_fail: Callable[[ua.StatusCode], None]
+
 
 @dataclass
 class SubscribeEventRequest:
     node_id: ua.NodeId
     handler: Callable[[Event], None]
+
+    on_fail: Callable[[ua.StatusCode], None]
 
 
 @dataclass
@@ -121,8 +125,11 @@ class OPCSubscriber:
                             "Data subscription for %s (%s) failed: %s",
                             req.node_id,
                             attr.name,
-                            result,
+                            result.name,
                         )
+
+                        if req.on_fail is not None:
+                            req.on_fail(result)
                     else:
                         # only keep track of subscriptions that actually worked
                         handles.data_change_handles.append(result)

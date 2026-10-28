@@ -1,8 +1,7 @@
 from datetime import datetime
 from typing import Any
 
-from asyncua.ua import NodeId
-from opensmi.core.ua_enums import ua
+from asyncua import ua
 
 from opensmi_ui.opc_model.entities.entity import (
     FeatureNodeEntity,
@@ -39,7 +38,7 @@ class VariableEntity(FeatureNodeEntity):
 
         data_type_node = opc_node.attributes.get("DataType", None)
 
-        if data_type_node is not None and isinstance(data_type_node, NodeId):
+        if data_type_node is not None and isinstance(data_type_node, ua.NodeId):
             try:
                 data_type = str(ua.object_ids.ObjectIdNames[data_type_node.Identifier])
             except KeyError:

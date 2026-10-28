@@ -1,4 +1,4 @@
-from opensmi.client.remote_variable import ua
+from asyncua import ua
 
 from opensmi_ui.logger import get_module_logger
 from opensmi_ui.opc_model.entities.user_entity import UserEntity

@@ -5,10 +5,32 @@ from typing import Any
 from uuid import UUID
 
 from asyncua import ua
+from asyncua.common.subscription import DataChangeEvent
 
 
 class VariantNormalizationFailedError(RuntimeError):
     """Raised whenever a value could not be normalized to Variant type"""
+
+
+def read_data_change_event_value(input: DataChangeEvent) -> Any:
+    if input is None or input.data is None or input.data.monitored_item is None:
+        return None
+
+    data_value = input.data.monitored_item.Value
+
+    if data_value is None:
+        return None
+
+    if not isinstance(data_value, ua.DataValue):
+        raise TypeError(
+            f"DataValue MonitoredItem is {type(data_value)} instead of ua.DataValue"
+        )
+
+    value = normalize_to_variant(data_value)
+    if not isinstance(value, ua.Variant):
+        raise TypeError(f"DataValue Variant is {type(value)} instead of ua.Variant")
+
+    return value
 
 
 def normalize_to_variant(input: Any) -> ua.Variant | None:

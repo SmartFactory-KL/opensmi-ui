@@ -408,29 +408,6 @@ wheels = [
 ]
 
 [[package]]
-name = "opensmi-client"
-version = "1.0.0rc2.dev41+g8a65bbfbe"
-source = { git = "https://github.com/SmartFactory-KL/opensmi-client.git?branch=main#8a65bbfbeba69a3f7c3d74c4240a51c03e66a0d9" }
-dependencies = [
-    { name = "asyncua" },
-    { name = "opensmi-core" },
-]
-
-[[package]]
-name = "opensmi-core"
-version = "0.4.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "asyncua" },
-    { name = "structlog" },
-    { name = "typing-extensions" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/fb/1e/8da17c7d4b6b9c8474ea6c5daa53273ba67418173f811c2bb26de129ef4f/opensmi_core-0.4.1.tar.gz", hash = "sha256:7b3a8f00a9cf5891dadf63713bce4d507448986bd41f2f9cebb902c3baac8940", size = 57682, upload-time = "2026-10-13T07:06:15.914Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/45/f4/b2d9e94375e0f930876aa8744849866f0ae578e9912cbebca74a0eef1f4f/opensmi_core-0.4.1-py3-none-any.whl", hash = "sha256:34a1f54a3871757432a604f78fc1640188f21f4f3145cc0fc28e09319d3671c5", size = 58059, upload-time = "2026-10-13T07:06:14.429Z" },
-]
-
-[[package]]
 name = "opensmi-ui"
 version = "0.1.0"
 source = { editable = "." }
@@ -438,7 +415,6 @@ dependencies = [
     { name = "appysetty" },
     { name = "asyncua" },
     { name = "fastapi", extra = ["standard"] },
-    { name = "opensmi-client" },
     { name = "pydantic" },
 ]
 
@@ -452,7 +428,6 @@ requires-dist = [
     { name = "appysetty", specifier = ">=0.5.0" },
     { name = "asyncua" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.141.1" },
-    { name = "opensmi-client", git = "https://github.com/SmartFactory-KL/opensmi-client.git?branch=main" },
     { name = "pydantic", specifier = ">=2.13.5" },
 ]
 
@@ -751,15 +726,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/b5/b4/205b0d5241d934e8add0c38aa924c4f9fb7330834ff11e5444db964ec3f9/starlette-1.6.0.tar.gz", hash = "sha256:d4e3ac5e546444960c710297a3c9fc3f7ebae1b7e963f3d36173b49da535be9b", size = 2716969, upload-time = "2026-08-08T18:27:57.512Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c8/cb/6a6a47d5b464bd08695d254f3da6e7986cc70c9fa5d778eda57538edfe56/starlette-1.6.0-py3-none-any.whl", hash = "sha256:a86dd39d14bb45f85a3d18525215a9ef0cfd1f192ac793220e72598c90335f0c", size = 75969, upload-time = "2026-08-08T18:27:56.196Z" },
-]
-
-[[package]]
-name = "structlog"
-version = "26.1.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/5e/89/b4a0bcfdf4f71a3dea31379f095929613d7e4528a0996bca6aa964cd0dca/structlog-26.1.0.tar.gz", hash = "sha256:f63a716cbd1b1291cf7661de7794b455acfa4c43c5bcf1630e6ad5ddc1adb3b7", size = 1459881, upload-time = "2026-06-06T07:33:39.348Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/a9/18/489c97b834dfff9cf2fc2507cede4bcd4b11e67f84bc462acd1992496f86/structlog-26.1.0-py3-none-any.whl", hash = "sha256:e081a26d6c373e6d201eca24eede26d8ffab07f88f477822e679183428d3d91e", size = 73764, upload-time = "2026-06-06T07:33:38.046Z" },
 ]
 
 [[package]]

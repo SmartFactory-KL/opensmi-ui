@@ -22,7 +22,7 @@ from opensmi_ui.opc_model.feature_node import (
 from opensmi_ui.opc_model.features.lock_feature import GenericAction
 from opensmi_ui.opc_model.opc_node import OPCNode
 from opensmi_ui.opc_model.value_read import (
-    normalize_to_variant,
+    read_data_change_event_value,
     variant_value_to_string,
 )
 
@@ -113,6 +113,7 @@ class SkillControlFeatureNode(FeatureNode):
         req.subscriptions.append(
             FeatureSubscribeDataRequest(
                 attr=ua.attribute_ids.AttributeIds.Value,
+                feature=self,
                 handler=self.on_state_update,
                 node_id=state_node.node_id,
             )
@@ -125,17 +126,8 @@ class SkillControlFeatureNode(FeatureNode):
             return
 
         try:
+            value = read_data_change_event_value(evt)
             data_value = evt.data.monitored_item.Value
-            if not isinstance(data_value, ua.DataValue):
-                logger.warning(
-                    "Received unexpected Non-DataValue Update on SkillStateFeature"
-                )
-                return
-
-            value = normalize_to_variant(data_value)
-            if not isinstance(value, ua.Variant):
-                logger.warning("Received unexpected Non-Variant Update on LockFeature")
-                return
 
             if isinstance(value.Value, ua.LocalizedText):
                 value = str(value.Value.Text)

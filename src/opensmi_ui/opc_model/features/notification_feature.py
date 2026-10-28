@@ -34,7 +34,9 @@ class NotificationFeatureNode(FeatureNode):
 
         req.subscriptions.append(
             FeatureSubscribeEventRequest(
-                handler=self.on_notification, node_id=self.opc_node.node_id
+                handler=self.on_notification,
+                feature=self,
+                node_id=self.opc_node.node_id,
             )
         )
 

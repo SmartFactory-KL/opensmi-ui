@@ -44,6 +44,7 @@ class FeatureInitState(StrEnum):
 @dataclass
 class FeatureSubscribeDataRequest:
     node_id: ua.NodeId
+    feature: "FeatureNode"
     attr: AttributeIds
 
     handler: Callable[[Node, DataChangeEvent], None]
@@ -52,6 +53,7 @@ class FeatureSubscribeDataRequest:
 @dataclass
 class FeatureSubscribeEventRequest:
     node_id: ua.NodeId
+    feature: "FeatureNode"
     handler: Callable[[Event], None]
 
 
@@ -192,6 +194,11 @@ class FeatureNode:
             self.init_state = FeatureInitState.ERROR
             self.init_error = str(e)
             return None
+
+    def handle_subscription_failure(self, status: ua.StatusCode) -> None:
+        """This method will be called when the creation of the subscription failed"""
+        self.init_state = FeatureInitState.ERROR
+        self.init_error = f"Failed to initialize subscriptions. StatusCode: {status.name}"
 
     ## VALUE READ
     @abstractmethod

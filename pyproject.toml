@@ -10,13 +10,9 @@ requires-python = ">=3.12, <3.13"
 dependencies = [
     "fastapi[standard]>=0.141.1",
     "pydantic>=2.13.5",
-    "opensmi-client",
     "appysetty>=0.5.0",
     "asyncua",
 ]
-
-[tool.uv.sources]
-opensmi-client = { git = "https://github.com/SmartFactory-KL/opensmi-client.git", branch = "main" }
 
 [project.scripts]
 opensmi-ui = "opensmi_ui:main"
