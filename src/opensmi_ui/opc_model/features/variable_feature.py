@@ -6,6 +6,7 @@ from asyncua.common.node import Node
 from asyncua.common.subscription import DataChangeEvent
 
 from opensmi_ui.logger import get_module_logger
+from opensmi_ui.model.action import GenericAction
 from opensmi_ui.model.json import JsonInModel, JsonOutModel
 from opensmi_ui.opc_model.entities.variable_entity import VariableEntity
 from opensmi_ui.opc_model.feature_node import (
@@ -59,9 +60,13 @@ ATTRIBUTES_TO_READ = [
 ]
 
 
+class VariableValueWriteAction(JsonInModel):
+    new_value: VariantData
+
+
 class VariableValueUpdate(JsonOutModel):
     entity_id: UUID
-    new_value: Any
+    new_value: VariantData
 
 
 class VariableSetValueAction(JsonInModel):
@@ -249,3 +254,19 @@ class VariableFeatureNode(FeatureNode):
         self.init_state = FeatureInitState.DONE
 
         return None
+
+    async def handle_action(self, action: GenericAction) -> None:
+        logger.info("Variable Action Requested")
+        logger.info(action)
+
+        match action.action_type:
+            case "VariableValueWriteAction":
+                data = VariableValueWriteAction.model_validate(action.action)
+
+                ua_variant = data.new_value.to_ua()
+
+                await self.opc_node.ua_node.write_value(value=ua_variant)
+            case _:
+                raise TypeError(
+                    f"Got unknown action {action.action_type} on VariableFeature"
+                )

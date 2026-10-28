@@ -2,6 +2,7 @@ from opensmi_ui.logger import get_module_logger
 from opensmi_ui.opc_model.feature_factory.machinery_building_blocks_feature_factory import (
     create_machinery_building_block_features,
 )
+from opensmi_ui.opc_model.feature_node import ComponentNode, FeatureNode
 from opensmi_ui.opc_model.features.lock_feature import LockFeatureNode
 from opensmi_ui.opc_model.features.method_container_feature import (
     MethodContainerFeatureNode,
@@ -16,7 +17,6 @@ from opensmi_ui.opc_model.features.skill_group_container_feature import (
 from opensmi_ui.opc_model.features.variable_container_feature import (
     VariableContainerFeatureNode,
 )
-from opensmi_ui.opc_model.feature_node import ComponentNode, FeatureNode
 from opensmi_ui.opc_model.opc_node import OPCNode
 
 logger = get_module_logger("opc_model.feature")

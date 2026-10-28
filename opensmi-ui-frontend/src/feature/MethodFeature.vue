@@ -46,7 +46,7 @@ async function callMethod() {
 <template>
     <section class="bg-white text-slate-900 shadow-lg">
         <div
-            class="p-2 flex flex-col justify-start items-start bg-fuchsia-700 text-slate-200 cursor-pointer"
+            class="p-2 flex flex-col justify-start items-start bg-indigo-700 text-slate-200 cursor-pointer"
             @click="$router.push('/method/' + feature.entityId)"
         >
             {{ entity.name }}

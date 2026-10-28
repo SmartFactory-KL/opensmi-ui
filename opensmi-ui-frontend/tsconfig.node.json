@@ -15,6 +15,9 @@
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
 
+    // wrote too much Go, need this sanity check
+    "noFallthroughCasesInSwitch": true,
+
     // Include Node.js types and avoid accidentally including other `@types/*` packages.
     "types": ["node"],
 

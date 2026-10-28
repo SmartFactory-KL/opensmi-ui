@@ -2,19 +2,23 @@
 import type { FeatureNode } from "@/types/NodeFeatureTypes";
 import SkillGroupFeature from "./SkillGroupFeature.vue";
 
-defineProps<{
+const props = defineProps<{
     feature: FeatureNode;
+    tiny?: boolean;
+    asColumn?: boolean;
 }>();
 </script>
 
 <template>
     <div>
-        <div class="font-semibold">SkillSet</div>
-
-        <div class="flex flex-row flex-wrap justify-start items-start gap-4">
+        <div
+            class="flex flex-wrap justify-start items-start"
+            :class="[asColumn ? 'flex-col' : 'flex-row']"
+        >
             <SkillGroupFeature
                 v-for="feature in feature.features"
                 :feature="feature"
+                :tiny="tiny"
             ></SkillGroupFeature>
         </div>
     </div>

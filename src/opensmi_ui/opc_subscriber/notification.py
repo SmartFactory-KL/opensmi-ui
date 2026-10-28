@@ -46,12 +46,10 @@ def read_notification(event: Event) -> NotificationEvent | None:
         if not isinstance(first_browse_path, ua.QualifiedName):
             continue
 
-
         attr_name = to_snake(first_browse_path.Name)
         if attr_name in NotificationEvent.model_fields:
             vals[attr_name] = VariantData.from_ua(value=evt_field).value
 
     notification = NotificationEvent.model_validate(vals)
-    logger.info(notification)
 
     return notification

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ComponentNode } from '@/types/NodeFeatureTypes';
-import MachineComponentTreeElement from './MachineComponentTreeElement.vue';
+import MachineComponentTreeElement from './ComponentTreeElement.vue';
 
 defineProps<{
     component: ComponentNode;

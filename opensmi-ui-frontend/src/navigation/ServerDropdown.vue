@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useModelStore } from "@/stores/ModelStore";
-import MachineComponentTree from "@/tree/MachineComponentTree.vue";
+import MachineComponentTree from "@/tree/ComponentTree.vue";
 import ServerStateIndicator from "./ServerStateIndicator.vue";
 import MachineOverviewCard from "./DropdownMachineOverviewCard.vue";
 import QuickConnectButton from "./QuickConnectButton.vue";
@@ -23,7 +23,7 @@ const serverStore = useServerStore();
     >
         <div
             v-show="modelStore.isDropdownVisible"
-            class="flex items-start px-24 pt-3 bg-stone-100/60 z-10"
+            class="flex items-start px-24 pt-3 bg-slate-900/80 z-10"
             @click.self.prevent="modelStore.closeDropdown()"
         >
             <div
@@ -137,7 +137,7 @@ const serverStore = useServerStore();
                         </div>
                         <!-- Root Component Trees -->
                         <div class="grow bg-slate-300 p-4 pr-0 rounded-2xl">
-                            <div class="overflow-auto max-h-[calc(80vh-4rem)]">
+                            <div class="overflow-auto max-h-[calc(80vh-4rem)] pr-4">
                                 <span
                                     v-show="modelStore.isWorking"
                                     class="text-center text-pink-500 text-xs"

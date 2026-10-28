@@ -32,6 +32,9 @@ class QualifiedNameData(JsonOutModel):
             namespace_index=value.NamespaceIndex,
         )
 
+    def to_ua(self) -> ua.QualifiedName:
+        return ua.QualifiedName(Name=self.name, NamespaceIndex=self.namespace_index)
+
 
 class LocalizedTextData(JsonOutModel):
     text: str | None
@@ -43,6 +46,9 @@ class LocalizedTextData(JsonOutModel):
             text=value.Text,
             locale=value.Locale,
         )
+
+    def to_ua(self) -> ua.LocalizedText:
+        return ua.LocalizedText(Text=self.text, Locale=self.locale)
 
 
 class NodeIdData(JsonOutModel):
@@ -101,6 +107,9 @@ class ExpandedNodeIdData(JsonOutModel):
             server_index=value.ServerIndex or 0,
         )
 
+    def to_ua(self) -> ua.ExpandedNodeId:
+        return _to_expanded(self.node_id.to_ua(), self.namespace_uri, self.server_index)
+
 
 class ReferenceData(JsonOutModel):
     reference_type_id: NodeIdData
@@ -127,6 +136,21 @@ class ReferenceData(JsonOutModel):
             ),
         )
 
+    def to_ua(self) -> ua.ReferenceDescription:
+        return ua.ReferenceDescription(
+            ReferenceTypeId=self.reference_type_id.to_ua(),
+            IsForward=self.is_forward,
+            # asyncua declares this field as ExpandedNodeId
+            NodeId=_to_expanded(self.node_id.to_ua()),
+            BrowseName=self.browse_name.to_ua(),
+            DisplayName=self.display_name.to_ua(),
+            NodeClass=ua.NodeClass[self.node_class],
+            # from_ua() maps a null TypeDefinition to None, so map it back
+            TypeDefinition=(
+                self.type_definition.to_ua() if self.type_definition else ua.NodeId()
+            ),
+        )
+
 
 class StatusCodeData(JsonOutModel):
     code: int
@@ -149,6 +173,10 @@ class StatusCodeData(JsonOutModel):
             severity = "uncertain"
 
         return cls(code=int(value.value), name=name, severity=severity)
+
+    def to_ua(self) -> ua.StatusCode:
+        # name and severity are derived from the code, so only the code is used
+        return ua.StatusCode(ua.UInt32(self.code))
 
 
 class DiagnosticInfoData(JsonOutModel):
@@ -186,6 +214,24 @@ class DiagnosticInfoData(JsonOutModel):
             ),
         )
 
+    def to_ua(self) -> ua.DiagnosticInfo:
+        kwargs: dict[str, Any] = {}
+        if self.symbolic_id is not None:
+            kwargs["SymbolicId"] = self.symbolic_id
+        if self.namespace_uri is not None:
+            kwargs["NamespaceURI"] = self.namespace_uri
+        if self.locale is not None:
+            kwargs["Locale"] = self.locale
+        if self.localized_text is not None:
+            kwargs["LocalizedText"] = self.localized_text
+        if self.additional_info is not None:
+            kwargs["AdditionalInfo"] = self.additional_info
+        if self.inner_status_code is not None:
+            kwargs["InnerStatusCode"] = self.inner_status_code.to_ua()
+        if self.inner_diagnostic_info is not None:
+            kwargs["InnerDiagnosticInfo"] = self.inner_diagnostic_info.to_ua()
+        return ua.DiagnosticInfo(**kwargs)
+
 
 class ExtensionObjectData(JsonOutModel):
     """A ua.ExtensionObject, i.e. a structure.
@@ -216,9 +262,7 @@ class ExtensionObjectData(JsonOutModel):
                     else None
                 ),
                 body=(
-                    b64encode(bytes(body)).decode("ascii")
-                    if body is not None
-                    else None
+                    b64encode(bytes(body)).decode("ascii") if body is not None else None
                 ),
             )
 
@@ -245,6 +289,35 @@ class ExtensionObjectData(JsonOutModel):
             f"Cannot encode ExtensionObject of type {type(value)}: Not supported"
         )
 
+    def to_ua(self) -> Any:
+        # undecoded: raw bytes + encoding id
+        if self.members is None:
+            if self.body is None and self.type_id is None:
+                raise ValueError("ExtensionObject needs either members or body/type_id")
+            return ua.ExtensionObject(
+                TypeId=self.type_id.to_ua() if self.type_id else ua.NodeId(),
+                Body=(
+                    cast(ua.ByteString, b64decode(self.body, validate=True))
+                    if self.body is not None
+                    else None
+                ),
+            )
+
+        # decoded: look up asyncua's generated dataclass by name
+        struct_cls: Any = getattr(ua, self.type_name, None) if self.type_name else None
+        if not isinstance(struct_cls, type) or not dataclasses.is_dataclass(struct_cls):
+            raise ValueError(
+                f"Cannot decode ExtensionObject: unknown structure {self.type_name!r}"
+            )
+
+        member_types = _ua_member_types(struct_cls)
+        return struct_cls(
+            **{
+                name: decode_member(value, member_types.get(name))
+                for name, value in self.members.items()
+            }
+        )
+
 
 class DataValueData(JsonOutModel):
     value: Union["VariantData", None] = None
@@ -265,6 +338,18 @@ class DataValueData(JsonOutModel):
             source_picoseconds=getattr(value, "SourcePicoseconds", None),
             server_picoseconds=getattr(value, "ServerPicoseconds", None),
         )
+
+    def to_ua(self) -> ua.DataValue:
+        kwargs: dict[str, Any] = {
+            "Value": self.value.to_ua() if self.value is not None else None,
+            "SourceTimestamp": self.source_timestamp,
+            "ServerTimestamp": self.server_timestamp,
+            "SourcePicoseconds": self.source_picoseconds,
+            "ServerPicoseconds": self.server_picoseconds,
+        }
+        if self.status is not None:
+            kwargs["StatusCode_"] = self.status.to_ua()
+        return ua.DataValue(**kwargs)
 
 
 class VariantData(JsonOutModel):
@@ -316,6 +401,41 @@ class VariantData(JsonOutModel):
     def from_value(cls, value: Any) -> "VariantData":
         """For already unwrapped values; the type is inferred (int -> Int64, float -> Double)."""
         return cls.from_ua(ua.Variant(value))
+
+    def to_ua(self) -> ua.Variant:
+        try:
+            variant_type = ua.VariantType[self.type]
+        except KeyError:
+            raise ValueError(f"Unknown VariantType {self.type!r}") from None
+
+        if self.is_array:
+            if not isinstance(self.value, (list, tuple)):
+                raise ValueError("Array variant value must be a list")
+            values = decode_array(variant_type, self.value)
+            dimensions = list(self.dimensions) if self.dimensions else None
+            if dimensions:
+                # asyncua keeps multi-dimensional arrays flat, shape in Dimensions
+                values = _flatten(values)
+                expected = math.prod(dimensions)
+                if len(values) != expected:
+                    raise ValueError(
+                        f"Array has {len(values)} elements, dimensions {dimensions} "
+                        f"require {expected}"
+                    )
+            return ua.Variant(
+                Value=values,
+                VariantType=variant_type,
+                Dimensions=cast(list[ua.Int32], dimensions)
+                if dimensions is not None
+                else None,
+                is_array=True,
+            )
+
+        return ua.Variant(
+            Value=decode_scalar(variant_type, self.value),
+            VariantType=variant_type,
+            is_array=False,
+        )
 
 
 def encode_array(variant_type: ua.VariantType, values: Sequence[Any]) -> list[Any]:
@@ -469,3 +589,130 @@ def _to_utc(dt: datetime | None) -> datetime | None:
     if dt.tzinfo is None:
         return dt.replace(tzinfo=UTC)  # OPC UA times are UTC
     return dt.astimezone(UTC)
+
+
+def _model(model_cls: type, value: Any) -> Any:
+    """Nested values are models when built in Python, but plain dicts when the
+    outer model was parsed from JSON."""
+    if isinstance(value, model_cls):
+        return value
+    return model_cls.model_validate(value)
+
+
+def decode_array(variant_type: ua.VariantType, values: Sequence[Any]) -> list[Any]:
+    return [
+        decode_array(variant_type, item)
+        if isinstance(item, (list, tuple))
+        else decode_scalar(variant_type, item)
+        for item in values
+    ]
+
+
+def decode_scalar(variant_type: ua.VariantType, value: Any) -> Any:
+    if value is None:
+        return None
+
+    if variant_type in SMALL_INT_TYPES or variant_type in BIG_INT_TYPES:
+        return int(value)  # big ints arrive as strings
+    if variant_type in FLOAT_TYPES:
+        return _decode_float(value)
+
+    match variant_type:
+        case VT.Null:
+            return None
+        case VT.Boolean:
+            return bool(value)
+        case VT.String | VT.XmlElement:
+            return str(value)
+        case VT.DateTime:
+            if isinstance(value, str):
+                value = datetime.fromisoformat(value)
+            return _to_utc(value)
+        case VT.Guid:
+            return UUID(str(value))
+        case VT.ByteString:
+            return b64decode(value, validate=True)
+        case VT.NodeId:
+            return _model(NodeIdData, value).to_ua()
+        case VT.ExpandedNodeId:
+            return _model(ExpandedNodeIdData, value).to_ua()
+        case VT.QualifiedName:
+            return _model(QualifiedNameData, value).to_ua()
+        case VT.LocalizedText:
+            return _model(LocalizedTextData, value).to_ua()
+        case VT.StatusCode:
+            return _model(StatusCodeData, value).to_ua()
+        case VT.ExtensionObject:
+            return _model(ExtensionObjectData, value).to_ua()
+        case VT.DataValue:
+            return _model(DataValueData, value).to_ua()
+        case VT.Variant:
+            return _model(VariantData, value).to_ua()
+        case VT.DiagnosticInfo:
+            return _model(DiagnosticInfoData, value).to_ua()
+        case _:
+            raise ValueError(
+                f"Cannot decode VariantType {variant_type}: Not supported",
+            )
+
+
+def decode_member(value: Any, type_name: str | None = None) -> Any:
+    """Inverse of encode_member(). Needs the declared field type to undo the
+    lossy encodings (Int64 -> str, bytes -> Base64, ...). Without it the value
+    is returned unchanged."""
+    if value is None:
+        return None
+
+    element_type = type_name.removeprefix("ListOf") if type_name else None
+
+    if isinstance(value, (list, tuple)):
+        return [decode_member(item, element_type) for item in value]
+
+    if element_type is None:
+        return value
+
+    if element_type in VT.__members__:
+        return decode_scalar(VT[element_type], value)
+
+    named = getattr(ua, element_type, None)
+    if isinstance(named, type):
+        if issubclass(named, Enum):
+            return named(value)
+        if dataclasses.is_dataclass(named):  # nested structure
+            return _model(ExtensionObjectData, value).to_ua()
+
+    return value
+
+
+def _to_expanded(
+    node_id: ua.NodeId, namespace_uri: str | None = None, server_index: int = 0
+) -> ua.ExpandedNodeId:
+    return ua.ExpandedNodeId(
+        Identifier=node_id.Identifier,
+        NamespaceIndex=node_id.NamespaceIndex,
+        NodeIdType=node_id.NodeIdType,
+        NamespaceUri=cast(ua.String, namespace_uri)
+        if namespace_uri is not None
+        else None,
+        ServerIndex=ua.Int32(server_index),
+    )
+
+
+def _flatten(values: Sequence[Any]) -> list[Any]:
+    flat: list[Any] = []
+    for item in values:
+        if isinstance(item, (list, tuple)):
+            flat.extend(_flatten(item))
+        else:
+            flat.append(item)
+    return flat
+
+
+def _decode_float(value: Any) -> float:
+    if value == "NaN":
+        return math.nan
+    if value == "Infinity":
+        return math.inf
+    if value == "-Infinity":
+        return -math.inf
+    return float(value)

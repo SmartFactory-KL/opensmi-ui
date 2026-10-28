@@ -82,7 +82,7 @@ const expectedFeatures = computed<Map<string, FeatureNode | null>>(() => {
                 class="w-full max-w-7xl mx-auto mt-4 flex flex-col justify-start items-start gap-y-4"
             >
                 <header
-                    class="flex flex-row justify-between items-start w-full p-4 bg-sky-800 text-slate-100 border-4 border-sky-900"
+                    class="flex flex-row justify-between items-start w-full p-4 bg-indigo-800 text-slate-100 border-4 border-indigo-900"
                 >
                     <div class="flex flex-col">
                         <span class="text-2xl">{{ item.entity.name }}</span>

@@ -3,7 +3,7 @@ import NavigationBrand from "./NavigationBrand.vue";
 import NotificationOverview from "./NotificationOverview.vue";
 import SocketState from "./SocketState.vue";
 import DualClocks from "./DualClocks.vue";
-import ServerSection from "./ServerSection.vue";
+import ServerSection from "./NavigationServerSection.vue";
 </script>
 
 <template>

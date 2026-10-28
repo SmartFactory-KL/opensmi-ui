@@ -149,9 +149,6 @@ class SkillControlFeatureNode(FeatureNode):
             return
 
     async def handle_action(self, action: GenericAction) -> None:
-        logger.info("action")
-        logger.info(action)
-
         method_node_to_call: OPCNode | None = None
         match action.action_type:
             case "SkillControlAction":

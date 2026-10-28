@@ -6,6 +6,9 @@
     // Extra safety for array and object lookups, but may have false positives.
     "noUncheckedIndexedAccess": true,
 
+    // wrote too much Go, need this sanity check
+    "noFallthroughCasesInSwitch": true,
+
     // Path mapping for cleaner imports.
     "paths": {
       "@/*": ["./src/*"]

@@ -16,7 +16,7 @@ const href = computed(() => {
 });
 
 const isMachineType = computed(() => {
-    return props.component.opcNode.nodeClass == "MachineType";
+    return props.component.entity.componentType == "MachineType";
 });
 
 const entity = computed(() => {
@@ -27,7 +27,7 @@ const entity = computed(() => {
 <template>
     <ClassicLink
         :to="href"
-        class="flex flex-row justify-start items-center text-blue-800 hover:text-blue-600 gap-x-1"
+        class="flex flex-row justify-start items-center bg-emerald-800 p-1 text-slate-200 hover:text-blue-600 gap-x-1"
     >
         <RobotArmIcon v-if="isMachineType" :size="16" />
         <CompassIcon v-else :size="16" />
