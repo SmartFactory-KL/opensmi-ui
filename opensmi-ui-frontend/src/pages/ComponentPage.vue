@@ -6,6 +6,7 @@ import ComponentFeature from "@/feature/ComponentFeature.vue";
 import LockFeature from "@/feature/LockFeature.vue";
 import MachineryItemStateFeature from "@/feature/MachineryItemStateFeature.vue";
 import MethodContainerFeature from "@/feature/MethodContainerFeature.vue";
+import ResourceContainerFeature from "@/feature/ResourceContainerFeature.vue";
 import SkillGroupContainerFeature from "@/feature/SkillGroupContainerFeature.vue";
 import UserContainerFeature from "@/feature/UserContainerFeature.vue";
 import VariableContainerFeature from "@/feature/VariableContainerFeature.vue";
@@ -96,7 +97,9 @@ const expectedFeatures = computed<Map<string, FeatureNode | null>>(() => {
                     <div class="flex flex-col">
                         <ComponentFeature :feature="item"></ComponentFeature>
                     </div>
-                    <div class="flex flex-col justify-start items-center gap-y-2">
+                    <div
+                        class="flex flex-col justify-start items-center gap-y-2"
+                    >
                         <ExpectedFeature
                             :expected-feature="expectedFeatures.get('Lock')"
                             expectedFeatureType="Lock"
@@ -160,7 +163,19 @@ const expectedFeatures = computed<Map<string, FeatureNode | null>>(() => {
                     </div>
                 </header>
 
-                <div class="flex flex-row"></div>
+                <div class="flex flex-row">
+                    <ExpectedFeature
+                        :expected-feature="
+                            expectedFeatures.get('ResourceContainer')
+                        "
+                        expectedFeatureType="ResourceContainer"
+                        v-slot="{ feature }"
+                    >
+                        <ResourceContainerFeature
+                            :feature="feature"
+                        ></ResourceContainerFeature>
+                    </ExpectedFeature>
+                </div>
 
                 <div class="flex flex-row justify-center gap-x-4">
                     <ExpectedFeature

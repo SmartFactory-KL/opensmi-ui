@@ -13,5 +13,5 @@ const entity = computed(() => {
 </script>
 
 <template>
-    <span>{{ entity.currentState }}</span>
+    <span>{{ entity.currentState?.text || "unknown" }}</span>
 </template>

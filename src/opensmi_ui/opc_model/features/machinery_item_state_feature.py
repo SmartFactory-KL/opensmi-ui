@@ -5,6 +5,7 @@ from asyncua.common.subscription import DataChangeEvent
 from opensmi_ui.logger import get_module_logger
 from opensmi_ui.opc_model.entities.machinery_item_state_entity import (
     MachineryItemStateEntity,
+    MachineryItemStateStateUpdate,
 )
 from opensmi_ui.opc_model.feature_node import (
     ComponentNode,
@@ -16,6 +17,7 @@ from opensmi_ui.opc_model.feature_node import (
     FeatureSubscribeRequest,
 )
 from opensmi_ui.opc_model.opc_node import OPCNode
+from opensmi_ui.opc_model.opc_types import LocalizedTextData
 from opensmi_ui.opc_model.value_read import read_data_change_event_value
 
 logger = get_module_logger("opc_model.features.machinery_item_state")
@@ -103,7 +105,22 @@ class MachineryItemStateFeatureNode(FeatureNode):
             value = read_data_change_event_value(evt)
             # data_value = evt.data.monitored_item.Value
 
-            logger.info("MachineryItemState: %s", value)
+            if not isinstance(value.Value, ua.LocalizedText):
+                logger.warning(
+                    f"MachineryState Update was expected to be LocalizedText, but got {type(value)}"
+                )
+                return
+
+            update = MachineryItemStateStateUpdate(
+                entity_id=self.entity_id,
+                new_state=LocalizedTextData.from_ua(value.Value),
+            )
+
+            self.entity.apply_update(update)
+
+            # TODO: Publish update
+            if self.event_bus is not None:
+                self.event_bus.publish(update)
 
         except Exception:
             logger.exception("Failed to handle update of MachineryItemState")

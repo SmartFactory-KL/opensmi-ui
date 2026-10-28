@@ -3,7 +3,6 @@ import type { UserEntityData } from "@/types/EntityTypes";
 import type { FeatureNode } from "@/types/NodeFeatureTypes";
 import { computed } from "vue";
 import { ShieldCheck, LockKeyhole } from "@lucide/vue";
-import { UsersIcon, CheckIcon, XIcon } from "@lucide/vue";
 import AllowMultipleIcon from "@/components/AllowMultipleIcon.vue";
 
 const props = defineProps<{

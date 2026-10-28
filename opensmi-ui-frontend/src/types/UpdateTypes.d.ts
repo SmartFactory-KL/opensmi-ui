@@ -1,5 +1,6 @@
 import type { OPCSessionData } from "@/stores/ServerSessionStore";
 import type { GenericUpdateMessage } from "./GenericTypes";
+import type { LocalizedTextData } from "./OPCTypes";
 
 type OPCClientState =
   | "disconnected"
@@ -49,6 +50,11 @@ export interface SkillControlStateUpdate {
   entityId: string;
   newState: string | number;
   timestamp: string;
+}
+
+export interface MachineryItemStateStateUpdate {
+  entityId: string;
+  newState: LocalizedTextData | null;
 }
 
 // ACTIONS

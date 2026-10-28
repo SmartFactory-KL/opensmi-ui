@@ -2,7 +2,6 @@
 import type { SkillEntityData } from "@/types/EntityTypes";
 import type { FeatureNode } from "@/types/NodeFeatureTypes";
 import { computed } from "vue";
-import VariableContainerFeature from "./VariableContainerFeature.vue";
 import { PlayCircleIcon } from "@lucide/vue";
 import IconButton from "@/components/IconButton.vue";
 import Toaster from "@/toast/Toaster";

@@ -1,3 +1,5 @@
+import type { LocalizedTextData } from "./OPCTypes";
+
 export enum SkillState {
   HALTED = 11,
   READY = 12,
@@ -45,7 +47,7 @@ export interface VariableEntityData {
 
 export interface MachineryItemStateEntityData {
   name: string;
-  currentState: string;
+  currentState: LocalizedTextData | null;
 }
 
 export interface UserEntityData {

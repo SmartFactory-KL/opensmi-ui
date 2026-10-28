@@ -3,6 +3,7 @@ import type SocketClient from "@/socket/SocketClient";
 import Toaster from "@/toast/Toaster";
 import type {
   LockEntityData,
+  MachineryItemStateEntityData,
   SkillControlEntityData,
   VariableEntityData,
 } from "@/types/EntityTypes";
@@ -11,6 +12,7 @@ import type {
   LockIsLockedUpdate,
   LockLockingClientUpdate,
   LockLockingUserUpdate,
+  MachineryItemStateStateUpdate,
   SkillControlStateUpdate,
   VariableValueUpdate,
 } from "@/types/UpdateTypes";
@@ -284,6 +286,16 @@ export const useModelStore = defineStore("model", {
 
             typedEntity.currentState = typedUpdate.newState;
             typedEntity.currentStateLastChange = typedUpdate.timestamp;
+          }
+          break;
+        case "MachineryItemStateStateUpdate":
+          {
+            const typedUpdate =
+              update.updateContent as MachineryItemStateStateUpdate;
+            const typedEntity =
+              targetFeature.entity as MachineryItemStateEntityData;
+
+            typedEntity.currentState = typedUpdate.newState;
           }
           break;
         default:

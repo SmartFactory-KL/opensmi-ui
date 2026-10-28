@@ -17,6 +17,8 @@ import GenericEntityPageLink from "@/link/GenericEntityPageLink.vue";
 import MethodContainerFeature from "./MethodContainerFeature.vue";
 import MethodFeature from "./MethodFeature.vue";
 import DependencyFeature from "./DependencyFeature.vue";
+import ResourceContainerFeature from "./ResourceContainerFeature.vue";
+import ResourceFeature from "./ResourceFeature.vue";
 
 const props = defineProps<{
     feature: FeatureNode | ComponentNode;
@@ -53,6 +55,11 @@ const featureComponent = computed(() => {
             return VariableContainerFeature;
         case "Variable":
             return VariableFeature;
+
+        case "ResourceContainer":
+            return ResourceContainerFeature;
+        case "Resource":
+            return ResourceFeature;
 
         case "Dependency":
             return DependencyFeature;

@@ -3,7 +3,6 @@ import type { SkillEntityData } from "@/types/EntityTypes";
 import type { FeatureNode } from "@/types/NodeFeatureTypes";
 import { computed } from "vue";
 import SkillControlFeature from "./SkillControlFeature.vue";
-import VariableContainerFeature from "./VariableContainerFeature.vue";
 import ExpectedFeature from "@/components/ExpectedFeature.vue";
 
 const props = defineProps<{
