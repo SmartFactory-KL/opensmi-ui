@@ -2,6 +2,7 @@ import ComponentPage from "@/pages/ComponentPage.vue";
 import ConnectPage from "@/pages/ConnectPage.vue";
 import GenericEntityPage from "@/pages/GenericEntityPage.vue";
 import HomePage from "@/pages/HomePage.vue";
+import MethodPage from "@/pages/MethodPage.vue";
 import NotificationPage from "@/pages/NotificationPage.vue";
 import SkillPage from "@/pages/SkillPage.vue";
 import { createRouter, createWebHistory } from "vue-router";
@@ -32,6 +33,10 @@ const router = createRouter({
     {
       path: "/skill/:entityId",
       component: SkillPage,
+    },
+    {
+      path: "/method/:entityId",
+      component: MethodPage,
     },
   ],
 });

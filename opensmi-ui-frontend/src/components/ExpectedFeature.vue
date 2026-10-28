@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Info } from "@lucide/vue";
 import type { FeatureNode } from "@/types/NodeFeatureTypes";
+import FeatureErrorWrapper from "@/components/FeatureErrorWrapper.vue";
 
 defineProps<{
     expectedFeature: FeatureNode | undefined | null;
@@ -10,7 +11,13 @@ defineProps<{
 </script>
 
 <template>
-    <slot v-if="expectedFeature" :feature="expectedFeature"></slot>
+    <FeatureErrorWrapper
+        v-if="expectedFeature"
+        :feature="expectedFeature"
+        v-slot="{ feature }"
+    >
+        <slot :feature="feature"></slot>
+    </FeatureErrorWrapper>
     <div
         v-else-if="!optional"
         role="status"

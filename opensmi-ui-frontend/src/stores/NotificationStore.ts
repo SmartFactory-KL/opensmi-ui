@@ -1,4 +1,5 @@
 import type SocketClient from "@/socket/SocketClient";
+import Toaster from "@/toast/Toaster";
 import type { NodeIdData, LocalizedTextData } from "@/types/OPCTypes";
 import { defineStore } from "pinia";
 
@@ -73,16 +74,27 @@ export const useNotificationStore = defineStore("notification", {
       }
 
       let level: "info" | "warning" | "error";
+
+      console.log(notification);
+
       switch (notification.severity) {
         case 555:
           level = "warning";
+          break;
         case 999:
           level = "error";
+          break;
         default:
           level = "info";
+          break;
       }
 
       this.notificationContent[level].push(notification);
+
+      if (level == "error") {
+        Toaster.error(notification.message.text)
+      }
+
       if (this.animate[level] === null) {
         this.animate[level] = setTimeout(() => {
           this.animate[level] = null;

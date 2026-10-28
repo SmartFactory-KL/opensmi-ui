@@ -26,7 +26,7 @@ from opensmi_ui.opc_model.value_read import (
     variant_value_to_string,
 )
 
-logger = get_module_logger("opc_model.features.skill_state")
+logger = get_module_logger("opc_model.features.skill_control")
 
 
 class PossibleSkillControlActions(StrEnum):

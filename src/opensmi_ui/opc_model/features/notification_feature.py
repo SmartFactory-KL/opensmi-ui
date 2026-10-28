@@ -32,11 +32,18 @@ class NotificationFeatureNode(FeatureNode):
     def _request_subscription(self) -> FeatureSubscribeRequest | None:
         req = FeatureSubscribeRequest(subscriptions=[])
 
+        # check if a messages node exists
+        messages_node = self.opc_node
+        try:
+            messages_node = self.opc_node.get_first_child_node_for_name("Messages")
+        except KeyError:
+            pass
+
         req.subscriptions.append(
             FeatureSubscribeEventRequest(
                 handler=self.on_notification,
                 feature=self,
-                node_id=self.opc_node.node_id,
+                node_id=messages_node.node_id,
             )
         )
 

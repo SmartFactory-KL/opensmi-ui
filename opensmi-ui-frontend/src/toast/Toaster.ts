@@ -3,7 +3,6 @@ import { useToasterStore } from "@/stores/ToasterStore";
 export type ToastClass = "info" | "warning" | "success" | "error";
 
 export interface ToastSettings {
-  closable: boolean;
   delayMS?: number;
 }
 
@@ -25,7 +24,6 @@ class Toaster {
     toastClass: ToastClass,
     msg: string,
     settings: ToastSettings = {
-      closable: true,
       delayMS: 750,
     },
   ) {
@@ -38,28 +36,24 @@ class Toaster {
 
   info(msg: string) {
     this.addMessage("info", msg, {
-      closable: true,
       delayMS: 2500,
     });
   }
 
   success(msg: string) {
     this.addMessage("success", msg, {
-      closable: true,
       delayMS: 2500,
     });
   }
 
   warning(msg: string) {
     this.addMessage("warning", msg, {
-      closable: true,
       delayMS: 5000,
     });
   }
 
   error(msg: string) {
     this.addMessage("error", msg, {
-      closable: true,
       delayMS: 5000,
     });
   }

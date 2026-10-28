@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ExpectedFeature from "@/components/ExpectedFeature.vue";
 import LockFeature from "@/feature/LockFeature.vue";
 import MachineryItemStateFeature from "@/feature/MachineryItemStateFeature.vue";
 import type { ComponentNode, FeatureNode } from "@/types/NodeFeatureTypes";
@@ -44,20 +45,32 @@ const lockFeature = computed(() => {
                 {{ component.entity.name }}
             </div>
 
-            <MachineryItemStateFeature
-                v-if="stateFeature !== null"
-                :feature="stateFeature"
-                class="text-xs"
-            ></MachineryItemStateFeature>
+            <ExpectedFeature
+                :expected-feature="stateFeature"
+                expectedFeatureType="MachineryItemState"
+                optional
+                v-slot="{ feature }"
+            >
+                <MachineryItemStateFeature
+                    :feature="feature"
+                    class="text-xs"
+                ></MachineryItemStateFeature>
+            </ExpectedFeature>
         </div>
 
         <div class="flex flex-col justify-start items-center gap-2">
-            <LockFeature
-                v-if="lockFeature !== null"
-                :feature="lockFeature"
-                @click.stop
-                :dark="!active"
-            ></LockFeature>
+            <ExpectedFeature
+                :expected-feature="lockFeature"
+                expectedFeatureType="Lock"
+                optional
+                v-slot="{ feature }"
+            >
+                <LockFeature
+                    :feature="feature"
+                    @click.stop
+                    :dark="!active"
+                ></LockFeature>
+            </ExpectedFeature>
         </div>
     </div>
 </template>

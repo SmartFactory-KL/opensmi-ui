@@ -48,38 +48,24 @@ async function copySnapshot() {
             </div>
             <div class="min-w-0 flex-1 px-3 py-2">
                 <h3 class="text-sm font-semibold leading-tight text-red-900">
-                    Feature failed to initialize
+                    Feature not in state done but in {{ feature.initState }}
                 </h3>
-                <p class="mt-0.5 text-xs text-red-700">
-                    The feature did not finish loading, so its content is not
-                    shown.
-                </p>
+                <div class="text-slate-800 text-xs">
+                    {{ feature.entityType }}
+                </div>
             </div>
         </header>
 
         <dl class="text-xs">
-            <div
-                class="flex items-baseline justify-between gap-4 border-b border-slate-200 px-3 py-1.5"
+            <dd
+                v-if="errorText"
+                class="max-h-40 overflow-auto whitespace-pre-wrap wrap-break-words border border-red-200 bg-red-50 px-2 py-1.5 font-mono text-red-800"
             >
-                <dt class="shrink-0 text-slate-500">Init state</dt>
-                <dd
-                    class="min-w-0 break-all text-right font-mono font-medium text-slate-800"
-                >
-                    {{ feature.initState }}
-                </dd>
-            </div>
-            <div class="px-3 py-1.5">
-                <dt class="text-slate-500">Error</dt>
-                <dd
-                    v-if="errorText"
-                    class="mt-1 max-h-40 overflow-auto whitespace-pre-wrap wrap-break-words border border-red-200 bg-red-50 px-2 py-1.5 font-mono text-red-800"
-                >
-                    {{ errorText }}
-                </dd>
-                <dd v-else class="mt-0.5 text-slate-400">
-                    No error message provided
-                </dd>
-            </div>
+                {{ errorText }}
+            </dd>
+            <dd v-else class="mt-0.5 text-slate-400">
+                No error message provided
+            </dd>
         </dl>
 
         <!-- JSON snapshot -->
@@ -125,7 +111,5 @@ async function copySnapshot() {
     </section>
 
     <!-- Normal state -->
-    <div v-else>
-        <slot :feature="feature"></slot>
-    </div>
+    <div v-else class="contents"><slot :feature="feature" /></div>
 </template>

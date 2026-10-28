@@ -18,7 +18,7 @@ from opensmi_ui.opc_model.feature_node import (
 from opensmi_ui.opc_model.opc_node import OPCNode
 from opensmi_ui.opc_model.value_read import read_data_change_event_value
 
-logger = get_module_logger("opc_model.features.resource")
+logger = get_module_logger("opc_model.features.machinery_item_state")
 
 
 class MachineryItemStateFeatureNode(FeatureNode):

@@ -12,7 +12,7 @@ from opensmi_ui.opc_model.feature_node import (
 from opensmi_ui.opc_model.features.skill_group_feature import SkillGroupFeatureNode
 from opensmi_ui.opc_model.opc_node import OPCNode
 
-logger = get_module_logger("opc_model.features.skill_container")
+logger = get_module_logger("opc_model.features.skill_group_container")
 
 
 class SkillGroupContainerFeatureNode(FeatureNode):
