@@ -2,7 +2,6 @@
 import router from "@/router";
 import { useNotificationStore, type NotificationLevel } from "@/stores/NotificationStore";
 import { BugIcon, MessageCircleIcon, TriangleAlertIcon } from "@lucide/vue";
-import { nextTick, onUnmounted, ref, watch } from "vue";
 
 const notificationStore = useNotificationStore();
 

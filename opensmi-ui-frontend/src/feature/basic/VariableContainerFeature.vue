@@ -8,11 +8,11 @@ defineProps<{
 </script>
 
 <template>
-    <div class="p-2 flex flex-col gap-y-1">
-        <div class="text-xs">
+    <div class="flex flex-col w-full">
+        <div class="border-l-4 border-l-slate-600 bg-indigo-100 px-4">
             {{ feature.entity.name }}
         </div>
-        <div>
+        <div class="flex flex-col justify-start items-stretch">
             <span class="text-xs" v-show="feature.features?.length == 0"
                 >-empty-</span
             >
@@ -20,7 +20,6 @@ defineProps<{
             <VariableFeature
                 v-for="variableFeature in feature.features"
                 :key="variableFeature.entityId"
-                class="p-0.5 text-sm"
                 :feature="variableFeature"
             >
             </VariableFeature>

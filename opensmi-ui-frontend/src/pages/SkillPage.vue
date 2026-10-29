@@ -2,9 +2,9 @@
 import EntityBreadcrumbs from "@/components/EntityBreadcrumbs.vue";
 import ExpectedFeature from "@/components/ExpectedFeature.vue";
 import NullablePage from "@/components/NullablePage.vue";
-import DependencyFeature from "@/feature/DependencyFeature.vue";
-import SkillControlFeature from "@/feature/SkillControlFeature.vue";
-import VariableContainerFeature from "@/feature/VariableContainerFeature.vue";
+import DependencyFeature from "@/feature/basic/DependencyFeature.vue";
+import SkillControlFeature from "@/feature/basic/SkillControlFeature.vue";
+import VariableContainerFeature from "@/feature/basic/VariableContainerFeature.vue";
 import GenericEntityPageLink from "@/link/GenericEntityPageLink.vue";
 import { useModelStore } from "@/stores/ModelStore";
 import type { FeatureNode } from "@/types/NodeFeatureTypes";

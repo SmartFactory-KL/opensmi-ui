@@ -23,11 +23,11 @@ const serverStore = useServerStore();
     >
         <div
             v-show="modelStore.isDropdownVisible"
-            class="flex items-start px-24 pt-3 bg-slate-900/80 z-10"
+            class="flex items-start px-24 pt-3 bg-slate-600/80 z-10"
             @click.self.prevent="modelStore.closeDropdown()"
         >
             <div
-                class="z-20 w-full overflow-hidden bg-slate-800 shadow-2xl rounded-3xl"
+                class="z-40 w-full overflow-hidden bg-slate-700 shadow-2xl rounded-3xl"
             >
                 <!-- Inner Part -->
                 <div class="my-4 max-h-[calc(80vh-2rem)] overflow-y-auto px-4">
@@ -136,7 +136,7 @@ const serverStore = useServerStore();
                             </div>
                         </div>
                         <!-- Root Component Trees -->
-                        <div class="grow bg-slate-300 rounded-xl pl-4 pt-4 pr-0 pb-10">
+                        <div class="grow bg-slate-300 rounded-xl pl-4 pt-4 pr-0">
                             <div class="overflow-auto max-h-[calc(80vh-4rem)] pr-4">
                                 <span
                                     v-show="modelStore.isWorking"

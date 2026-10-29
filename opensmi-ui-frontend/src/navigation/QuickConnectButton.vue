@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import IconButton from "@/components/IconButton.vue";
 import { useServerStore } from "@/stores/ServerSessionStore";
-import { LogInIcon, LogOutIcon, PlugZapIcon, UnplugIcon } from "@lucide/vue";
+import { PlugZapIcon, UnplugIcon } from "@lucide/vue";
 import { computed } from "vue";
 
 defineProps<{

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import ExpectedFeature from "@/components/ExpectedFeature.vue";
-import GenericFeature from "@/feature/GenericFeature.vue";
-import SkillGroupContainerFeature from "@/feature/SkillGroupContainerFeature.vue";
-import SkillGroupFeature from "@/feature/SkillGroupFeature.vue";
+import GenericFeature from "@/feature/basic/GenericFeature.vue";
+import SkillGroupContainerFeature from "@/feature/basic/SkillGroupContainerFeature.vue";
+import SkillGroupFeature from "@/feature/basic/SkillGroupFeature.vue";
 import ComponentLink from "@/link/ComponentLink.vue";
 import type { ComponentNode, FeatureNode } from "@/types/NodeFeatureTypes";
 import { computed } from "vue";

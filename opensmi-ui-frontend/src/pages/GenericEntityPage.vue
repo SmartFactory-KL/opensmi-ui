@@ -3,7 +3,7 @@ import EntityBreadcrumbs from "@/components/EntityBreadcrumbs.vue";
 import NullablePage from "@/components/NullablePage.vue";
 import OPCNodeInfo from "@/components/OPCNodeInfo.vue";
 import SectionBar from "@/components/SectionBar.vue";
-import GenericFeature from "@/feature/GenericFeature.vue";
+import GenericFeature from "@/feature/basic/GenericFeature.vue";
 import GenericEntityPageLink from "@/link/GenericEntityPageLink.vue";
 import { useModelStore } from "@/stores/ModelStore";
 import type { ComponentNode, FeatureNode } from "@/types/NodeFeatureTypes";
@@ -180,8 +180,7 @@ async function copyJson() {
                     <pre
                         v-if="showJSON && snapshot !== null"
                         class="mt-2 max-h-96 overflow-auto rounded-md bg-slate-200 p-4 text-xs leading-relaxed text-slate-800 shadow-inner"
-                        >{{ snapshot }}</pre
-                    >
+                        >{{ snapshot }}</pre>
                 </div>
 
                 <SectionBar>OPC Node Data</SectionBar>

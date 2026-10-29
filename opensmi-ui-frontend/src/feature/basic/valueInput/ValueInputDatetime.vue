@@ -1,5 +1,8 @@
 <script setup lang="ts">
+import type { VariableModifier } from "@/types/NodeFeatureTypes";
 import { computed } from "vue";
+
+const props = defineProps<{modifiers?: VariableModifier[]}>()
 
 // The wire format is an ISO string in UTC. datetime-local has no time zone,
 // so the field is shown and edited as UTC.

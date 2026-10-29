@@ -109,7 +109,7 @@ async function requestAction(requestedAction: LockAction["requestedAction"]) {
 
 <template>
     <article
-        class="flex h-16 w-fit items-center gap-3 rounded-full border p-1 pl-5 shadow-sm transition-colors duration-150"
+        class="flex h-16 w-fit items-center gap-3 rounded-xl border p-1 pl-5 shadow-sm transition-colors duration-150"
         :class="containerClasses"
     >
         <!-- Lock Information -->
@@ -138,7 +138,7 @@ async function requestAction(requestedAction: LockAction["requestedAction"]) {
         <!-- Lock action: circle fits the pill's right end -->
         <button
             type="button"
-            class="flex size-14 shrink-0 items-center justify-center rounded-full text-white shadow-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer"
+            class="flex size-14 shrink-0 items-center justify-center rounded-xl text-white shadow-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer"
             :class="buttonClasses"
             :disabled="isWorking"
             :title="currentAction.label"

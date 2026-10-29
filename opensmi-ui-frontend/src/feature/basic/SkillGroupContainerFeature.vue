@@ -4,21 +4,15 @@ import SkillGroupFeature from "./SkillGroupFeature.vue";
 
 const props = defineProps<{
     feature: FeatureNode;
-    tiny?: boolean;
-    asColumn?: boolean;
 }>();
 </script>
 
 <template>
     <div>
-        <div
-            class="flex flex-wrap justify-start items-start"
-            :class="[asColumn ? 'flex-col' : 'flex-row']"
-        >
+        <div class="flex flex-col flex-wrap justify-start items-start">
             <SkillGroupFeature
                 v-for="feature in feature.features"
                 :feature="feature"
-                :tiny="tiny"
             ></SkillGroupFeature>
         </div>
     </div>

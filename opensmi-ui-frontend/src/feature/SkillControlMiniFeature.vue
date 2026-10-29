@@ -12,7 +12,7 @@ import {
     SkillControlStateStyles,
     SkillState,
     type StateConfig,
-} from "./additionalData/SkillControl";
+} from "./data/SkillControl";
 
 const props = defineProps<{
     feature: FeatureNode;

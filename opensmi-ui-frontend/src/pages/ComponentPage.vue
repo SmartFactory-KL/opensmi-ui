@@ -1,18 +1,20 @@
 <script setup lang="ts">
 import EntityBreadcrumbs from "@/components/EntityBreadcrumbs.vue";
 import ExpectedFeature from "@/components/ExpectedFeature.vue";
+import IconButton from "@/components/IconButton.vue";
 import NullablePage from "@/components/NullablePage.vue";
-import ComponentFeature from "@/feature/ComponentFeature.vue";
-import LockFeature from "@/feature/LockFeature.vue";
-import MachineryItemStateFeature from "@/feature/MachineryItemStateFeature.vue";
-import MethodContainerFeature from "@/feature/MethodContainerFeature.vue";
-import ResourceContainerFeature from "@/feature/ResourceContainerFeature.vue";
-import SkillGroupContainerFeature from "@/feature/SkillGroupContainerFeature.vue";
-import UserContainerFeature from "@/feature/UserContainerFeature.vue";
-import VariableContainerFeature from "@/feature/VariableContainerFeature.vue";
+import ComponentAdditionalInformation from "@/feature/ComponentAdditionalInformation.vue";
+import ComponentFolderFeature from "@/feature/ComponentFolderFeature.vue";
+import ComponentTitleFeature from "@/feature/ComponentTitleFeature.vue";
+import LockFeature from "@/feature/basic/LockFeature.vue";
+import MachineryItemStateFeature from "@/feature/basic/MachineryItemStateFeature.vue";
+import MethodContainerFeature from "@/feature/basic/MethodContainerFeature.vue";
+import SkillGroupContainerFeature from "@/feature/basic/SkillGroupContainerFeature.vue";
+import VariableContainerFeature from "@/feature/basic/VariableContainerFeature.vue";
 import GenericEntityPageLink from "@/link/GenericEntityPageLink.vue";
 import { useModelStore } from "@/stores/ModelStore";
 import type { FeatureNode } from "@/types/NodeFeatureTypes";
+import { ChevronDownIcon, ChevronUpIcon } from "@lucide/vue";
 import { computed, ref } from "vue";
 import { useRoute } from "vue-router";
 
@@ -39,7 +41,7 @@ const component = computed(() => {
     return modelStore.entityIdComponentNodeMap.get(_entityId) ?? null;
 });
 
-const expectedFeatures = computed<Map<string, FeatureNode | null>>(() => {
+const expectedFeatures = computed<Map<string, FeatureNode>>(() => {
     const featureMap = new Map<string, FeatureNode>();
 
     if (component.value === null) {
@@ -64,6 +66,8 @@ const expectedFeatures = computed<Map<string, FeatureNode | null>>(() => {
 
     return featureMap;
 });
+
+const showDetails = ref(false);
 </script>
 
 <template>
@@ -89,145 +93,132 @@ const expectedFeatures = computed<Map<string, FeatureNode | null>>(() => {
             </div>
 
             <section
-                class="w-full max-w-7xl mx-auto mt-4 flex flex-col justify-start items-start gap-y-4"
+                class="w-full mx-auto flex flex-row justify-start items-stretch gap-y-4"
             >
                 <header
-                    class="flex flex-row justify-between items-start w-full p-4 bg-emerald-800 text-slate-100 border-4 border-emerald-900"
+                    class="sticky top-8 min-w-[20vw] h-[calc(100vh-6rem-4px)] overflow-y-auto flex flex-col justify-start items-start p-4 bg-emerald-800 text-slate-100 border-r-2 border-emerald-900 gap-2"
                 >
-                    <div class="flex flex-col">
-                        <ComponentFeature :feature="item"></ComponentFeature>
-                    </div>
-                    <div
-                        class="flex flex-col justify-start items-center gap-y-2"
+                    <ComponentTitleFeature
+                        :feature="item"
+                    ></ComponentTitleFeature>
+
+                    <ExpectedFeature
+                        :expected-feature="
+                            expectedFeatures.get('MachineryItemState')
+                        "
+                        expectedFeatureType="MachineryItemState"
+                        optional
+                        v-slot="{ feature }"
                     >
-                        <ExpectedFeature
-                            :expected-feature="expectedFeatures.get('Lock')"
-                            expectedFeatureType="Lock"
-                            optional
-                            v-slot="{ feature }"
-                        >
-                            <LockFeature :feature="feature"></LockFeature>
-                        </ExpectedFeature>
+                        <MachineryItemStateFeature
+                            :feature="feature"
+                        ></MachineryItemStateFeature>
+                    </ExpectedFeature>
 
-                        <ExpectedFeature
-                            :expected-feature="
-                                expectedFeatures.get('MachineryItemState')
-                            "
-                            expectedFeatureType="MachineryItemState"
-                            optional
-                            v-slot="{ feature }"
-                        >
-                            <MachineryItemStateFeature
-                                :feature="feature"
-                            ></MachineryItemStateFeature>
-                        </ExpectedFeature>
-                    </div>
-                    <div class="flex flex-col gap-y-4">
-                        <ExpectedFeature
-                            :expected-feature="
-                                expectedFeatures.get('Identification')
-                            "
-                            expectedFeatureType="Identification"
-                            optional
-                            v-slot="{ feature }"
-                        >
-                            <VariableContainerFeature
-                                :feature="feature"
-                            ></VariableContainerFeature>
-                        </ExpectedFeature>
+                    <ExpectedFeature
+                        :expected-feature="expectedFeatures.get('Lock')"
+                        expectedFeatureType="Lock"
+                        optional
+                        v-slot="{ feature }"
+                    >
+                        <LockFeature :feature="feature"></LockFeature>
+                    </ExpectedFeature>
 
-                        <ExpectedFeature
-                            :expected-feature="
-                                expectedFeatures.get('Attributes')
-                            "
-                            expectedFeatureType="Attributes"
-                            v-slot="{ feature }"
-                        >
-                            <VariableContainerFeature
-                                :feature="feature"
-                            ></VariableContainerFeature>
-                        </ExpectedFeature>
-
-                        <ExpectedFeature
-                            :expected-feature="
-                                expectedFeatures.get('UserContainer')
-                            "
-                            expectedFeatureType="UserContainer"
-                            optional
-                            v-slot="{ feature }"
-                        >
-                            <UserContainerFeature
-                                :feature="feature"
-                            ></UserContainerFeature>
-                        </ExpectedFeature>
-                    </div>
+                    <ComponentFolderFeature
+                        :feature="item"
+                    ></ComponentFolderFeature>
                 </header>
 
-                <div class="flex flex-row">
-                    <ExpectedFeature
-                        :expected-feature="
-                            expectedFeatures.get('ResourceContainer')
-                        "
-                        expectedFeatureType="ResourceContainer"
-                        v-slot="{ feature }"
-                    >
-                        <ResourceContainerFeature
-                            :feature="feature"
-                        ></ResourceContainerFeature>
-                    </ExpectedFeature>
-                </div>
+                <section
+                    class="w-full flex flex-col justify-start items-stretch gap-3 pl-4 pr-4 pt-4"
+                >
+                    <div class="flex flex-col justify-end items-end">
+                        <div>
+                            <IconButton
+                                @click="showDetails = !showDetails"
+                                class="bg-indigo-50 border-indigo-800"
+                            >
+                                Attributes | Users | Resources
+                                <ChevronDownIcon
+                                    v-show="!showDetails"
+                                ></ChevronDownIcon>
+                                <ChevronUpIcon
+                                    v-show="showDetails"
+                                ></ChevronUpIcon>
+                            </IconButton>
+                        </div>
 
-                <div class="flex flex-row justify-center gap-x-4">
-                    <ExpectedFeature
-                        :expected-feature="expectedFeatures.get('Monitoring')"
-                        expectedFeatureType="Monitoring"
-                        v-slot="{ feature }"
-                    >
-                        <VariableContainerFeature
-                            :feature="feature"
-                        ></VariableContainerFeature>
-                    </ExpectedFeature>
+                        <ComponentAdditionalInformation
+                            :expectedFeatures="expectedFeatures"
+                            v-show="showDetails"
+                            class="mt-2 w-full"
+                        ></ComponentAdditionalInformation>
+                    </div>
 
-                    <ExpectedFeature
-                        :expected-feature="expectedFeatures.get('ParameterSet')"
-                        expectedFeatureType="ParameterSet"
-                        v-slot="{ feature }"
-                    >
-                        <VariableContainerFeature
-                            :feature="feature"
-                        ></VariableContainerFeature>
-                    </ExpectedFeature>
-                </div>
+                    <section class="flex flex-row justify-around">
+                        <div
+                            class="flex flex-col justify-start items-start gap-8"
+                        >
+                            <ExpectedFeature
+                                :expected-feature="
+                                    expectedFeatures.get('Monitoring')
+                                "
+                                expectedFeatureType="Monitoring"
+                                v-slot="{ feature }"
+                            >
+                                <VariableContainerFeature
+                                    :feature="feature"
+                                ></VariableContainerFeature>
+                            </ExpectedFeature>
 
-                <div>
-                    <ExpectedFeature
-                        :expected-feature="
-                            expectedFeatures.get('SkillGroupContainer')
-                        "
-                        expectedFeatureType="SkillGroupContainer"
-                        v-slot="{ feature }"
-                    >
-                        <SkillGroupContainerFeature
-                            :feature="feature"
-                        ></SkillGroupContainerFeature>
-                    </ExpectedFeature>
-                </div>
+                            <ExpectedFeature
+                                :expected-feature="
+                                    expectedFeatures.get('ParameterSet')
+                                "
+                                expectedFeatureType="ParameterSet"
+                                v-slot="{ feature }"
+                            >
+                                <VariableContainerFeature
+                                    :feature="feature"
+                                ></VariableContainerFeature>
+                            </ExpectedFeature>
+                        </div>
 
-                <div>
-                    <ExpectedFeature
-                        :expected-feature="
-                            expectedFeatures.get('MethodContainer')
-                        "
-                        expectedFeatureType="MethodContainer"
-                        v-slot="{ feature }"
-                    >
-                        <MethodContainerFeature
-                            :feature="feature"
-                        ></MethodContainerFeature>
-                    </ExpectedFeature>
-                </div>
-                <!-- Always add some spacing for that funky on-screen-display on the touchscreens -->
-                <div class="on-screen-placeholder" style="height: 25vh"></div>
+                        <div
+                            class="flex flex-col jusitfy-start items-start gap-4"
+                        >
+                            <ExpectedFeature
+                                :expected-feature="
+                                    expectedFeatures.get('SkillGroupContainer')
+                                "
+                                expectedFeatureType="SkillGroupContainer"
+                                v-slot="{ feature }"
+                            >
+                                <SkillGroupContainerFeature
+                                    :feature="feature"
+                                ></SkillGroupContainerFeature>
+                            </ExpectedFeature>
+
+                            <ExpectedFeature
+                                :expected-feature="
+                                    expectedFeatures.get('MethodContainer')
+                                "
+                                optional
+                                expectedFeatureType="MethodContainer"
+                                v-slot="{ feature }"
+                            >
+                                <MethodContainerFeature
+                                    :feature="feature"
+                                ></MethodContainerFeature>
+                            </ExpectedFeature>
+                        </div>
+                    </section>
+                    <!-- Always add some spacing for that funky on-screen-display on the touchscreens -->
+                    <div
+                        class="on-screen-placeholder"
+                        style="height: 25vh"
+                    ></div>
+                </section>
             </section>
         </main>
     </NullablePage>
