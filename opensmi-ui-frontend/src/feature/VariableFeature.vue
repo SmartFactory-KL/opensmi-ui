@@ -46,24 +46,43 @@ async function setValue() {
 </script>
 
 <template>
-    <div class="flex flex-col justify-start items-start text-emerald-900">
-        <div
-            class="flex flex-row justify-around gap-x-2 items-center bg-slate-100 w-full px-2 pt-1 min-h-4"
-        >
-            <template v-if="entity.isWritable">
-                <ValueInput v-model="tempValue" class="grow"></ValueInput>
+    <div
+        class="flex flex-col justify-start items-stretch bg-slate-100 text-emerald-900"
+    >
+        <div class="flex flex-row gap-x-2 px-2 pt-1 min-h-4">
+            <div
+                v-if="entity.isWritable"
+                class="grow grid grid-cols-[1fr_auto_1fr] items-center gap-x-1"
+            >
+                <ValueInput
+                    v-model="tempValue"
+                    class="min-w-0 w-full"
+                ></ValueInput>
 
                 <ArrowRightIcon
                     @click="setValue"
                     :size="16"
-                    class="cursor-pointer active:scale-90"
+                    class="cursor-pointer active:scale-90 size-4"
                 ></ArrowRightIcon>
-            </template>
 
-            <ValueDisplay
-                :variableValue="entity.value"
-                class="grow"
-            ></ValueDisplay>
+                <ValueDisplay
+                    :variableValue="entity.value"
+                    class="min-w-0"
+                ></ValueDisplay>
+            </div>
+
+            <div v-else class="grow">
+                <ValueDisplay
+                    :variableValue="entity.value"
+                    class="grow"
+                ></ValueDisplay>
+            </div>
+        </div>
+        <div
+            class="text-xs bg-red-50 text-red-500 p-1"
+            v-if="feature.initState !== 'done'"
+        >
+            Error: {{ feature.initError }}
         </div>
         <div
             class="w-full flex flex-row justify-between items-center text-xs text-stone-500 bg-stone-200 gap-x-2 px-2 py-0.5"

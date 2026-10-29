@@ -10,6 +10,9 @@ from opensmi_ui.opc_model.entities.entity import (
 from opensmi_ui.opc_model.features.variable_modifier.modifier import (
     VariableModifierData,
 )
+from opensmi_ui.opc_model.features.variable_modifier.node_id_enum_modifier import (
+    NodeIdEnumModifier,
+)
 from opensmi_ui.opc_model.features.variable_modifier.range_modifier import RangeModifier
 from opensmi_ui.opc_model.features.variable_modifier.unit_modifier import UnitModifier
 from opensmi_ui.opc_model.opc_node import OPCNode
@@ -17,6 +20,9 @@ from opensmi_ui.opc_model.opc_types import LocalizedTextData, VariantData
 from opensmi_ui.opc_session.session import get_module_logger
 
 logger = get_module_logger("opc_model.entity.variable")
+
+
+UTILIZES_REFERENCE = ua.NodeId(ua.Int32(ua.object_ids.ObjectIds.Utilizes), ua.Int16(0))
 
 
 class VariableEntityData(FeatureNodeEntityData):
@@ -67,15 +73,40 @@ class VariableEntity(FeatureNodeEntity):
                         unit_modifier = UnitModifier(property)
                         modifiers.append(unit_modifier.get_data())
                     except Exception:
-                        logger.exception("failed to create UnitModifier for property")
+                        logger.exception(
+                            f"failed to create UnitModifier for {opc_node.node_id}"
+                        )
                         continue
                 case "EURange":
                     try:
                         range_modifier = RangeModifier(property)
                         modifiers.append(range_modifier.get_data())
                     except Exception:
-                        logger.exception("failed to create RangeModifier for property")
+                        logger.exception(
+                            f"failed to create RangeModifier for {opc_node.node_id}"
+                        )
                         continue
+
+        # special case: check for existing Utilizes References if data type is NodeId
+        if data_type == "NodeId":
+            try:
+                # check if any references for Utilizes exist on the node
+                utilizes_references: list[ua.ReferenceDescription] = []
+                for reference in opc_node.references:
+                    if not isinstance(reference, ua.ReferenceDescription):
+                        continue
+
+                    if reference.ReferenceTypeId == UTILIZES_REFERENCE:
+                        utilizes_references.append(reference)
+
+                # if util refs are present, assume its a nodeId enum
+                if len(utilizes_references) > 0:
+                    enum_modifier = NodeIdEnumModifier(references=utilizes_references)
+                    modifiers.append(enum_modifier.get_data())
+            except Exception:
+                logger.exception(
+                    f"failed to create NodeIdEnumModifier for {opc_node.node_id}"
+                )
 
         content = VariableEntityData(
             name=opc_node.browse_name.Name,

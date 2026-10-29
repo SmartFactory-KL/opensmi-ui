@@ -38,7 +38,7 @@ const contentId = useId();
         <div
             v-show="isOpen"
             :id="contentId"
-            class="flex flex-row gap-2"
+            class="flex flex-row flex-wrap gap-2"
         >
             <span
                 v-if="!feature.features?.length"

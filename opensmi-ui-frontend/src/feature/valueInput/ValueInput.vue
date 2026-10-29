@@ -8,7 +8,7 @@ const variant = defineModel<VariantData | null>({ required: true });
 
 function setScalar(value: unknown) {
     if (variant.value === null) return;
-    variant.value = { ...variant.value, value };
+    variant.value = { ...variant.value, value } as VariantData;
 }
 </script>
 

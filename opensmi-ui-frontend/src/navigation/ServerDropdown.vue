@@ -136,7 +136,7 @@ const serverStore = useServerStore();
                             </div>
                         </div>
                         <!-- Root Component Trees -->
-                        <div class="grow bg-slate-300 p-4 pr-0 rounded-2xl">
+                        <div class="grow bg-slate-300 rounded-xl pl-4 pt-4 pr-0 pb-10">
                             <div class="overflow-auto max-h-[calc(80vh-4rem)] pr-4">
                                 <span
                                     v-show="modelStore.isWorking"

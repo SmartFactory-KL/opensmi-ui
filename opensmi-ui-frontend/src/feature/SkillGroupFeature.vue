@@ -29,12 +29,13 @@ const skillFeatureToUse = computed(() => {
     </div>
 
     <!-- Only show Group Information for skills with anything else other then only the Execution -->
-    <div v-else>
-        <div>SkillGroup for {{ feature.opcNode.browseName }}</div>
+    <div v-else class="bg-white p-1 flex flex-col justify-start items-start">
+        <div><span class="font-semibold">{{ feature.entity.name }}</span> SkillGroup</div>
         <component
             :is="skillFeatureToUse"
             v-for="feature in feature.features"
             :feature="feature"
+            :name="feature.entity.name"
         ></component>
     </div>
 </template>
