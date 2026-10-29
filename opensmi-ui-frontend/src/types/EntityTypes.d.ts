@@ -1,3 +1,4 @@
+import type { VariableModifier } from "./NodeFeatureTypes";
 import type { LocalizedTextData } from "./OPCTypes";
 
 export enum SkillState {
@@ -42,7 +43,7 @@ export interface VariableEntityData {
   rank: number;
   isWritable: boolean;
 
-  modifiers: any[];
+  modifiers: VariableModifier[];
 }
 
 export interface MachineryItemStateEntityData {

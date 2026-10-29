@@ -18,6 +18,20 @@ const entity = computed(() => {
     return props.feature.entity as VariableEntityData;
 });
 
+const unitModifier = computed(() => {
+    if (!entity.value?.modifiers?.length) {
+        return null;
+    }
+
+    for (const mod of entity.value.modifiers) {
+        if (mod.modifierType == "UnitModifier") {
+            return mod.modifierContent;
+        }
+    }
+
+    return null;
+});
+
 const tempValue = ref<any>(null);
 
 onMounted(() => {
@@ -56,6 +70,7 @@ async function setValue() {
             >
                 <ValueInput
                     v-model="tempValue"
+                    :modifiers="entity.modifiers"
                     class="min-w-0 w-full"
                 ></ValueInput>
 
@@ -67,6 +82,7 @@ async function setValue() {
 
                 <ValueDisplay
                     :variableValue="entity.value"
+                    :modifiers="entity.modifiers"
                     class="min-w-0"
                 ></ValueDisplay>
             </div>
@@ -74,6 +90,7 @@ async function setValue() {
             <div v-else class="grow">
                 <ValueDisplay
                     :variableValue="entity.value"
+                    :modifiers="entity.modifiers"
                     class="grow"
                 ></ValueDisplay>
             </div>
@@ -87,9 +104,12 @@ async function setValue() {
         <div
             class="w-full flex flex-row justify-between items-center text-xs text-stone-500 bg-stone-200 gap-x-2 px-2 py-0.5"
         >
-            <span>
+            <div class="flex flex-row justify-start gap-x-1 items-center">
                 {{ entity.name }}
-            </span>
+                <div v-if="unitModifier">
+                    [{{ unitModifier.displayName.text }}]
+                </div>
+            </div>
 
             <span class="font-light">
                 {{ entity.dataType }} |

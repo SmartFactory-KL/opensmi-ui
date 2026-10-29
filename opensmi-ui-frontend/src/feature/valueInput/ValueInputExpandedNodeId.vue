@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import type { ExpandedNodeIdData } from "@/types/OPCTypes";
 import ValueInputNodeId from "./ValueInputNodeId.vue";
+import type { VariableModifier } from "@/types/NodeFeatureTypes";
 
+const props = defineProps<{ modifiers?: VariableModifier[] }>();
 const model = defineModel<ExpandedNodeIdData>({ required: true });
 
 function patch(change: Partial<ExpandedNodeIdData>) {

@@ -1,12 +1,17 @@
 <script setup lang="ts">
+import type { VariableModifier } from "@/types/NodeFeatureTypes";
 import { computed } from "vue";
 
 const props = withDefaults(
-    defineProps<{ kind?: "string" | "guid" | "base64" }>(),
+    defineProps<{
+        kind?: "string" | "guid" | "base64";
+        modifiers?: VariableModifier[];
+    }>(),
     {
         kind: "string",
     },
 );
+
 const model = defineModel<string | null>({ required: true });
 
 const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

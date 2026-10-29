@@ -33,3 +33,8 @@ export interface FeatureNode extends EntityNode {
 export interface ComponentNode extends EntityNode {
   children: ComponentNode[];
 }
+
+export interface VariableModifier {
+  modifierType: string;
+  modifierContent: any;
+}

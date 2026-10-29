@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import type { VariableModifier } from "@/types/NodeFeatureTypes";
 import { computed, ref, watch } from "vue";
 
 // SByte..UInt32 are numbers, Int64/UInt64 are decimal strings on the wire
 // (they can exceed MAX_SAFE_INTEGER), so both are validated with BigInt.
-const props = defineProps<{ type: string }>();
+const props = defineProps<{ type: string; modifiers?: VariableModifier[] }>();
 const model = defineModel<number | string | null>({ required: true });
 
 const RANGES: Record<string, [bigint, bigint]> = {

@@ -141,7 +141,7 @@ class OPCSubscriber:
                     evt_handle = await self.subscription.subscribe_events(
                         sourcenode=self.opc_session.opc_client.get_node(req.node_id)
                     )
-                    logger.info(f"Added Event Subscription with handler {evt_handle}")
+                    logger.debug(f"Added Event Subscription with handler {evt_handle}")
                     handles.event_handles.append(evt_handle)
                 except Exception:
                     logger.exception("Event subscription for %s failed", req.node_id)

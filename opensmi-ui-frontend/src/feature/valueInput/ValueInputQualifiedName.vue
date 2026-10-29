@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import type { VariableModifier } from "@/types/NodeFeatureTypes";
 import type { QualifiedNameData } from "@/types/OPCTypes";
 
+const props = defineProps<{modifiers?: VariableModifier[]}>()
 const model = defineModel<QualifiedNameData>({ required: true });
 
 function setName(event: Event) {

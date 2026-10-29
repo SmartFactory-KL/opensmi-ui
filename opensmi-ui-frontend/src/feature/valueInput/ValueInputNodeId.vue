@@ -2,12 +2,30 @@
 import { computed } from "vue";
 import { NUMERIC_NODE_ID_TYPES } from "./ValueInputUtils";
 import type { NodeIdData } from "@/types/OPCTypes";
+import type { VariableModifier } from "@/types/NodeFeatureTypes";
 
+const props = defineProps<{ modifiers?: VariableModifier[] }>();
 const model = defineModel<NodeIdData>({ required: true });
 
 const BASE_TYPES = ["Numeric", "String", "Guid", "ByteString"];
 
-const isNumeric = computed(() => NUMERIC_NODE_ID_TYPES.includes(model.value.identifierType));
+const enumModifier = computed<any | null>(() => {
+    if (!props.modifiers?.length) {
+        return null;
+    }
+
+    for (const mod of props.modifiers) {
+        if (mod.modifierType == "NodeIdEnumModifier") {
+            return mod.modifierContent;
+        }
+    }
+
+    return null;
+});
+
+const isNumeric = computed(() =>
+    NUMERIC_NODE_ID_TYPES.includes(model.value.identifierType),
+);
 const typeOptions = computed(() =>
     BASE_TYPES.includes(model.value.identifierType)
         ? BASE_TYPES
@@ -28,7 +46,7 @@ function setType(event: Event) {
     const identifier = NUMERIC_NODE_ID_TYPES.includes(identifierType)
         ? Number(model.value.identifier) || 0
         : String(model.value.identifier);
-    patch({ identifierType, identifier });
+    patch({ identifierType, identifier } as NodeIdData);
 }
 
 function setIdentifier(event: Event) {
@@ -44,28 +62,42 @@ function setIdentifier(event: Event) {
 
 <template>
     <div class="flex flex-row items-center gap-1">
-        <input
-            type="number"
-            min="0"
-            title="Namespace index"
-            :value="model.namespaceIndex"
-            class="w-14 min-h-6 border border-stone-300 px-1 text-sm"
-            @input="setNamespace"
-        />
-        <select
-            :value="model.identifierType"
-            class="min-h-6 border border-stone-300 text-sm"
-            @change="setType"
-        >
-            <option v-for="t in typeOptions" :key="t" :value="t">{{ t }}</option>
-        </select>
-        <input
-            :type="isNumeric ? 'number' : 'text'"
-            :min="isNumeric ? 0 : undefined"
-            title="Identifier"
-            :value="model.identifier"
-            class="min-w-20 min-h-6 border border-stone-300 px-1 text-sm"
-            @input="setIdentifier"
-        />
+        <template v-if="enumModifier">
+            <select v-model="model">
+                <option
+                    v-for="(item, label) in enumModifier.validValues"
+                    :value="item"
+                >
+                    {{ label }}
+                </option>
+            </select>
+        </template>
+        <template v-else>
+            <input
+                type="number"
+                min="0"
+                title="Namespace index"
+                :value="model.namespaceIndex"
+                class="w-14 min-h-6 border border-stone-300 px-1 text-sm"
+                @input="setNamespace"
+            />
+            <select
+                :value="model.identifierType"
+                class="min-h-6 border border-stone-300 text-sm"
+                @change="setType"
+            >
+                <option v-for="t in typeOptions" :key="t" :value="t">
+                    {{ t }}
+                </option>
+            </select>
+            <input
+                :type="isNumeric ? 'number' : 'text'"
+                :min="isNumeric ? 0 : undefined"
+                title="Identifier"
+                :value="model.identifier"
+                class="min-w-20 min-h-6 border border-stone-300 px-1 text-sm"
+                @input="setIdentifier"
+            />
+        </template>
     </div>
 </template>

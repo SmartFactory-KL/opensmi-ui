@@ -1,5 +1,8 @@
 <script setup lang="ts">
+import type { VariableModifier } from "@/types/NodeFeatureTypes";
 import { computed, ref, watch } from "vue";
+
+const props = defineProps<{modifiers?: VariableModifier[]}>()
 
 // Fallback for types without a dedicated editor (ExtensionObject, DataValue,
 // Variant, DiagnosticInfo). Edits the encoded value as JSON.

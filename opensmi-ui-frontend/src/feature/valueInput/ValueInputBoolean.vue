@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import type { VariableModifier } from '@/types/NodeFeatureTypes';
+
+const props = defineProps<{modifiers?: VariableModifier[]}>()
 const model = defineModel<boolean | null>({ required: true });
 </script>
 

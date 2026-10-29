@@ -2,6 +2,11 @@
 import type { VariantData } from "@/types/OPCTypes";
 import ValueInputArray from "./ValueInputArray.vue";
 import ValueInputScalar from "./ValueInputScalar.vue";
+import type { VariableModifier } from "@/types/NodeFeatureTypes";
+
+const props = defineProps<{
+    modifiers?: VariableModifier[];
+}>();
 
 // Usage: <ValueInput v-model="tempValue" />
 const variant = defineModel<VariantData | null>({ required: true });
@@ -15,11 +20,12 @@ function setScalar(value: unknown) {
 <template>
     <!-- without a VariantData there is no type to edit against -->
     <span v-if="variant === null" class="text-sm text-stone-400">null</span>
-    <ValueInputArray v-else-if="variant.isArray" v-model="variant" />
+    <ValueInputArray v-else-if="variant.isArray" v-model="variant" :modifiers="modifiers" />
     <ValueInputScalar
         v-else
         :type="variant.type"
         :model-value="variant.value"
+        :modifiers="modifiers"
         @update:model-value="setScalar"
     />
 </template>

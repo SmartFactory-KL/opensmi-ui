@@ -1,5 +1,8 @@
 <script setup lang="ts">
+import type { VariableModifier } from "@/types/NodeFeatureTypes";
 import { computed, ref, watch } from "vue";
+
+const props = defineProps<{ modifiers?: VariableModifier[] }>();
 
 // NaN and +/-Infinity are strings on the wire, finite values are numbers.
 const model = defineModel<number | string | null>({ required: true });
@@ -16,13 +19,16 @@ function parse(text: string): Parsed {
     const n = Number(t);
     if (Number.isNaN(n)) return { error: HINT };
     // JSON.stringify would turn a real Infinity into null
-    if (!Number.isFinite(n)) return { error: "Too large, use Infinity or -Infinity" };
+    if (!Number.isFinite(n))
+        return { error: "Too large, use Infinity or -Infinity" };
     return { value: n };
 }
 
 const draft = ref(model.value == null ? "" : String(model.value));
 const parsed = computed(() => parse(draft.value));
-const error = computed(() => ("error" in parsed.value ? parsed.value.error : null));
+const error = computed(() =>
+    "error" in parsed.value ? parsed.value.error : null,
+);
 
 function onInput(event: Event) {
     draft.value = (event.target as HTMLInputElement).value;

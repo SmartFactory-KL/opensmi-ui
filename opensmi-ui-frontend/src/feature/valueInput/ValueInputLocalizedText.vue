@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import type { VariableModifier } from "@/types/NodeFeatureTypes";
 import type { LocalizedTextData } from "@/types/OPCTypes";
 
+const props = defineProps<{modifiers?: VariableModifier[]}>()
 const model = defineModel<LocalizedTextData>({ required: true });
 
 function setText(event: Event) {
