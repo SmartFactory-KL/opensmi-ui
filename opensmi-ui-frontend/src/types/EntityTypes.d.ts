@@ -84,6 +84,11 @@ export interface SkillEntityData {
   minAccessLevel: number;
 }
 
+export interface SkillGroupEntityData {
+  name: string;
+  isContinuous: boolean;
+}
+
 export interface DependencyEntityData {
   name: string;
   dependsOn: NodeIdData[];

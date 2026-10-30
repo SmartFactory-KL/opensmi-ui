@@ -2,10 +2,15 @@
 import type { FeatureNode } from "@/types/NodeFeatureTypes";
 import SkillFeature from "./SkillFeature.vue";
 import { computed } from "vue";
+import type { SkillGroupEntityData } from "@/types/EntityTypes";
 
 const props = defineProps<{
     feature: FeatureNode;
 }>();
+
+const entity = computed(() => {
+  return props.feature.entity as SkillGroupEntityData;
+})
 </script>
 
 <template>
@@ -13,7 +18,8 @@ const props = defineProps<{
     <div v-if="feature.features && feature.features.length === 1">
         <SkillFeature
             :feature="feature.features[0]!"
-            :name="feature.entity.name"
+            :name="entity.name"
+            :is-continuous="entity.isContinuous"
         ></SkillFeature>
     </div>
 
@@ -29,7 +35,8 @@ const props = defineProps<{
         <SkillFeature
             v-for="feature in feature.features"
             :feature="feature"
-            :name="feature.entity.name"
+            :name="entity.name"
+            :is-continuous="entity.isContinuous"
         ></SkillFeature>
     </div>
 </template>

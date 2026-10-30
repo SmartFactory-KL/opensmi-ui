@@ -4,7 +4,6 @@ import type { FeatureNode } from "@/types/NodeFeatureTypes";
 import { computed } from "vue";
 import { normalizeSkillState, type StateConfig } from "./SkillData";
 import {
-    ArrowDownLeftFromSquareIcon,
     CircleChevronLeftIcon,
     CircleIcon,
     PauseCircleIcon,
@@ -15,6 +14,7 @@ import {
 import type { SkillControlAction } from "@/types/UpdateTypes";
 import { simplyPostToText } from "@/fetch/simplyFetch";
 import Toaster from "@/toast/Toaster";
+import { useModelStore } from "@/stores/ModelStore";
 
 const props = defineProps<{
     feature: FeatureNode;
@@ -30,6 +30,52 @@ const state = computed<StateConfig | null>(() => {
     return normalizeSkillState(value);
 });
 
+const firstParentLock = computed(() => {
+    if (!props.feature?.parentComponentNodeEntityId) {
+        return null;
+    }
+
+    let curComponent = useModelStore().entityIdComponentNodeMap.get(
+        props.feature.parentComponentNodeEntityId,
+    );
+
+    if (!curComponent) {
+        return null;
+    }
+
+    let lock: FeatureNode | null = null;
+    let count = 0;
+    while (lock === null && count < 1000) {
+        count++;
+
+        for (const feature of curComponent.features) {
+            if (feature.entityType == "Lock") {
+                lock = feature;
+                break;
+            }
+        }
+
+        if (!curComponent.parentComponentNodeEntityId) {
+            break;
+        }
+
+        curComponent = useModelStore().entityIdComponentNodeMap.get(
+            curComponent.parentComponentNodeEntityId,
+        );
+
+        if (!curComponent) {
+            break;
+        }
+    }
+
+    if (count >= 1000) {
+        console.warn("Count Overflow while looking for Lock");
+        return null;
+    }
+
+    return lock;
+});
+
 type Action = SkillControlAction["requestedAction"];
 
 const enabledButtons = computed<Record<Action, boolean>>(() => {
@@ -43,6 +89,15 @@ const enabledButtons = computed<Record<Action, boolean>>(() => {
     };
 
     if (!stateLabel) {
+        return activeButtons;
+    }
+
+    let isLocked = false;
+    if (firstParentLock.value !== null) {
+        isLocked = firstParentLock.value.entity.isLocked;
+    }
+
+    if (isLocked === false) {
         return activeButtons;
     }
 
