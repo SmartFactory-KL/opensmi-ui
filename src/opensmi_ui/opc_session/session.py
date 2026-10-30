@@ -1,4 +1,3 @@
-import asyncio
 from collections.abc import Callable
 from datetime import datetime
 from uuid import uuid4
@@ -16,7 +15,7 @@ from asyncua.ua.uaerrors import BadNodeIdUnknown
 
 from opensmi_ui.logger import get_module_logger
 from opensmi_ui.model.json import JsonBaseModel, JsonOutModel
-from opensmi_ui.opc_session.task import StoppableTask, wait_or_stop
+from opensmi_ui.opc_session.task import StoppableTask
 
 logger = get_module_logger("opc_session")
 
@@ -213,18 +212,15 @@ class OPCSession:
 
         self._session_data.username = ""
 
-    async def _connection_monitor_worker(self, stop_event: asyncio.Event) -> None:
+    async def _connection_monitor_worker(self) -> None:
         if self.opc_client is None:
             logger.warning("Connection monitor cannot work while opc_client is None")
             return
 
         logger.info("Start Connection Monitor")
         async with self.opc_client.subscribe_state() as conn_state:
-            while not stop_event.is_set():
-                state = await wait_or_stop(conn_state.next_change(), stop_event)
-
-                if state is None:
-                    break
+            while True:
+                state = await conn_state.next_change()
 
                 logger.info(f"Session now in {state}")
                 self._session_data.state = state
@@ -247,7 +243,7 @@ class OPCSession:
                                 f"failed to handle connection session change: {e}"
                             )
 
-    async def _time_change_worker(self, stop_event: asyncio.Event) -> None:
+    async def _time_change_worker(self) -> None:
         if self.opc_client is None:
             logger.warning("Time Monitor cannot work while opc_client is None")
             return
@@ -257,25 +253,19 @@ class OPCSession:
         current_time_node = self.opc_client.get_node(
             ua.object_ids.ObjectIds.Server_ServerStatus_CurrentTime
         )
+        interval = self._session_data.settings.time_subscription_sampling_interval_ms
 
         async with await self.opc_client.create_subscription(
-            period=self._session_data.settings.time_subscription_sampling_interval_ms,
+            period=interval,
             handler=None,
         ) as subscription:
             await subscription.subscribe_data_change(
                 nodes=current_time_node,
-                sampling_interval=ua.Duration(
-                    self._session_data.settings.time_subscription_sampling_interval_ms
-                ),
+                sampling_interval=ua.Duration(interval),
             )
 
-            while not stop_event.is_set():
-                event = await wait_or_stop(subscription.__anext__(), stop_event)
-
-                if event is None:
-                    break
-
-                match event:
+            async for item in subscription:
+                match item:
                     case DataChangeEvent(node=node, value=value):
                         if node == current_time_node:
                             for handler in self._time_changed_handler:

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import ExpectedFeature from "@/components/ExpectedFeature.vue";
-import LockFeature from "@/feature/basic/LockFeature.vue";
-import MachineryItemStateFeature from "@/feature/basic/MachineryItemStateFeature.vue";
+import LockFeature from "@/feature/LockFeature.vue";
+import MachineryItemStateFeature from "@/feature/MachineryItemStateFeature.vue";
 import type { ComponentNode, FeatureNode } from "@/types/NodeFeatureTypes";
 import { computed } from "vue";
 

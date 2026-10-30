@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import ExpectedFeature from "@/components/ExpectedFeature.vue";
 import type { FeatureNode } from "@/types/NodeFeatureTypes";
-import VariableContainerFeature from "@/feature/basic/VariableContainerFeature.vue";
-import UserContainerFeature from "@/feature/basic/UserContainerFeature.vue";
-import ResourceContainerFeature from "@/feature/basic/ResourceContainerFeature.vue";
+import VariableContainerFeature from "@/feature/VariableContainerFeature.vue";
+import UserContainerFeature from "@/feature/UserContainerFeature.vue";
+import ResourceContainerFeature from "@/feature/ResourceContainerFeature.vue";
 
 const props = defineProps<{
     expectedFeatures: Map<string, FeatureNode> | null;

@@ -2,18 +2,25 @@
 import { Info } from "@lucide/vue";
 import type { FeatureNode } from "@/types/NodeFeatureTypes";
 import FeatureErrorWrapper from "@/components/FeatureErrorWrapper.vue";
+import { computed } from "vue";
 
-defineProps<{
+const props = defineProps<{
     expectedFeature: FeatureNode | undefined | null;
     expectedFeatureType?: string;
     optional?: boolean;
 }>();
+
+const isFeatureOk = computed(() => {
+    return (
+        props.expectedFeature !== null && props.expectedFeature !== undefined
+    );
+});
 </script>
 
 <template>
     <FeatureErrorWrapper
-        v-if="expectedFeature"
-        :feature="expectedFeature"
+        v-if="isFeatureOk"
+        :feature="expectedFeature!"
         v-slot="{ feature }"
     >
         <slot :feature="feature"></slot>
@@ -30,6 +37,7 @@ defineProps<{
         </span>
         <span
             class="flex min-w-0 flex-col items-center justify-around gap-y-2 wrap-break-word py-2"
+            v-show="!isFeatureOk"
         >
             <div>Missing Feature</div>
             <div

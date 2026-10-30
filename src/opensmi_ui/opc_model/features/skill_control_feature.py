@@ -6,7 +6,7 @@ from asyncua.common.subscription import DataChangeEvent
 
 from opensmi_ui.logger import get_module_logger
 from opensmi_ui.model.json import JsonInModel
-from opensmi_ui.opc_model.entities.skill_state_entity import (
+from opensmi_ui.opc_model.entities.skill_control_entity import (
     SkillControlEntity,
     SkillControlStateUpdate,
 )
@@ -97,7 +97,7 @@ class SkillControlFeatureNode(FeatureNode):
                     raise ValueError("Failed to read skill state")
 
                 self.opc_node.attributes["Value"] = val.Value
-                self.entity = SkillControlEntity(opc_node=self.opc_node)
+                self.entity = SkillControlEntity(opc_node=self.opc_node, action_nodes=self.action_nodes)
 
                 self._init_step += 1
                 self.init_state = FeatureInitState.DONE

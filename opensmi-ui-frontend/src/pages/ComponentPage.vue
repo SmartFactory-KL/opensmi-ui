@@ -1,16 +1,17 @@
 <script setup lang="ts">
+import ComponentAdditionalInformation from "@/components/ComponentAdditionalInformation.vue";
 import EntityBreadcrumbs from "@/components/EntityBreadcrumbs.vue";
 import ExpectedFeature from "@/components/ExpectedFeature.vue";
 import IconButton from "@/components/IconButton.vue";
 import NullablePage from "@/components/NullablePage.vue";
-import ComponentAdditionalInformation from "@/feature/ComponentAdditionalInformation.vue";
-import ComponentFolderFeature from "@/feature/ComponentFolderFeature.vue";
-import ComponentTitleFeature from "@/feature/ComponentTitleFeature.vue";
-import LockFeature from "@/feature/basic/LockFeature.vue";
-import MachineryItemStateFeature from "@/feature/basic/MachineryItemStateFeature.vue";
-import MethodContainerFeature from "@/feature/basic/MethodContainerFeature.vue";
-import SkillGroupContainerFeature from "@/feature/basic/SkillGroupContainerFeature.vue";
-import VariableContainerFeature from "@/feature/basic/VariableContainerFeature.vue";
+import ComponentFolders from "@/feature/component/ComponentFolders.vue";
+import ComponentTitle from "@/feature/component/ComponentTitle.vue";
+
+import LockFeature from "@/feature/LockFeature.vue";
+import MachineryItemStateFeature from "@/feature/MachineryItemStateFeature.vue";
+import MethodContainerFeature from "@/feature/MethodContainerFeature.vue";
+import SkillGroupContainerFeature from "@/feature/SkillGroupContainerFeature.vue";
+import VariableContainerFeature from "@/feature/VariableContainerFeature.vue";
 import GenericEntityPageLink from "@/link/GenericEntityPageLink.vue";
 import { useModelStore } from "@/stores/ModelStore";
 import type { FeatureNode } from "@/types/NodeFeatureTypes";
@@ -98,9 +99,7 @@ const showDetails = ref(false);
                 <header
                     class="sticky top-8 min-w-[20vw] h-[calc(100vh-6rem-4px)] overflow-y-auto flex flex-col justify-start items-start p-4 bg-emerald-800 text-slate-100 border-r-2 border-emerald-900 gap-2"
                 >
-                    <ComponentTitleFeature
-                        :feature="item"
-                    ></ComponentTitleFeature>
+                    <ComponentTitle :feature="item"></ComponentTitle>
 
                     <ExpectedFeature
                         :expected-feature="
@@ -124,9 +123,7 @@ const showDetails = ref(false);
                         <LockFeature :feature="feature"></LockFeature>
                     </ExpectedFeature>
 
-                    <ComponentFolderFeature
-                        :feature="item"
-                    ></ComponentFolderFeature>
+                    <ComponentFolders :feature="item"></ComponentFolders>
                 </header>
 
                 <section

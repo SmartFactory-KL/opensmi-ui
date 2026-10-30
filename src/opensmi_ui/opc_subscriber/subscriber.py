@@ -18,7 +18,7 @@ from asyncua.ua.attribute_ids import AttributeIds
 
 from opensmi_ui.logger import get_module_logger
 from opensmi_ui.opc_session.session import OPCSession
-from opensmi_ui.opc_session.task import StoppableTask, wait_or_stop
+from opensmi_ui.opc_session.task import StoppableTask
 from opensmi_ui.opc_subscriber.notification import read_notification
 
 logger = get_module_logger("opc_subscriber")
@@ -183,7 +183,7 @@ class OPCSubscriber:
                 asyncio.create_task(self.close())
 
     # handler
-    async def handler_worker(self, stop_event: asyncio.Event) -> None:
+    async def handler_worker(self) -> None:
         if not self.opc_session.is_connected():
             raise RuntimeError(
                 f"Cannot create subscriptions when OPCSession is not connected (State: {self.opc_session.opc_client.state})"
@@ -196,18 +196,13 @@ class OPCSubscriber:
         ) as subscription:
             self.subscription = subscription
 
-            while not stop_event.is_set():
-                event = await wait_or_stop(subscription.__anext__(), stop_event)
-
-                if event is None:
-                    break
-
-                match event:
+            async for item in subscription:
+                match item:
                     case DataChangeEvent(node=source_node):
                         if source_node.nodeid in self.data_handlers:
                             try:
                                 self.data_handlers[source_node.nodeid](
-                                    source_node, event
+                                    source_node, item
                                 )
                             except Exception:
                                 logger.exception("failed to handle data change event")
@@ -248,7 +243,7 @@ class OPCSubscriber:
                         if notification.Status.is_bad():
                             break
                     case _:
-                        logger.info("Unexpected Event: %s", event)
+                        logger.info("Unexpected Event: %s", item)
 
         self.subscription = None
         logger.info("Stopping Subscription Worker")

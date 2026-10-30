@@ -2,69 +2,38 @@ import asyncio
 from collections.abc import Callable, Coroutine
 from typing import Any
 
+from opensmi_ui.logger import get_module_logger
+
+logger = get_module_logger("opc_session.stoppable_task")
+
 
 class StoppableTask:
-    def __init__(self, worker: Callable[[asyncio.Event], Coroutine[Any, Any, None]]):
+    def __init__(self, worker: Callable[[], Coroutine[Any, Any, None]]):
         self._lock = asyncio.Lock()
         self._worker = worker
-
         self._task: asyncio.Task[None] | None = None
-        self._stop_event: asyncio.Event | None = None
 
     @property
     def running(self) -> bool:
         return self._task is not None and not self._task.done()
 
-    async def start(self):
+    async def start(self) -> None:
         async with self._lock:
-            if self._task is not None:
-                await self._stop_locked()
+            await self._stop_locked()
+            self._task = asyncio.create_task(self._worker())
 
-            self._stop_event = asyncio.Event()
-            self._task = asyncio.create_task(self._worker(self._stop_event))
-
-    async def stop(self):
+    async def stop(self) -> None:
         async with self._lock:
             await self._stop_locked()
 
     async def _stop_locked(self) -> None:
-        if self._task is None:
+        task, self._task = self._task, None
+        if task is None:
             return
 
-        if not self._task.done() and self._stop_event is not None:
-            self._stop_event.set()
+        task.cancel()
+        # wait() neither raises the task's exception nor swallows *our* cancellation
+        await asyncio.wait({task})
 
-        try:
-            # Wait for the worker to finish its cleanup.
-            await self._task
-        finally:
-            self._task = None
-            self._stop_event = None
-
-
-async def wait_or_stop[T](
-    awaitable: Coroutine[Any, Any, T],
-    stop_event: asyncio.Event,
-) -> T | None:
-    operation = asyncio.create_task(awaitable)
-    stopping = asyncio.create_task(stop_event.wait())
-
-    try:
-        done, _ = await asyncio.wait(
-            {operation, stopping},
-            return_when=asyncio.FIRST_COMPLETED,
-        )
-
-        if stopping in done:
-            return None
-
-        return operation.result()
-
-    finally:
-        for task in (operation, stopping):
-            if not task.done():
-                task.cancel()
-
-        await asyncio.gather(
-            operation, stopping, return_exceptions=True
-        )
+        if not task.cancelled() and (exc := task.exception()):
+            logger.warning("Worker ended with an error: %r", exc)

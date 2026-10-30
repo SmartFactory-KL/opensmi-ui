@@ -35,6 +35,10 @@ async function copySnapshot() {
         console.error(e);
     }
 }
+
+const isEntityOk = computed(() => {
+    return props.feature.entity !== null;
+});
 </script>
 
 <template>
@@ -111,5 +115,10 @@ async function copySnapshot() {
     </section>
 
     <!-- Normal state -->
-    <div v-else class="contents"><slot :feature="feature" /></div>
+    <div v-else class="contents">
+        <div v-if="!isEntityOk">
+            This feature has a Null Entity!
+        </div>
+        <slot v-else :feature="feature" />
+    </div>
 </template>

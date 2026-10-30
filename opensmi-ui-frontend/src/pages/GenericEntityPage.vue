@@ -3,7 +3,7 @@ import EntityBreadcrumbs from "@/components/EntityBreadcrumbs.vue";
 import NullablePage from "@/components/NullablePage.vue";
 import OPCNodeInfo from "@/components/OPCNodeInfo.vue";
 import SectionBar from "@/components/SectionBar.vue";
-import GenericFeature from "@/feature/basic/GenericFeature.vue";
+import GenericFeature from "@/feature/GenericFeature.vue";
 import GenericEntityPageLink from "@/link/GenericEntityPageLink.vue";
 import { useModelStore } from "@/stores/ModelStore";
 import type { ComponentNode, FeatureNode } from "@/types/NodeFeatureTypes";

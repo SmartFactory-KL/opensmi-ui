@@ -76,6 +76,7 @@ export interface SkillControlEntityData {
   name: string;
   currentState: string | number;
   currentStateLastChange: string;
+  isSuspendable: boolean;
 }
 
 export interface SkillEntityData {

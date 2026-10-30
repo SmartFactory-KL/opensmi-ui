@@ -18,20 +18,27 @@ class SkillControlStateUpdate(JsonOutModel):
 
 class SkillControlEntityData(FeatureNodeEntityData):
     name: str
+
     current_state: int | str
     current_state_last_change: datetime | None
+
+    is_suspendable: bool
 
 
 class SkillControlEntity(FeatureNodeEntity):
     content: SkillControlEntityData
 
-    def __init__(self, opc_node: OPCNode):
+    def __init__(self, opc_node: OPCNode, action_nodes: dict[str, OPCNode]):
         current_state = opc_node.attributes.get("Value", 11)
+
+        suspendable_node = action_nodes.get("Suspend", None)
+        is_suspendable = suspendable_node is not None
 
         self.content = SkillControlEntityData(
             name=opc_node.browse_name.Name,
             current_state=variant_value_to_string(current_state),
             current_state_last_change=None,
+            is_suspendable=is_suspendable,
         )
 
     def get_data(self) -> SkillControlEntityData:

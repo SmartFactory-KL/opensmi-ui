@@ -1,13 +1,9 @@
-import type { SkillControlAction } from "@/types/UpdateTypes";
 import {
-  ArrowDownLeftFromSquareIcon,
   CircleCheck,
   CirclePause,
   CirclePlay,
   CircleStop,
   LoaderCircle,
-  PauseCircleIcon,
-  PlayCircleIcon,
   RotateCcw,
   StopCircleIcon,
   Timer,
@@ -37,41 +33,47 @@ export type StateConfig = {
   isBusy: boolean;
 };
 
-export const SkillControlControls: {
-  action: SkillControlAction["requestedAction"];
-  label: string;
-  icon: LucideIcon;
-  classes: string;
-}[] = [
-  {
-    action: "Reset",
-    label: "Reset",
-    icon: ArrowDownLeftFromSquareIcon,
-    classes:
-      "text-violet-600 bg-violet-50 hover:text-violet-700 focus-visible:ring-violet-500",
-  },
-  {
-    action: "Start",
-    label: "Start",
-    icon: PlayCircleIcon,
-    classes:
-      "text-emerald-600 bg-emerald-50 hover:text-emerald-700 focus-visible:ring-emerald-500",
-  },
-  {
-    action: "Suspend",
-    label: "Suspend",
-    icon: PauseCircleIcon,
-    classes:
-      "text-amber-600 bg-amber-50 hover:text-amber-700 focus-visible:ring-amber-500",
-  },
-  {
-    action: "Halt",
-    label: "Halt",
-    icon: StopCircleIcon,
-    classes:
-      "text-red-600 bg-red-50 hover:text-red-700 focus-visible:ring-red-500",
-  },
-];
+export const SkillControlLabels: Record<string, number> = {
+  halted: SkillState.HALTED,
+  ready: SkillState.READY,
+  running: SkillState.RUNNING,
+  suspended: SkillState.SUSPENDED,
+  completed: SkillState.COMPLETED,
+  starting: SkillState.STARTING,
+  halting: SkillState.HALTING,
+  completing: SkillState.COMPLETING,
+  resetting: SkillState.RESETTING,
+  suspending: SkillState.SUSPENDING,
+};
+
+export function normalizeSkillState(
+  state: string | number,
+): StateConfig | null {
+  if (typeof state === "number") {
+    return SkillControlStateStyles[state] ?? null;
+  }
+
+  if (typeof state !== "string") {
+    return null;
+  }
+
+  const numericValue = Number(state);
+  if (Number.isInteger(numericValue)) {
+    return SkillControlStateStyles[numericValue] ?? null;
+  }
+
+  const normalized = state.trim().toLowerCase();
+  if (normalized === "") {
+    return null;
+  }
+
+  const stateEnum = SkillControlLabels[normalized] ?? null;
+  if (stateEnum === null) {
+    return null;
+  }
+
+  return SkillControlStateStyles[stateEnum] ?? null;
+}
 
 export const SkillControlStateStyles: Record<number, StateConfig> = {
   [SkillState.HALTED]: {
