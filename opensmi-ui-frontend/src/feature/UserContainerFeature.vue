@@ -13,7 +13,9 @@ const contentId = useId();
 </script>
 
 <template>
-    <div class="border border-gray-300 bg-white shadow-sm">
+    <div
+        class="border border-gray-300 bg-white shadow-sm max-h-[50vh] overflow-auto"
+    >
         <!-- Header -->
         <button
             type="button"

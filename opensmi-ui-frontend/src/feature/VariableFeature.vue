@@ -61,7 +61,7 @@ async function setValue() {
 
 <template>
     <div
-        class="flex flex-col justify-start items-stretch  text-emerald-900 border-l-4 border-l-slate-600"
+        class="flex flex-col justify-start items-stretch text-emerald-900 border-l-4 border-l-slate-600"
     >
         <div class="flex flex-row gap-x-2 px-2 pt-1 min-h-8 bg-stone-100">
             <div
@@ -112,10 +112,12 @@ async function setValue() {
             </div>
 
             <span class="font-light">
-                {{ entity.dataType }} |
-                <span v-if="entity.lastUpdatedAt">{{
-                    new Date(entity.lastUpdatedAt).toLocaleString()
-                }}</span>
+                {{ entity.dataType }}
+                <!-- Does not update anyway -->
+                <!-- | -->
+                <!-- <span v-if="entity.lastUpdatedAt">{{
+                    new Date(entity.lastUpdatedAt).toLocaleTimeString()
+                }}</span> -->
             </span>
         </div>
     </div>

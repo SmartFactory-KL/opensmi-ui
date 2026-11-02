@@ -21,14 +21,10 @@ const children = computed<ComponentNode[]>(
 
 <template>
     <div class="flex flex-col justify-start items-start gap-y-2 ml-1">
-        <div class="flex flex-col flex-wrap justify-start items-start gap-4">
-            Components
-        </div>
-
         <!-- Direct child components (first level only), drawn as a tree -->
         <ul
             v-if="children.length"
-            class="-mt-1 ml-2 flex max-w-full min-w-0 flex-col"
+            class="mt-1 flex max-w-full min-w-0 flex-col"
             aria-label="Child components"
         >
             <li v-for="child in children" :key="child.entityId">

@@ -34,11 +34,11 @@ const variableContainers = computed(() => {
             ></ValueDisplayNodeId>
         </div>
 
-        <div>
+        <!-- <div>
             <VariableContainerFeature
                 v-for="container in variableContainers"
                 :feature="container"
             ></VariableContainerFeature>
-        </div>
+        </div> -->
     </section>
 </template>

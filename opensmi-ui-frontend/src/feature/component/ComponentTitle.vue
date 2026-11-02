@@ -14,9 +14,9 @@ const entity = computed(() => {
 
 <template>
     <div class="flex flex-col jusitfy-start items-start gap-2">
-        <div class="bg-emerald-200 rounded-lg py-1 px-2 text-xs text-slate-600">
+        <div class="bg-emerald-200 rounded-lg font-light py-1 px-2 text-xs text-slate-600">
             {{ entity.componentType }}
         </div>
-        <div class="font-semibold text-3xl">{{ entity.name }}</div>
+        <div class="font-semibold text-xl">{{ entity.name }}</div>
     </div>
 </template>

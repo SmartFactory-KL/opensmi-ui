@@ -10,6 +10,7 @@ from opensmi_ui.opc_model.feature_node import (
     FeatureNode,
 )
 from opensmi_ui.opc_model.features.dependency_feature import DependencyFeatureNode
+from opensmi_ui.opc_model.features.lock_feature import LockFeatureNode
 from opensmi_ui.opc_model.features.skill_control_feature import SkillControlFeatureNode
 from opensmi_ui.opc_model.features.variable_container_feature import (
     VariableContainerFeatureNode,
@@ -77,6 +78,7 @@ class SkillFeatureNode(FeatureNode):
                             parent_feature_node=self,
                         )
                     )
+
 
     def _populate_step(
         self, last_result: FeatureInitResult | None

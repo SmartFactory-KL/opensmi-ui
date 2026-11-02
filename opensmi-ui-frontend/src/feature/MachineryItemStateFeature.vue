@@ -19,7 +19,11 @@ const entity = computed(() => {
 });
 
 type StateKey =
-    "executing" | "notexecuting" | "outofservice" | "notavailable" | "unknown";
+    | "executing"
+    | "notexecuting"
+    | "outofservice"
+    | "notavailable"
+    | "unknown";
 
 interface StateStyle {
     label: string;
@@ -35,35 +39,35 @@ const STATES: Record<StateKey, StateStyle> = {
         label: "Executing",
         icon: CirclePlayIcon,
         description: "The machine is actively working",
-        pill: "bg-emerald-100 text-emerald-900 border-emerald-400",
+        pill: "bg-transparent",
         iconClass: "text-emerald-600",
     },
     notexecuting: {
         label: "Not executing",
         icon: CirclePauseIcon,
         description: "Ready, but currently not working",
-        pill: "bg-amber-100 text-amber-900 border-amber-400",
+        pill: "bg-transparent",
         iconClass: "text-amber-600",
     },
     outofservice: {
         label: "Out of service",
         icon: WrenchIcon,
         description: "Taken out of service, e.g. for maintenance or a fault",
-        pill: "bg-red-100 text-red-900 border-red-400",
+        pill: "bg-transparent",
         iconClass: "text-red-600",
     },
     notavailable: {
         label: "Not available",
         icon: PowerOffIcon,
         description: "The machine is not available",
-        pill: "bg-slate-200 text-slate-800 border-slate-400",
+        pill: "bg-transparent",
         iconClass: "text-slate-500",
     },
     unknown: {
         label: "Unknown",
         icon: CircleHelpIcon,
         description: "The state could not be determined",
-        pill: "bg-stone-100 text-stone-700 border-stone-400 border-dashed",
+        pill: "bg-transparent",
         iconClass: "text-stone-500",
     },
 };
@@ -91,16 +95,11 @@ const label = computed(() => {
 
 <template>
     <span
-        class="inline-flex items-center gap-2 rounded-lg border px-3 py-1 text-sm font-semibold shadow-sm"
+        class="inline-flex items-center gap-2 rounded-lg py-1 text-sm"
         :class="style.pill"
         :title="style.description"
     >
         <span class="relative flex size-5 items-center justify-center">
-            <!-- soft ping behind the icon while executing -->
-            <span
-                v-if="stateKey === 'executing'"
-                class="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-50"
-            ></span>
             <component
                 :is="style.icon"
                 class="relative size-5"
