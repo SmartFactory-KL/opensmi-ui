@@ -1,4 +1,5 @@
 from fastapi import WebSocket
+from pydantic_core import PydanticSerializationError
 
 from opensmi_ui.logger import get_module_logger
 from opensmi_ui.messages.types import WebSocketMessage, WebSocketMessageBatch
@@ -43,14 +44,20 @@ class MessageBroadcaster:
         try:
             payload = message.model_dump_json(by_alias=True)
             await self._broadcast_payload(payload)
-        except Exception as e:  # noqa: BLE001 # unknown exceptions in broadcast and model_dump
-            logger.warning(f"Failed to broadcast: {e}")
+        except PydanticSerializationError:
+            logger.warning("Failed to broadcast message due to an serialization error")
+            logger.exception()
 
     async def broadcast_batch(self, message_batch: list[WebSocketMessage]):
         """broadcast a batch of WebSocketMessages to the batch channel of all clients"""
         batch = WebSocketMessageBatch(channel="batch", data=message_batch)
-        payload = batch.model_dump_json(by_alias=True)
-        await self._broadcast_payload(payload)
+
+        try:
+            payload = batch.model_dump_json(by_alias=True)
+            await self._broadcast_payload(payload)
+        except PydanticSerializationError:
+            logger.warning("Failed to broadcast batch due to an serialization error")
+            logger.exception()
 
     async def _broadcast_payload(self, payload: str):
         dead_connections: list[WebSocket] = []

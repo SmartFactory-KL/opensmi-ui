@@ -1,7 +1,4 @@
-from collections.abc import Callable
-from datetime import datetime
 from enum import StrEnum
-from typing import Any
 
 from asyncua import ua
 from asyncua.common.node import Node
@@ -26,10 +23,7 @@ from opensmi_ui.opc_model.feature_node import (
 )
 from opensmi_ui.opc_model.features.machinery_item_state_feature import FeatureInitState
 from opensmi_ui.opc_model.opc_node import OPCNode
-from opensmi_ui.opc_model.opc_types import VariantData
-from opensmi_ui.opc_model.value_read import (
-    normalize_to_variant,
-)
+from opensmi_ui.opc_model.update import handle_update_with_callback
 
 logger = get_module_logger("opc_model.features.lock")
 
@@ -160,67 +154,45 @@ class LockFeatureNode(FeatureNode):
 
         return req
 
-    def _handle_update(
-        self,
-        evt: DataChangeEvent,
-        callback: Callable[[Any, datetime | None], JsonOutModel],
-    ):
-        if not isinstance(self.entity, LockEntity):
-            return
-
-        try:
-            data_value = evt.data.monitored_item.Value
-            if not isinstance(data_value, ua.DataValue):
-                logger.warning(
-                    "Received unexpected Non-DataValue Update on LockFeature"
-                )
-                return
-
-            value = normalize_to_variant(data_value)
-            if not isinstance(value, ua.Variant):
-                logger.warning("Received unexpected Non-Variant Update on LockFeature")
-                return
-
-            data = VariantData.from_ua(value)
-            update = callback(data.value, (data_value.SourceTimestamp))
-
-            self.entity.apply_update(update)
-            if self.event_bus is not None:
-                self.event_bus.publish(update)
-
-        except Exception:
-            logger.exception("Failed to handle Update due to an Exception")
-            return
-
     def on_locked_update(self, node: Node, evt: DataChangeEvent):
-        self._handle_update(
+        handle_update_with_callback(
             evt,
-            lambda val, timestamp: LockIsLockedUpdate(
+            update_creator=lambda val, timestamp: LockIsLockedUpdate(
                 entity_id=self.entity_id,
                 new_is_locked=val,
                 timestamp=str(timestamp),
             ),
+            entity=self.entity,
+            callback=self.publish_update,
         )
 
     def on_locking_user_update(self, node: Node, evt: DataChangeEvent):
-        self._handle_update(
+        handle_update_with_callback(
             evt,
-            lambda val, timestamp: LockLockingUserUpdate(
+            update_creator=lambda val, timestamp: LockLockingUserUpdate(
                 entity_id=self.entity_id,
                 new_user=val,
                 timestamp=str(timestamp),
             ),
+            entity=self.entity,
+            callback=self.publish_update,
         )
 
     def on_locking_client_update(self, node: Node, evt: DataChangeEvent):
-        self._handle_update(
+        handle_update_with_callback(
             evt,
-            lambda val, timestamp: LockLockingClientUpdate(
+            update_creator=lambda val, timestamp: LockLockingClientUpdate(
                 entity_id=self.entity_id,
                 new_client=val,
                 timestamp=str(timestamp),
             ),
+            entity=self.entity,
+            callback=self.publish_update,
         )
+
+    def publish_update(self, update: JsonOutModel):
+        if self.event_bus is not None:
+            self.event_bus.publish(update)
 
     async def handle_action(self, action: GenericAction) -> None:
         method_node_to_call: OPCNode | None = None

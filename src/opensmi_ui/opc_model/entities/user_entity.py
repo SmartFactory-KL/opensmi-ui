@@ -1,10 +1,19 @@
+from uuid import UUID
+
 from asyncua.ua import Variant
 
+from opensmi_ui.model.json import JsonOutModel
 from opensmi_ui.opc_model.entities.entity import (
     FeatureNodeEntity,
     FeatureNodeEntityData,
 )
 from opensmi_ui.opc_model.opc_node import OPCNode
+
+
+class UserIsPresentUpdate(JsonOutModel):
+    entity_id: UUID
+    timestamp: str
+    new_is_present: bool
 
 
 class UserEntityData(FeatureNodeEntityData):
@@ -29,6 +38,9 @@ class UserEntity(FeatureNodeEntity):
                     val = child.attributes.get("Value", None)
                     if val is None:
                         continue
+
+                    if isinstance(val, Variant):
+                        val = val.Value
 
                     vals[child.browse_name.Name] = bool(val)
                 case "UserLevel" | "MaxAccessLevel":

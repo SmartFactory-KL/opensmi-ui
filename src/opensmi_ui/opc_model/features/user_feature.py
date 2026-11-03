@@ -1,15 +1,25 @@
+from collections.abc import Callable
+from datetime import datetime
+from typing import Any
+
 from asyncua import ua
+from asyncua.common.node import Node
+from asyncua.common.subscription import DataChangeEvent
 
 from opensmi_ui.logger import get_module_logger
-from opensmi_ui.opc_model.entities.user_entity import UserEntity
+from opensmi_ui.model.json import JsonOutModel
+from opensmi_ui.opc_model.entities.user_entity import UserEntity, UserIsPresentUpdate
 from opensmi_ui.opc_model.feature_node import (
     ComponentNode,
     FeatureInitRequest,
     FeatureInitResult,
     FeatureInitState,
     FeatureNode,
+    FeatureSubscribeDataRequest,
+    FeatureSubscribeRequest,
 )
 from opensmi_ui.opc_model.opc_node import OPCNode
+from opensmi_ui.opc_model.update import handle_update_with_callback
 
 logger = get_module_logger("opc_model.features.user")
 
@@ -81,3 +91,41 @@ class UserFeatureNode(FeatureNode):
                 return None
             case _:
                 return None
+
+    def _request_subscription(self) -> FeatureSubscribeRequest | None:
+        req = FeatureSubscribeRequest(subscriptions=[])
+
+        is_present_node = self.opc_node.get_first_child_node_for_name("IsPresent")
+
+        req.subscriptions.append(
+            FeatureSubscribeDataRequest(
+                attr=ua.attribute_ids.AttributeIds.Value,
+                feature=self,
+                handler=self.on_is_present_update,
+                node_id=is_present_node.node_id,
+            )
+        )
+
+        return req
+
+    def on_is_present_update(self, node: Node, evt: DataChangeEvent) -> None:
+        if not isinstance(self.entity, UserEntity):
+            return
+
+        try:
+            handle_update_with_callback(
+                evt=evt,
+                update_creator=lambda val, timestamp: UserIsPresentUpdate(
+                    entity_id=self.entity_id,
+                    new_is_present=val,
+                    timestamp=str(timestamp),
+                ),
+                entity=self.entity,
+                callback=self.publish_update,
+            )
+        except Exception:
+            logger.exception("Failed to handle IsPresent Update on UserFeature")
+
+    def publish_update(self, update: JsonOutModel):
+        if self.event_bus is not None:
+            self.event_bus.publish(update)

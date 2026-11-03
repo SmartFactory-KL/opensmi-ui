@@ -183,19 +183,19 @@ class OPCSession:
             if self._session_data.settings.time_subscription_enabled:
                 await self._time_change_task.start()
 
+            self._namespaces = await self.opc_client.get_namespace_array()
+
+            for idx, _ns in enumerate(self._namespaces):
+                self._ns_idx_uri[idx] = _ns
+                self._ns_uri_idx[_ns] = ua.Int16(idx)
+
+            self._type_defs = await self.opc_client.load_data_type_definitions()
+
+            self._session_data.namespaces = self._namespaces
+
         except:
             logger.exception("Failed to connect")
             raise
-
-        self._namespaces = await self.opc_client.get_namespace_array()
-
-        for idx, _ns in enumerate(self._namespaces):
-            self._ns_idx_uri[idx] = _ns
-            self._ns_uri_idx[_ns] = ua.Int16(idx)
-
-        self._type_defs = await self.opc_client.load_data_type_definitions()
-
-        self._session_data.namespaces = self._namespaces
 
     async def disconnect(self) -> None:
         if self.opc_client is None:

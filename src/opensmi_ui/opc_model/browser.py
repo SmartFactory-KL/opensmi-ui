@@ -1,5 +1,6 @@
 from collections import deque
 from dataclasses import dataclass
+from enum import StrEnum
 from time import perf_counter
 
 from asyncua import ua
@@ -39,6 +40,17 @@ MAX_FEATURE_ADVANCE_COUNT = 20
 """This is a boundary to check for 'infinite' loops within the feature advancing. No feature can have more than this amount of advance steps."""
 
 
+class BrowsingState(StrEnum):
+    OPEN = "open"
+    """Never browsed anything"""
+    PENDING = "pending"
+    """Browsing is in progress right now"""
+    FINISHED = "finished"
+    """Browsing finished, model should be available"""
+    ERROR = "error"
+    """Error state to allow re-browsing after an error happened"""
+
+
 @dataclass(frozen=True)
 class OPCNodeReadItem:
     opc_node: OPCNode
@@ -58,10 +70,13 @@ class NodeReadItem:
 
 
 class OPCBrowser:
+    browsing_state: BrowsingState
+
     def __init__(self, opc_session: OPCSession):
         self.opc_session = opc_session
+        self.browsing_state = BrowsingState.OPEN
 
-    async def browse_basic_nodes(self) -> list[OPCNode]:
+    async def _browse_basic_nodes(self) -> list[OPCNode]:
         """Reads the nodes and returns them as a list of node-trees while only reading basic information"""
         if not self.opc_session.is_connected():
             raise OPCSessionNotReadyError(
@@ -277,109 +292,122 @@ class OPCBrowser:
         return results
 
     async def read_model(self) -> list[ComponentNode]:
-        # read basic nodes
-        browse_start = perf_counter()
-        basic_nodes = await self.browse_basic_nodes()
-        basic_nodes_duration = perf_counter() - browse_start
-        logger.info("Basic Node Reading took %.6f seconds", basic_nodes_duration)
+        if self.browsing_state == BrowsingState.PENDING:
+            raise RuntimeError("Browsing is already in progress.")
 
-        # convert to basic components tree
-        tree_convert_start = perf_counter()
-        component_trees = get_component_trees(basic_nodes)
-        tree_convert_duration = perf_counter() - tree_convert_start
-        logger.info("Tree Conversion took %.6f seconds", tree_convert_duration)
+        self.browsing_state = BrowsingState.PENDING
 
-        print_component_trees(component_trees)
+        try:
+            # read basic nodes
+            browse_start = perf_counter()
+            basic_nodes = await self._browse_basic_nodes()
+            basic_nodes_duration = perf_counter() - browse_start
+            logger.info("Basic Node Reading took %.6f seconds", basic_nodes_duration)
 
-        # create features for nodes
-        feature_create_start = perf_counter()
-        create_features_on_trees(component_trees)
-        feature_create_duration = perf_counter() - feature_create_start
-        logger.info("Feature Creation took %.6f seconds", feature_create_duration)
+            # convert to basic components tree
+            tree_convert_start = perf_counter()
+            component_trees = get_component_trees(basic_nodes)
+            tree_convert_duration = perf_counter() - tree_convert_start
+            logger.info("Tree Conversion took %.6f seconds", tree_convert_duration)
 
-        # enrich features with entities using attributes and properties in
-        # a recursive procedure
-        feature_init_start = perf_counter()
+            print_component_trees(component_trees)
 
-        init_requests: list[FeatureInitRequest] = []
+            # create features for nodes
+            feature_create_start = perf_counter()
+            create_features_on_trees(component_trees)
+            feature_create_duration = perf_counter() - feature_create_start
+            logger.info("Feature Creation took %.6f seconds", feature_create_duration)
 
-        def read_req(feature: FeatureNode, _) -> None:
-            req = feature.next_populate_step(None)
-            if req is not None:
-                init_requests.append(req)
+            # enrich features with entities using attributes and properties in
+            # a recursive procedure
+            feature_init_start = perf_counter()
 
-        for component_tree in component_trees:
-            visit_tree_features(tree=component_tree, method=read_req)
+            init_requests: list[FeatureInitRequest] = []
 
-        loop_count = 0
-        while len(init_requests) > 0 and loop_count < MAX_FEATURE_ADVANCE_COUNT:
-            loop_count += 1
+            def read_req(feature: FeatureNode, _) -> None:
+                req = feature.next_populate_step(None)
+                if req is not None:
+                    init_requests.append(req)
 
-            # create results list and next init
-            next_init_requests: list[FeatureInitRequest] = []
-            init_results: list[FeatureInitResult] = [
-                FeatureInitResult(read_results=[], browse_results=[])
-                for _ in init_requests
-            ]
+            for component_tree in component_trees:
+                visit_tree_features(tree=component_tree, method=read_req)
 
-            # handle the reads and match them to their request
-            reading_requests = aggregate_reading_requests(init_requests)
-            reading_results = await self.read_requests_in_chunks(
-                reading_requests=reading_requests
-            )
-            result_idx = 0
-            for req_idx, req in enumerate(init_requests):
-                req_size = len(req.read_requests)
+            loop_count = 0
+            while len(init_requests) > 0 and loop_count < MAX_FEATURE_ADVANCE_COUNT:
+                loop_count += 1
 
-                results = reading_results[result_idx : (result_idx + req_size)]
+                # create results list and next init
+                next_init_requests: list[FeatureInitRequest] = []
+                init_results: list[FeatureInitResult] = [
+                    FeatureInitResult(read_results=[], browse_results=[])
+                    for _ in init_requests
+                ]
 
-                if req_size != len(results):
-                    raise ValueError(
-                        f"Size Mismatch on reading_results, got {len(results)} but expected {req_size}"
+                # handle the reads and match them to their request
+                reading_requests = aggregate_reading_requests(init_requests)
+                reading_results = await self.read_requests_in_chunks(
+                    reading_requests=reading_requests
+                )
+                result_idx = 0
+                for req_idx, req in enumerate(init_requests):
+                    req_size = len(req.read_requests)
+
+                    results = reading_results[result_idx : (result_idx + req_size)]
+
+                    if req_size != len(results):
+                        raise ValueError(
+                            f"Size Mismatch on reading_results, got {len(results)} but expected {req_size}"
+                        )
+
+                    init_results[req_idx].read_results = results
+                    result_idx += req_size
+
+                # handle the browses and match them to their request
+                browsing_requests = aggregate_browsing_requests(init_requests)
+                browsing_results = await self.browse_requests_in_chunks(
+                    browse_descriptions=browsing_requests
+                )
+                result_idx = 0
+                for req_idx, req in enumerate(init_requests):
+                    req_size = len(req.browse_requests)
+
+                    results = browsing_results[result_idx : (result_idx + req_size)]
+
+                    if req_size != len(results):
+                        raise ValueError(
+                            f"Size Mismatch on browsing_results, got {len(results)} but expected {req_size}"
+                        )
+
+                    init_results[req_idx].browse_results = results
+                    result_idx += req_size
+
+                # advance all features using their results
+                for idx, item in enumerate(init_requests):
+                    next_req = item.feature.next_populate_step(
+                        last_result=init_results[idx]
                     )
 
-                init_results[req_idx].read_results = results
-                result_idx += req_size
+                    if next_req is not None:
+                        next_init_requests.append(next_req)
 
-            # handle the browses and match them to their request
-            browsing_requests = aggregate_browsing_requests(init_requests)
-            browsing_results = await self.browse_requests_in_chunks(
-                browse_descriptions=browsing_requests
-            )
-            result_idx = 0
-            for req_idx, req in enumerate(init_requests):
-                req_size = len(req.browse_requests)
+                init_requests = next_init_requests
 
-                results = browsing_results[result_idx : (result_idx + req_size)]
-
-                if req_size != len(results):
-                    logger.error(
-                        f"Size Mismatch on browsing_results, got {len(results)} but expected {req_size}"
-                    )
-
-                init_results[req_idx].browse_results = results
-                result_idx += req_size
-
-            # advance all features using their results
-            for idx, item in enumerate(init_requests):
-                next_req = item.feature.next_populate_step(
-                    last_result=init_results[idx]
+            if loop_count >= MAX_FEATURE_ADVANCE_COUNT:
+                raise RuntimeError(
+                    f"Feature Advancing resulted in loop count of over {MAX_FEATURE_ADVANCE_COUNT} - indicating an infinite loop. Check your feature advances."
                 )
 
-                if next_req is not None:
-                    next_init_requests.append(next_req)
-
-            init_requests = next_init_requests
-
-        if loop_count >= MAX_FEATURE_ADVANCE_COUNT:
-            raise RuntimeError(
-                f"Feature Advancing resulted in loop count of over {MAX_FEATURE_ADVANCE_COUNT} - indicating an infinite loop. Check your feature advances."
+            feature_init_duration = perf_counter() - feature_init_start
+            logger.info(
+                "Feature Initialization took %.6f seconds", feature_init_duration
             )
 
-        feature_init_duration = perf_counter() - feature_init_start
-        logger.info("Feature Initialization took %.6f seconds", feature_init_duration)
+            self.browsing_state = BrowsingState.FINISHED
 
-        return component_trees
+            return component_trees
+        except:
+            self.browsing_state = BrowsingState.ERROR
+            raise
 
 
 def get_component_trees(nodes: list[OPCNode]) -> list[ComponentNode]:
