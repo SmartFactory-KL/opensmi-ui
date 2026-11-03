@@ -32,10 +32,10 @@ const skillControlFeature = computed(() => {
             <ExpectedFeature
                 :expectedFeature="skillControlFeature"
                 expectedFeatureType="SkillControl"
-                v-slot="{ feature }"
+                v-slot="{ resolvedFeature }"
             >
                 <SkillControlFeature
-                    :feature="feature"
+                    :feature="resolvedFeature"
                     v-if="skillControlFeature !== null"
                 ></SkillControlFeature>
             </ExpectedFeature>

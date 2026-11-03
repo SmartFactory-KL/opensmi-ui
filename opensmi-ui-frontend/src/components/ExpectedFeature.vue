@@ -10,6 +10,10 @@ const props = defineProps<{
     optional?: boolean;
 }>();
 
+defineSlots<{
+    default(props: { resolvedFeature: FeatureNode }): unknown;
+}>();
+
 const isFeatureOk = computed(() => {
     return (
         props.expectedFeature !== null && props.expectedFeature !== undefined
@@ -21,9 +25,9 @@ const isFeatureOk = computed(() => {
     <FeatureErrorWrapper
         v-if="isFeatureOk"
         :feature="expectedFeature!"
-        v-slot="{ feature }"
+        v-slot="{ feature: resolvedFeature }"
     >
-        <slot :feature="feature"></slot>
+        <slot :resolved-feature="resolvedFeature"></slot>
     </FeatureErrorWrapper>
     <div
         v-else-if="!optional"

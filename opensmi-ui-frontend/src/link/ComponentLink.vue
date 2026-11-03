@@ -27,7 +27,7 @@ const entity = computed(() => {
 <template>
     <ClassicLink
         :to="href"
-        class="flex flex-row justify-start items-center bg-emerald-800 p-1 text-slate-200 hover:text-blue-600 gap-x-1"
+        class="flex flex-row justify-start items-center  p-1 text-emerald-50 hover:text-emerald-400 gap-x-1"
     >
         <RobotArmIcon v-if="isMachineType" :size="16" />
         <CompassIcon v-else :size="16" />

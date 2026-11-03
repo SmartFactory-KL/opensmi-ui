@@ -18,6 +18,9 @@ import type { FeatureNode } from "@/types/NodeFeatureTypes";
 import { ChevronLeftIcon, ChevronRightIcon } from "@lucide/vue";
 import { computed, ref } from "vue";
 import { useRoute } from "vue-router";
+import ComponentTypeBadge from "@/feature/component/ComponentTypeBadge.vue";
+import MiniSkillContainer from "@/components/MiniSkillContainer.vue";
+import MiniMethodContainer from "@/components/MiniMethodContainer.vue";
 
 const modelStore = useModelStore();
 
@@ -104,18 +107,24 @@ function togglePanel(panel: PanelKey) {
                 class="w-full mx-auto flex flex-row justify-start items-stretch gap-y-4"
             >
                 <header
-                    class="sticky top-8 min-w-64 h-[calc(100vh-6rem-4px)] overflow-y-auto flex flex-col justify-start items-stretch p-4 bg-emerald-800 text-slate-100 border-r-2 border-emerald-900 gap-2"
+                    class="sticky top-8 w-64 h-[calc(100vh-6rem-4px)] shrink-0  overflow-y-auto flex flex-col justify-start items-stretch p-4 bg-emerald-800 text-slate-100 border-r-2 border-emerald-900 gap-2"
                 >
+                    <div class="flex items-start justify-start">
+                        <ComponentTypeBadge
+                            :feature="item"
+                        ></ComponentTypeBadge>
+                    </div>
+
                     <ExpectedFeature
                         :expected-feature="
                             expectedFeatures.get('MachineryItemState')
                         "
                         expectedFeatureType="MachineryItemState"
                         optional
-                        v-slot="{ feature }"
+                        v-slot="{ resolvedFeature }"
                     >
                         <MachineryItemStateFeature
-                            :feature="feature"
+                            :feature="resolvedFeature"
                         ></MachineryItemStateFeature>
                     </ExpectedFeature>
 
@@ -125,9 +134,12 @@ function togglePanel(panel: PanelKey) {
                         :expected-feature="expectedFeatures.get('Lock')"
                         expectedFeatureType="Lock"
                         optional
-                        v-slot="{ feature }"
+                        v-slot="{ resolvedFeature }"
                     >
-                        <LockFeature dark :feature="feature"></LockFeature>
+                        <LockFeature
+                            dark
+                            :feature="resolvedFeature"
+                        ></LockFeature>
                     </ExpectedFeature>
 
                     <ComponentFolders
@@ -196,10 +208,10 @@ function togglePanel(panel: PanelKey) {
                                     expectedFeatures.get('Monitoring')
                                 "
                                 expectedFeatureType="Monitoring"
-                                v-slot="{ feature }"
+                                v-slot="{ resolvedFeature }"
                             >
                                 <VariableContainerFeature
-                                    :feature="feature"
+                                    :feature="resolvedFeature"
                                 ></VariableContainerFeature>
                             </ExpectedFeature>
 
@@ -208,10 +220,10 @@ function togglePanel(panel: PanelKey) {
                                     expectedFeatures.get('ParameterSet')
                                 "
                                 expectedFeatureType="ParameterSet"
-                                v-slot="{ feature }"
+                                v-slot="{ resolvedFeature }"
                             >
                                 <VariableContainerFeature
-                                    :feature="feature"
+                                    :feature="resolvedFeature"
                                 ></VariableContainerFeature>
                             </ExpectedFeature>
                         </div>
@@ -224,11 +236,11 @@ function togglePanel(panel: PanelKey) {
                                     expectedFeatures.get('SkillGroupContainer')
                                 "
                                 expectedFeatureType="SkillGroupContainer"
-                                v-slot="{ feature }"
+                                v-slot="{ resolvedFeature }"
                             >
-                                <SkillGroupContainerFeature
-                                    :feature="feature"
-                                ></SkillGroupContainerFeature>
+                                <MiniSkillContainer
+                                    :feature="resolvedFeature"
+                                ></MiniSkillContainer>
                             </ExpectedFeature>
 
                             <ExpectedFeature
@@ -237,11 +249,11 @@ function togglePanel(panel: PanelKey) {
                                 "
                                 optional
                                 expectedFeatureType="MethodContainer"
-                                v-slot="{ feature }"
+                                v-slot="{ resolvedFeature }"
                             >
-                                <MethodContainerFeature
-                                    :feature="feature"
-                                ></MethodContainerFeature>
+                                <MiniMethodContainer
+                                    :feature="resolvedFeature"
+                                ></MiniMethodContainer>
                             </ExpectedFeature>
                         </div>
                     </section>
@@ -267,10 +279,10 @@ function togglePanel(panel: PanelKey) {
                                         expectedFeatures.get('Identification')
                                     "
                                     expectedFeatureType="Identification"
-                                    v-slot="{ feature }"
+                                    v-slot="{ resolvedFeature }"
                                 >
                                     <VariableContainerFeature
-                                        :feature="feature"
+                                        :feature="resolvedFeature"
                                     ></VariableContainerFeature>
                                 </ExpectedFeature>
                             </div>
@@ -281,10 +293,10 @@ function togglePanel(panel: PanelKey) {
                                         expectedFeatures.get('Attributes')
                                     "
                                     expectedFeatureType="Attributes"
-                                    v-slot="{ feature }"
+                                    v-slot="{ resolvedFeature }"
                                 >
                                     <VariableContainerFeature
-                                        :feature="feature"
+                                        :feature="resolvedFeature"
                                     ></VariableContainerFeature>
                                 </ExpectedFeature>
                             </div>
@@ -300,10 +312,10 @@ function togglePanel(panel: PanelKey) {
                                         expectedFeatures.get('UserContainer')
                                     "
                                     expectedFeatureType="UserContainer"
-                                    v-slot="{ feature }"
+                                    v-slot="{ resolvedFeature }"
                                 >
                                     <UserContainerFeature
-                                        :feature="feature"
+                                        :feature="resolvedFeature"
                                     ></UserContainerFeature>
                                 </ExpectedFeature>
                             </div>
@@ -316,10 +328,10 @@ function togglePanel(panel: PanelKey) {
                                         )
                                     "
                                     expectedFeatureType="ResourceContainer"
-                                    v-slot="{ feature }"
+                                    v-slot="{ resolvedFeature }"
                                 >
                                     <ResourceContainerFeature
-                                        :feature="feature"
+                                        :feature="resolvedFeature"
                                     ></ResourceContainerFeature>
                                 </ExpectedFeature>
                             </div>

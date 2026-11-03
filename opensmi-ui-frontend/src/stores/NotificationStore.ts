@@ -75,8 +75,6 @@ export const useNotificationStore = defineStore("notification", {
 
       let level: "info" | "warning" | "error";
 
-      console.log(notification);
-
       switch (notification.severity) {
         case 555:
           level = "warning";
@@ -92,7 +90,7 @@ export const useNotificationStore = defineStore("notification", {
       this.notificationContent[level].push(notification);
 
       if (level == "error") {
-        Toaster.error(notification.message.text)
+        Toaster.error(notification.message.text);
       }
 
       if (this.animate[level] === null) {

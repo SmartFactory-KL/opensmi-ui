@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import {
-    BoxIcon,
     ChevronRightIcon,
     ComponentIcon,
-    Feather,
     FeatherIcon,
-    PuzzleIcon,
     RatIcon,
 } from "@lucide/vue";
 

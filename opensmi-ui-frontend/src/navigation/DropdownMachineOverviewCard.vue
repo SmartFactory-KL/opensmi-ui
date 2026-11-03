@@ -49,10 +49,10 @@ const lockFeature = computed(() => {
                 :expected-feature="stateFeature"
                 expectedFeatureType="MachineryItemState"
                 optional
-                v-slot="{ feature }"
+                v-slot="{ resolvedFeature }"
             >
                 <MachineryItemStateFeature
-                    :feature="feature"
+                    :feature="resolvedFeature"
                     class="text-xs"
                 ></MachineryItemStateFeature>
             </ExpectedFeature>
@@ -63,10 +63,10 @@ const lockFeature = computed(() => {
                 :expected-feature="lockFeature"
                 expectedFeatureType="Lock"
                 optional
-                v-slot="{ feature }"
+                v-slot="{ resolvedFeature }"
             >
                 <LockFeature
-                    :feature="feature"
+                    :feature="resolvedFeature"
                     @click.stop
                     :dark="!active"
                 ></LockFeature>

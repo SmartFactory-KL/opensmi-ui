@@ -108,7 +108,7 @@ function togglePanel(panel: PanelKey) {
                 class="w-full mx-auto flex flex-row justify-start items-stretch gap-y-4"
             >
                 <header
-                    class="sticky top-8 w-64 h-[calc(100vh-6rem-4px)] overflow-y-auto flex flex-col justify-start items-stretch p-4 bg-sky-800 text-slate-100 border-r-2 border-sky-900 gap-2"
+                    class="sticky top-8 w-64 h-[calc(100vh-6rem-4px)] shrink-0 overflow-y-auto flex flex-col justify-start items-stretch p-4 bg-sky-800 text-slate-100 border-r-2 border-sky-900 gap-2"
                 >
                     <div class="flex flex-col">
                         <span class="text-2xl">{{ skillGroupLabel }}</span>
@@ -152,10 +152,10 @@ function togglePanel(panel: PanelKey) {
                             <ExpectedFeature
                                 :expected-feature="skillFeature"
                                 expectedFeatureType="Skill"
-                                v-slot="{ feature }"
+                                v-slot="{ resolvedFeature }"
                             >
                                 <SkillFeature
-                                    :feature="feature"
+                                    :feature="resolvedFeature"
                                 ></SkillFeature>
                             </ExpectedFeature>
                         </div>
@@ -170,10 +170,10 @@ function togglePanel(panel: PanelKey) {
                                     expectedFeatures.get('Monitoring')
                                 "
                                 expectedFeatureType="Monitoring"
-                                v-slot="{ feature }"
+                                v-slot="{ resolvedFeature }"
                             >
                                 <VariableContainerFeature
-                                    :feature="feature"
+                                    :feature="resolvedFeature"
                                 ></VariableContainerFeature>
                             </ExpectedFeature>
 
@@ -182,10 +182,10 @@ function togglePanel(panel: PanelKey) {
                                     expectedFeatures.get('ParameterSet')
                                 "
                                 expectedFeatureType="ParameterSet"
-                                v-slot="{ feature }"
+                                v-slot="{ resolvedFeature }"
                             >
                                 <VariableContainerFeature
-                                    :feature="feature"
+                                    :feature="resolvedFeature"
                                 ></VariableContainerFeature>
                             </ExpectedFeature>
 
@@ -194,10 +194,10 @@ function togglePanel(panel: PanelKey) {
                                     expectedFeatures.get('FinalResultData')
                                 "
                                 expectedFeatureType="FinalResultData"
-                                v-slot="{ feature }"
+                                v-slot="{ resolvedFeature }"
                             >
                                 <VariableContainerFeature
-                                    :feature="feature"
+                                    :feature="resolvedFeature"
                                 ></VariableContainerFeature>
                             </ExpectedFeature>
                         </div>
@@ -210,10 +210,10 @@ function togglePanel(panel: PanelKey) {
                                     expectedFeatures.get('Dependency')
                                 "
                                 expectedFeatureType="Dependency"
-                                v-slot="{ feature }"
+                                v-slot="{ resolvedFeature }"
                             >
                                 <DependencyFeature
-                                    :feature="feature"
+                                    :feature="resolvedFeature"
                                 ></DependencyFeature>
                             </ExpectedFeature>
                         </div>
@@ -228,7 +228,7 @@ function togglePanel(panel: PanelKey) {
                     <!-- Inlay panel: sits directly to the right of the sidebar, one panel at a time -->
                     <section
                         v-if="activePanel"
-                        class="fixed bottom-0 left-64 w-[calc(100%-16rem)] bg-sky-200 border-t-2 border-emerald-900 shadow-lg text-xs"
+                        class="fixed bottom-0 left-64 w-[calc(100vw-16rem)] bg-sky-200 border-t-2 border-emerald-900 shadow-lg text-xs"
                     >
                         <div
                             v-if="activePanel === 'identification-attributes'"
@@ -240,10 +240,10 @@ function togglePanel(panel: PanelKey) {
                                         expectedFeatures.get('Identification')
                                     "
                                     expectedFeatureType="Identification"
-                                    v-slot="{ feature }"
+                                    v-slot="{ resolvedFeature }"
                                 >
                                     <VariableContainerFeature
-                                        :feature="feature"
+                                        :feature="resolvedFeature"
                                     ></VariableContainerFeature>
                                 </ExpectedFeature>
                             </div>
@@ -254,10 +254,10 @@ function togglePanel(panel: PanelKey) {
                                         expectedFeatures.get('Attributes')
                                     "
                                     expectedFeatureType="Attributes"
-                                    v-slot="{ feature }"
+                                    v-slot="{ resolvedFeature }"
                                 >
                                     <VariableContainerFeature
-                                        :feature="feature"
+                                        :feature="resolvedFeature"
                                     ></VariableContainerFeature>
                                 </ExpectedFeature>
                             </div>

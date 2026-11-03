@@ -2,12 +2,14 @@
 import EntityBreadcrumbs from "@/components/EntityBreadcrumbs.vue";
 import ExpectedFeature from "@/components/ExpectedFeature.vue";
 import NullablePage from "@/components/NullablePage.vue";
+import DependencyFeature from "@/feature/DependencyFeature.vue";
 import MethodFeature from "@/feature/MethodFeature.vue";
 import VariableContainerFeature from "@/feature/VariableContainerFeature.vue";
 import GenericEntityPageLink from "@/link/GenericEntityPageLink.vue";
 import { useModelStore } from "@/stores/ModelStore";
 import type { FeatureNode } from "@/types/NodeFeatureTypes";
-import { computed } from "vue";
+import { ChevronLeftIcon, ChevronRightIcon } from "@lucide/vue";
+import { computed, ref } from "vue";
 import { useRoute } from "vue-router";
 
 const modelStore = useModelStore();
@@ -53,6 +55,29 @@ const expectedFeatures = computed<Map<string, FeatureNode | null>>(() => {
 
     return featureMap;
 });
+
+const parentLabel = computed(() => {
+    const parentFeatureEntityId = methodFeature.value?.parentFeatureNodeEntityId;
+
+    if (!parentFeatureEntityId) {
+        return "Unknown Name";
+    }
+
+    const parentFeature = modelStore.entityIdFeatureNodeMap.get(
+        parentFeatureEntityId,
+    );
+
+    return parentFeature?.entity?.name || "Unknown name";
+});
+
+type PanelKey = "identification-attributes";
+
+// Only one panel can be open at a time
+const activePanel = ref<PanelKey | null>(null);
+
+function togglePanel(panel: PanelKey) {
+    activePanel.value = activePanel.value === panel ? null : panel;
+}
 </script>
 
 <template>
@@ -78,98 +103,171 @@ const expectedFeatures = computed<Map<string, FeatureNode | null>>(() => {
             </div>
 
             <section
-                class="w-full max-w-7xl mx-auto mt-4 flex flex-col justify-start items-start gap-y-4"
+                class="w-full mx-auto flex flex-row justify-start items-stretch gap-y-4"
             >
                 <header
-                    class="flex flex-row justify-between items-start w-full p-4 bg-indigo-800 text-slate-100 border-4 border-indigo-900"
+                    class="sticky top-8 w-64 h-[calc(100vh-6rem-4px)] shrink-0 overflow-y-auto flex flex-col justify-start items-stretch p-4 bg-rose-800 text-slate-100 border-r-2 border-rose-900 gap-2"
                 >
                     <div class="flex flex-col">
-                        <span class="text-2xl">{{ item.entity.name }}</span>
+                        <span class="text-2xl">{{ parentLabel }}</span>
+                        <span class="text-xs">{{ item.entity.name }}</span>
                     </div>
-                    <div>
-                        <ExpectedFeature
-                            :expected-feature="item"
-                            expectedFeatureType="SkillControl"
-                            v-slot="{ feature }"
-                        >
-                            <MethodFeature :feature="feature"></MethodFeature>
-                        </ExpectedFeature>
-                    </div>
-                    <div class="flex flex-col gap-y-4">
-                        <ExpectedFeature
-                            :expected-feature="
-                                expectedFeatures.get('Identification')
-                            "
-                            expectedFeatureType="Identification"
-                            v-slot="{ feature }"
-                        >
-                            <VariableContainerFeature
-                                :feature="feature"
-                            ></VariableContainerFeature>
-                        </ExpectedFeature>
 
-                        <ExpectedFeature
-                            :expected-feature="
-                                expectedFeatures.get('Attributes')
-                            "
-                            expectedFeatureType="Attributes"
-                            v-slot="{ feature }"
-                        >
-                            <VariableContainerFeature
-                                :feature="feature"
-                            ></VariableContainerFeature>
-                        </ExpectedFeature>
+                    <!-- Pushes the buttons to the bottom of the sidebar -->
+                    <div class="grow"></div>
 
-                        <ExpectedFeature
-                            :expected-feature="
-                                expectedFeatures.get('Dependency')
+                    <div class="flex flex-col justify-start items-end gap-1">
+                        <button
+                            type="button"
+                            @click="togglePanel('identification-attributes')"
+                            :class="
+                                activePanel === 'identification-attributes'
+                                    ? 'text-rose-100 bg-rose-600 border-rose-300'
+                                    : 'text-rose-700 bg-rose-300'
                             "
-                            expectedFeatureType="Dependency"
-                            v-slot="{ feature }"
+                            class="inline-flex items-center gap-1 px-2 py-1 text-xs border-2 cursor-pointer active:scale-95"
                         >
-                            <DependencyFeature
-                                :feature="feature"
-                            ></DependencyFeature>
-                        </ExpectedFeature>
+                            Identification | Attributes
+                            <ChevronRightIcon
+                                v-show="
+                                    activePanel !== 'identification-attributes'
+                                "
+                            ></ChevronRightIcon>
+                            <ChevronLeftIcon
+                                v-show="
+                                    activePanel === 'identification-attributes'
+                                "
+                            ></ChevronLeftIcon>
+                        </button>
                     </div>
                 </header>
 
-                <div>
-                    <ExpectedFeature
-                        :expected-feature="expectedFeatures.get('Monitoring')"
-                        expectedFeatureType="Monitoring"
-                        v-slot="{ feature }"
-                    >
-                        <VariableContainerFeature
-                            :feature="feature"
-                        ></VariableContainerFeature>
-                    </ExpectedFeature>
+                <section
+                    class="w-full flex flex-col justify-start items-stretch gap-3 pl-4 pr-4 pt-4"
+                >
+                    <div class="flex flex-row justify-center items-center">
+                        <div class="bg-rose-800 p-5">
+                            <ExpectedFeature
+                                :expected-feature="item"
+                                expectedFeatureType="SkillControl"
+                                v-slot="{ resolvedFeature }"
+                            >
+                                <MethodFeature
+                                    :feature="resolvedFeature"
+                                ></MethodFeature>
+                            </ExpectedFeature>
+                        </div>
+                    </div>
 
-                    <ExpectedFeature
-                        :expected-feature="expectedFeatures.get('ParameterSet')"
-                        expectedFeatureType="ParameterSet"
-                        v-slot="{ feature }"
-                    >
-                        <VariableContainerFeature
-                            :feature="feature"
-                        ></VariableContainerFeature>
-                    </ExpectedFeature>
+                    <section class="flex flex-row justify-around gap-8">
+                        <div
+                            class="flex flex-col justify-start items-stretch gap-8"
+                        >
+                            <ExpectedFeature
+                                :expected-feature="
+                                    expectedFeatures.get('Monitoring')
+                                "
+                                expectedFeatureType="Monitoring"
+                                v-slot="{ resolvedFeature }"
+                            >
+                                <VariableContainerFeature
+                                    :feature="resolvedFeature"
+                                ></VariableContainerFeature>
+                            </ExpectedFeature>
 
-                    <ExpectedFeature
-                        :expected-feature="
-                            expectedFeatures.get('FinalResultData')
-                        "
-                        expectedFeatureType="FinalResultData"
-                        v-slot="{ feature }"
-                    >
-                        <VariableContainerFeature
-                            :feature="feature"
-                        ></VariableContainerFeature>
-                    </ExpectedFeature>
-                </div>
+                            <ExpectedFeature
+                                :expected-feature="
+                                    expectedFeatures.get('ParameterSet')
+                                "
+                                expectedFeatureType="ParameterSet"
+                                v-slot="{ resolvedFeature }"
+                            >
+                                <VariableContainerFeature
+                                    :feature="resolvedFeature"
+                                ></VariableContainerFeature>
+                            </ExpectedFeature>
 
-                <!-- Always add some spacing for that funky on-screen-display on the touchscreens -->
-                <div class="on-screen-placeholder" style="height: 25vh"></div>
+                            <ExpectedFeature
+                                :expected-feature="
+                                    expectedFeatures.get('FinalResultData')
+                                "
+                                expectedFeatureType="FinalResultData"
+                                v-slot="{ resolvedFeature }"
+                            >
+                                <VariableContainerFeature
+                                    :feature="resolvedFeature"
+                                ></VariableContainerFeature>
+                            </ExpectedFeature>
+                        </div>
+
+                        <div
+                            class="flex flex-col justify-start items-start gap-4"
+                        >
+                            <ExpectedFeature
+                                :expected-feature="
+                                    expectedFeatures.get('Dependency')
+                                "
+                                expectedFeatureType="Dependency"
+                                v-slot="{ resolvedFeature }"
+                            >
+                                <DependencyFeature
+                                    :feature="resolvedFeature"
+                                ></DependencyFeature>
+                            </ExpectedFeature>
+                        </div>
+                    </section>
+
+                    <!-- Always add some spacing for that funky on-screen-display on the touchscreens -->
+                    <div
+                        class="on-screen-placeholder"
+                        style="height: 25vh"
+                    ></div>
+
+                    <!-- Inlay panel: sits directly to the right of the sidebar, one panel at a time -->
+                    <section
+                        v-if="activePanel"
+                        class="fixed bottom-0 left-64 w-[calc(100%-16rem)] bg-rose-200 border-t-2 border-rose-900 shadow-lg text-xs"
+                    >
+                        <div
+                            v-if="activePanel === 'identification-attributes'"
+                            class="grid grid-cols-2 items-start gap-4 p-4"
+                        >
+                            <div class="min-w-0">
+                                <ExpectedFeature
+                                    :expected-feature="
+                                        expectedFeatures.get('Identification')
+                                    "
+                                    expectedFeatureType="Identification"
+                                    v-slot="{ resolvedFeature }"
+                                >
+                                    <VariableContainerFeature
+                                        :feature="resolvedFeature"
+                                    ></VariableContainerFeature>
+                                </ExpectedFeature>
+                            </div>
+
+                            <div class="min-w-0">
+                                <ExpectedFeature
+                                    :expected-feature="
+                                        expectedFeatures.get('Attributes')
+                                    "
+                                    expectedFeatureType="Attributes"
+                                    v-slot="{ resolvedFeature }"
+                                >
+                                    <VariableContainerFeature
+                                        :feature="resolvedFeature"
+                                    ></VariableContainerFeature>
+                                </ExpectedFeature>
+                            </div>
+                        </div>
+
+                        <!-- Always add some spacing for that funky on-screen-display on the touchscreens -->
+                        <div
+                            class="on-screen-placeholder"
+                            style="height: 25vh"
+                        ></div>
+                    </section>
+                </section>
             </section>
         </main>
     </NullablePage>

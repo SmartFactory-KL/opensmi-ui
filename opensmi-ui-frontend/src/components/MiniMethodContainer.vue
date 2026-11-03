@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { FeatureNode } from "@/types/NodeFeatureTypes";
+import MiniMethodLine from "./MiniMethodLine.vue";
 
 const props = defineProps<{
     feature: FeatureNode;
@@ -9,7 +10,10 @@ const props = defineProps<{
 <template>
     <div>
         <div class="flex flex-col flex-wrap justify-start items-start">
-            <div v-for="feature in feature.features"></div>
+            <MiniMethodLine
+                v-for="methodFeature in feature.features"
+                :feature="methodFeature"
+            ></MiniMethodLine>
         </div>
     </div>
 </template>
