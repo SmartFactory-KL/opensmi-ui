@@ -54,7 +54,7 @@ class DependencyFeatureNode(FeatureNode):
                 IncludeSubtypes=True,
                 NodeClassMask=ua.NodeClass.Unspecified,
                 NodeId=self.opc_node.node_id,
-                ReferenceTypeId=ua.NodeId(ua.Int32(ua.object_ids.ObjectIds.References)),
+                ReferenceTypeId=ua.NodeId(ua.Int32(ua.object_ids.ObjectIds.Requires)),
                 ResultMask=ua.BrowseResultMask.All,
             )
         )

@@ -3,6 +3,7 @@ import type { FeatureNode } from "@/types/NodeFeatureTypes";
 import { LayoutGridIcon, ListIcon } from "@lucide/vue";
 import { computed, ref } from "vue";
 import VariableFeature from "./VariableFeature.vue";
+import ExpectedFeature from "@/components/ExpectedFeature.vue";
 
 defineProps<{
     feature: FeatureNode;
@@ -116,12 +117,14 @@ const gridStyle = computed(() => {
                 >-empty-</span
             >
 
-            <VariableFeature
+            <ExpectedFeature
                 v-for="variableFeature in feature.features"
                 :key="variableFeature.entityId"
-                :feature="variableFeature"
+                :expectedFeature="variableFeature"
+                v-slot="{ resolvedFeature }"
             >
-            </VariableFeature>
+                <VariableFeature :feature="resolvedFeature"> </VariableFeature>
+            </ExpectedFeature>
         </div>
     </div>
 </template>

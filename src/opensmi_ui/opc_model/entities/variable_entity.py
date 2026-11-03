@@ -108,6 +108,12 @@ class VariableEntity(FeatureNodeEntity):
                     f"failed to create NodeIdEnumModifier for {opc_node.node_id}"
                 )
 
+        val_variant = opc_node.attributes.get("Value", None)
+        if val_variant is None:
+            val_variant = ua.Variant(None)
+        elif not isinstance(val_variant, ua.Variant):
+            val_variant = ua.Variant(val_variant)
+
         content = VariableEntityData(
             name=opc_node.browse_name.Name,
             description=LocalizedTextData.from_ua(desc),
@@ -116,7 +122,7 @@ class VariableEntity(FeatureNodeEntity):
             last_updated_at=datetime.now().astimezone(),
             modifiers=modifiers,
             rank=0,
-            value=None,
+            value=VariantData.from_ua(val_variant),
         )
 
         self.content = content

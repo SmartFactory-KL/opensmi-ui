@@ -136,15 +136,9 @@ class VariableFeatureNode(FeatureNode):
         if first_result.StatusCode is None or first_result.StatusCode.is_bad():
             return
 
-        val_attr = self.opc_node.attributes.get("Value", None)
+        variant = normalize_to_variant(first_result)
 
-        if val_attr is None:
-            return
-
-        if first_result.Value is None:
-            return
-
-        self.opc_node.attributes["Value"] = first_result.Value.Value
+        self.opc_node.attributes["Value"] = variant
 
     def on_value_update(self, node: Node, evt: DataChangeEvent):
         if not isinstance(self.entity, VariableEntity):

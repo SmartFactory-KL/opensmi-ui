@@ -41,7 +41,6 @@ const isFeatureOk = computed(() => {
         </span>
         <span
             class="flex min-w-0 flex-col items-center justify-around gap-y-2 wrap-break-word py-2"
-            v-show="!isFeatureOk"
         >
             <div>Missing Feature</div>
             <div
