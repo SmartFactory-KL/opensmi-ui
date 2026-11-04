@@ -1,3 +1,4 @@
+from random import random
 from typing import Any
 from uuid import UUID
 
@@ -93,6 +94,11 @@ class VariableFeatureNode(FeatureNode):
     def _populate_step(
         self, last_result: FeatureInitResult | None
     ) -> FeatureInitRequest | None:
+        # Use this to demonstrate per-feature-errors
+        # rand = random()
+        # if rand < 0.9:
+        #     raise ValueError("You have been chosen to die")
+
         match self._init_step:
             case 0:
                 return self._read_attributes_and_properties(last_result)
