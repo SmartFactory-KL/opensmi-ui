@@ -16,6 +16,8 @@ export interface NotificationEvent {
   time: string;
   message: LocalizedTextData;
   severity: number;
+
+  errorCode?: string;
 }
 
 export const NOTIFICATION_MAX_COUNT = 999;
@@ -90,7 +92,7 @@ export const useNotificationStore = defineStore("notification", {
       this.notificationContent[level].push(notification);
 
       if (level == "error") {
-        Toaster.error(notification.message.text);
+        Toaster.error(notification.message.text, notification.errorCode ?? null);
       }
 
       if (this.animate[level] === null) {

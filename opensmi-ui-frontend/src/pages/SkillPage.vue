@@ -156,6 +156,7 @@ function togglePanel(panel: PanelKey) {
                             >
                                 <SkillFeature
                                     :feature="resolvedFeature"
+                                    :name="skillGroupLabel"
                                 ></SkillFeature>
                             </ExpectedFeature>
                         </div>

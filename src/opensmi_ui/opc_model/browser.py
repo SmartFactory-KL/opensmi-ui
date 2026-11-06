@@ -4,6 +4,7 @@ from enum import StrEnum
 from time import perf_counter
 
 from asyncua import ua
+from asyncua.ua.uaerrors import BadNodeIdUnknown
 from asyncua.ua.uaprotocol_auto import ReferenceDescription
 
 from opensmi_ui.logger import get_module_logger
@@ -22,6 +23,7 @@ from opensmi_ui.opc_model.feature_proxy import (
     create_features_for_node,
 )
 from opensmi_ui.opc_model.opc_node import OPCNode
+from opensmi_ui.opc_session.namespace import OPCNamespace, UriNodeId
 from opensmi_ui.opc_session.session import OPCSession, OPCSessionNotReadyError
 
 logger = get_module_logger("opc_model.browse")
@@ -83,20 +85,57 @@ class OPCBrowser:
                 f"failed to browse: opc session not ready, state {self.opc_session.opc_client.state}"
             )
 
+        session_ns = self.opc_session.namespace
+
         # TODO: This could emit notifications like "browse_start" and milestones
         logger.info("Browsing nodes..")
 
-        # read machines node
-        machines_node_id = ua.NodeId(
-            Identifier=MACHINE_IDENTIFIER,
-            NamespaceIndex=self.opc_session.namespace_idx(
-                "http://opcfoundation.org/UA/Machinery/"
-            ),
+        machines_to_read: list[ua.NodeId] = []
+
+        # try to read machines node
+        machines_node_id = session_ns.to_node_id(
+            uri_node_id=UriNodeId(
+                Identifier=MACHINE_IDENTIFIER,
+                NamespaceUri="http://opcfoundation.org/UA/Machinery/",
+            )
         )
 
-        # add all children as "root components" to be browsed
+        try:
+            machines_node = self.opc_session.opc_client.get_node(machines_node_id)
+            await machines_node.read_node_class()
+            machines_to_read.append(machines_node_id)
+        except BadNodeIdUnknown:
+            logger.warning("Failed to use Machinery Node")
+
+        if len(machines_to_read) == 0:
+            logger.warning("Trying toread Objects/Machines")
+            objects_node = self.opc_session.opc_client.get_objects_node()
+            references = await objects_node.get_children_descriptions()
+
+            object_machines_node_id: ua.NodeId | None = None
+            for ref in references:
+                if ref.BrowseName is not None and ref.BrowseName == "Machines":
+                    object_machines_node_id = ref.NodeId
+                    break
+
+            if object_machines_node_id is not None:
+                object_machines_node = self.opc_session.opc_client.get_node(
+                    object_machines_node_id
+                )
+                object_machine_references = (
+                    await object_machines_node.get_children_descriptions()
+                )
+
+                for ref in object_machine_references:
+                    if ref is not None:
+                        machines_to_read.append(ref.NodeId)
+
+        # add all "root components"
         current_level = deque[NodeReadItem](
-            [NodeReadItem(node_id=machines_node_id, parent_node=None)]
+            [
+                NodeReadItem(node_id=item_node_id, parent_node=None)
+                for item_node_id in machines_to_read
+            ]
         )
         next_level = deque[NodeReadItem]([])
 
@@ -306,7 +345,9 @@ class OPCBrowser:
 
             # convert to basic components tree
             tree_convert_start = perf_counter()
-            component_trees = get_component_trees(basic_nodes)
+            component_trees = get_component_trees(
+                nodes=basic_nodes, opc_namespace=self.opc_session.namespace
+            )
             tree_convert_duration = perf_counter() - tree_convert_start
             logger.info("Tree Conversion took %.6f seconds", tree_convert_duration)
 
@@ -314,7 +355,10 @@ class OPCBrowser:
 
             # create features for nodes
             feature_create_start = perf_counter()
-            create_features_on_trees(component_trees)
+            create_features_on_trees(
+                component_trees=component_trees,
+                opc_namespace=self.opc_session.namespace,
+            )
             feature_create_duration = perf_counter() - feature_create_start
             logger.info("Feature Creation took %.6f seconds", feature_create_duration)
 
@@ -410,7 +454,9 @@ class OPCBrowser:
             raise
 
 
-def get_component_trees(nodes: list[OPCNode]) -> list[ComponentNode]:
+def get_component_trees(
+    nodes: list[OPCNode], opc_namespace: OPCNamespace
+) -> list[ComponentNode]:
     """Take a list of OPCNodes and return a component tree with only the components"""
     trees: list[ComponentNode] = []
 
@@ -425,6 +471,7 @@ def get_component_trees(nodes: list[OPCNode]) -> list[ComponentNode]:
 
             component_node = ComponentNode(
                 opc_node=next_item.opc_node,
+                opc_namespace=opc_namespace,
                 parent_component_node=next_item.parent_component_node,
             )
 
@@ -452,7 +499,9 @@ def get_component_trees(nodes: list[OPCNode]) -> list[ComponentNode]:
     return trees
 
 
-def create_features_on_trees(component_trees: list[ComponentNode]):
+def create_features_on_trees(
+    component_trees: list[ComponentNode], opc_namespace: OPCNamespace
+):
     components_to_process = deque(component_trees)
     while components_to_process:
         next_component_node = components_to_process.popleft()
@@ -460,7 +509,9 @@ def create_features_on_trees(component_trees: list[ComponentNode]):
         for child_node in next_component_node.opc_node.children:
             try:
                 new_features = create_features_for_node(
-                    opc_node=child_node, parent_component_node=next_component_node
+                    opc_node=child_node,
+                    opc_namespace=opc_namespace,
+                    parent_component_node=next_component_node,
                 )
 
                 next_component_node.features.extend(new_features)

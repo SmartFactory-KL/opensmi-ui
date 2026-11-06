@@ -120,5 +120,8 @@ async function setValue() {
                 }}</span> -->
             </span>
         </div>
+        <div>
+            <VariableFeature v-for="child in feature.features" :feature="child"></VariableFeature>
+        </div>
     </div>
 </template>

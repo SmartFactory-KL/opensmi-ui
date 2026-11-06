@@ -6,10 +6,12 @@ from opensmi_ui.opc_model.features.user_container_feature import (
     UserContainerFeatureNode,
 )
 from opensmi_ui.opc_model.opc_node import OPCNode
+from opensmi_ui.opc_session.namespace import OPCNamespace
 
 
 def create_machinery_building_block_features(
     opc_node: OPCNode,
+    opc_namespace: OPCNamespace,
     parent_component_node: ComponentNode,
     parent_feature_node: FeatureNode | None = None,
 ) -> list[FeatureNode]:
@@ -21,6 +23,7 @@ def create_machinery_building_block_features(
                 feature_list.append(
                     MachineryItemStateFeatureNode(
                         opc_node=child,
+                        opc_namespace=opc_namespace,
                         parent_component_node=parent_component_node,
                         parent_feature_node=parent_feature_node,
                     )
@@ -31,6 +34,7 @@ def create_machinery_building_block_features(
                 feature_list.append(
                     UserContainerFeatureNode(
                         opc_node=child,
+                        opc_namespace=opc_namespace,
                         parent_component_node=parent_component_node,
                         parent_feature_node=parent_feature_node,
                     )

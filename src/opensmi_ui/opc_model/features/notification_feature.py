@@ -12,14 +12,24 @@ from opensmi_ui.opc_model.feature_node import (
     FeatureSubscribeRequest,
 )
 from opensmi_ui.opc_model.opc_node import OPCNode
+from opensmi_ui.opc_session.namespace import OPCNamespace
 from opensmi_ui.opc_subscriber.notification import read_notification
 
 logger = get_module_logger("opc_model.features.notification")
 
 
 class NotificationFeatureNode(FeatureNode):
-    def __init__(self, opc_node: OPCNode, parent_component_node: ComponentNode):
-        super().__init__(opc_node=opc_node, parent_component_node=parent_component_node)
+    def __init__(
+        self,
+        opc_node: OPCNode,
+        opc_namespace: OPCNamespace,
+        parent_component_node: ComponentNode,
+    ):
+        super().__init__(
+            opc_node=opc_node,
+            opc_namespace=opc_namespace,
+            parent_component_node=parent_component_node,
+        )
         self.entity_type = "Notification"
 
     def _populate_step(
@@ -54,7 +64,9 @@ class NotificationFeatureNode(FeatureNode):
             return
 
         try:
-            notification = read_notification(evt)
+            notification = read_notification(
+                event=evt, opc_namespace=self.opc_namespace
+            )
             if notification is None:
                 return
 

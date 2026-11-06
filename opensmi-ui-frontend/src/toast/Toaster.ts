@@ -10,6 +10,7 @@ export interface ToastMessage {
   id: number;
   toastClass: ToastClass;
   msg: string;
+  errorCode?: string;
   settings: ToastSettings;
 }
 
@@ -23,6 +24,7 @@ class Toaster {
   addMessage(
     toastClass: ToastClass,
     msg: string,
+    errorCode: string | null = null,
     settings: ToastSettings = {
       delayMS: 750,
     },
@@ -31,29 +33,29 @@ class Toaster {
       return;
     }
 
-    this.store.addToast(toastClass, msg, settings);
+    this.store.addToast(toastClass, msg, errorCode, settings);
   }
 
   info(msg: string) {
-    this.addMessage("info", msg, {
+    this.addMessage("info", msg, null, {
       delayMS: 2500,
     });
   }
 
   success(msg: string) {
-    this.addMessage("success", msg, {
+    this.addMessage("success", msg, null, {
       delayMS: 2500,
     });
   }
 
   warning(msg: string) {
-    this.addMessage("warning", msg, {
+    this.addMessage("warning", msg, null, {
       delayMS: 5000,
     });
   }
 
-  error(msg: string) {
-    this.addMessage("error", msg, {
+  error(msg: string, errorCode: string | null = null) {
+    this.addMessage("error", msg, errorCode, {
       delayMS: 5000,
     });
   }

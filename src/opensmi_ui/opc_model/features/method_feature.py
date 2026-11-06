@@ -15,6 +15,7 @@ from opensmi_ui.opc_model.features.variable_container_feature import (
     VariableContainerFeatureNode,
 )
 from opensmi_ui.opc_model.opc_node import OPCNode
+from opensmi_ui.opc_session.namespace import OPCNamespace
 
 logger = get_module_logger("opc_model.features.method")
 
@@ -26,10 +27,16 @@ class MethodFeatureNode(FeatureNode):
     def __init__(
         self,
         opc_node: OPCNode,
+        opc_namespace: OPCNamespace,
         parent_component_node: ComponentNode,
         parent_feature_node: FeatureNode | None = None,
     ):
-        super().__init__(opc_node, parent_component_node, parent_feature_node)
+        super().__init__(
+            opc_node=opc_node,
+            opc_namespace=opc_namespace,
+            parent_component_node=parent_component_node,
+            parent_feature_node=parent_feature_node,
+        )
         self._init_step = 0
         self.entity_type = "Method"
 
@@ -40,6 +47,7 @@ class MethodFeatureNode(FeatureNode):
                     self.features.append(
                         VariableContainerFeatureNode(
                             opc_node=child,
+                            opc_namespace=opc_namespace,
                             parent_component_node=parent_component_node,
                             parent_feature_node=self,
                         )
@@ -48,6 +56,7 @@ class MethodFeatureNode(FeatureNode):
                     self.features.append(
                         VariableContainerFeatureNode(
                             opc_node=child,
+                            opc_namespace=opc_namespace,
                             parent_component_node=parent_component_node,
                             parent_feature_node=self,
                         )
@@ -56,6 +65,7 @@ class MethodFeatureNode(FeatureNode):
                     self.features.append(
                         VariableContainerFeatureNode(
                             opc_node=child,
+                            opc_namespace=opc_namespace,
                             parent_component_node=parent_component_node,
                             parent_feature_node=self,
                         )
@@ -64,6 +74,7 @@ class MethodFeatureNode(FeatureNode):
                     self.features.append(
                         DependencyFeatureNode(
                             opc_node=child,
+                            opc_namespace=opc_namespace,
                             parent_component_node=parent_component_node,
                             parent_feature_node=self,
                         )

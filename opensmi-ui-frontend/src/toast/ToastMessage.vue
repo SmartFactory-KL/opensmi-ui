@@ -141,6 +141,10 @@ onBeforeUnmount(stopTimer);
                 >
                     {{ toast.msg }}
                 </p>
+
+                <div v-if="toast.errorCode">
+                    <span class="text-slate-600 bg-red-50 px-2 py-1 font-mono rounded-full">{{ toast.errorCode }}</span>
+                </div>
             </div>
 
             <button

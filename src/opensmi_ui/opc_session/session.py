@@ -10,18 +10,28 @@ from asyncua.common.subscription import (
     OpcEvent,
     StatusChangeEvent,
 )
-from asyncua.ua import Int16
 from asyncua.ua.uaerrors import BadNodeIdUnknown
 
 from opensmi_ui.logger import get_module_logger
 from opensmi_ui.model.json import JsonBaseModel, JsonOutModel
+from opensmi_ui.opc_session.namespace import OPCNamespace
 from opensmi_ui.opc_session.task import StoppableTask
 
 logger = get_module_logger("opc_session")
 
+__all__ = [
+    "OPCSession",
+    "OPCSessionAlreadyConnectedError",
+    "OPCSessionConnectRequest",
+    "OPCSessionData",
+    "OPCSessionNotReadyError",
+    "OPCSessionSettings",
+]
+
 ConnectionStateChangedHandler = Callable[[UaClientState], None]
 ConnectionSessionChangedHandler = Callable[["OPCSessionData"], None]
 TimeChangedHandler = Callable[[datetime], None]
+SessionIsReadyChangedHandler = Callable[[bool], None]
 
 
 class OPCSessionNotReadyError(Exception):
@@ -47,7 +57,6 @@ class OPCSessionSettings(JsonBaseModel):
 
     reconnect_request_timeout: float = 60.0
 
-    time_subscription_enabled: bool = True
     time_subscription_sampling_interval_ms: float = 500.0
 
 
@@ -68,21 +77,26 @@ class OPCSession:
     def __init__(
         self,
         settings: OPCSessionSettings | None = None,
-    ):
-        """Create a new OPC Session while sending session updates to the msg_receiver. settings are optional and will be
-        set to default values if not present. This only creates the session, it does not connect. To do that, call the connect() method."""
+    ) -> None:
+        """Create a new OPC Session. Settings are optional and fall back to
+        default values. This only creates the session, it does not connect.
+        To do that, call the connect() method."""
         if settings is None:
             settings = OPCSessionSettings()
 
-        self._session_data = OPCSessionData(
+        self._session_data: OPCSessionData = OPCSessionData(
             settings=settings,
             application_uri=f"urn:smartfactory-kl:opensmi_ui:{uuid4()}",
             product_uri="urn:smartfactory-kl:opensmi_ui:session",
         )
 
-        self.opc_client: Client = Client(
-            url=""
-        )  # this is only a dummy client to prevent None
+        # only a dummy client to prevent None
+        self.opc_client: Client = Client(url="")
+
+        self._is_ready: bool = False
+        """This captures the dangling state in between being connected but not yet ready.
+        Namespaces for example should only be read after _is_ready is True"""
+
         self._connection_monitor_task: StoppableTask = StoppableTask(
             worker=self._connection_monitor_worker
         )
@@ -90,10 +104,7 @@ class OPCSession:
             worker=self._time_change_worker
         )
 
-        self._namespaces: list[str] = []
-        self._ns_idx_uri: dict[int, str] = {}
-        self._ns_uri_idx: dict[str, ua.Int16] = {}
-
+        self._namespace: OPCNamespace = OPCNamespace()
         self._type_defs: dict[str, type] = {}
 
         self._connection_state_changed_handler: set[ConnectionStateChangedHandler] = (
@@ -103,6 +114,14 @@ class OPCSession:
             ConnectionSessionChangedHandler
         ] = set()
         self._time_changed_handler: set[TimeChangedHandler] = set()
+        self._is_ready_changed_handler: set[SessionIsReadyChangedHandler] = set()
+
+    @property
+    def namespace(self):
+        if not self._namespace.is_ready():
+            raise OPCSessionNotReadyError("Namespace is not ready to use")
+
+        return self._namespace
 
     async def start(self) -> None:
         await self._connection_monitor_task.start()
@@ -121,6 +140,9 @@ class OPCSession:
             raise OPCSessionAlreadyConnectedError(
                 f"Cannot connect: Client exists and not in state Disconnected (actual state is {self.opc_client.state})"
             )
+
+        self._is_ready = False
+        self._namespace.reset()
 
         settings = self._session_data.settings
 
@@ -141,9 +163,6 @@ class OPCSession:
         try:
             self._session_data.username = username
             self._session_data.url = url
-
-            self._ns_idx_uri.clear()
-            self._ns_uri_idx.clear()
 
             await self.opc_client.connect(
                 auto_reconnect=settings.auto_reconnect,
@@ -179,22 +198,19 @@ class OPCSession:
             except Exception as e:  # noqa: BLE001 # only used for informational purposes anyway
                 logger.warning(f"Failed to read reference types: {e}")
 
-            # create the time subscription if enabled
-            if self._session_data.settings.time_subscription_enabled:
-                await self._time_change_task.start()
+            # create the time subscription
+            await self._time_change_task.start()
 
-            self._namespaces = await self.opc_client.get_namespace_array()
-
-            for idx, _ns in enumerate(self._namespaces):
-                self._ns_idx_uri[idx] = _ns
-                self._ns_uri_idx[_ns] = ua.Int16(idx)
+            namespaces = await self.opc_client.get_namespace_array()
+            self._namespace.update_namespaces(namespaces=namespaces)
+            self._session_data.namespaces = namespaces
 
             self._type_defs = await self.opc_client.load_data_type_definitions()
 
-            self._session_data.namespaces = self._namespaces
-
+            self._is_ready = True
         except:
             logger.exception("Failed to connect")
+            await self._time_change_task.stop()
             raise
 
     async def disconnect(self) -> None:
@@ -202,7 +218,10 @@ class OPCSession:
             return
 
         try:
+            self._is_ready = False
+            await self._time_change_task.stop()
             await self.opc_client.disconnect()
+            self._namespace.reset()
             self._clear_session_data()
         except ConnectionError:
             logger.warning("Disconnect was called but got ConnectionError")
@@ -303,17 +322,11 @@ class OPCSession:
     def off_time_changed(self, handler: TimeChangedHandler):
         self._time_changed_handler.discard(handler)
 
-    def namespace_idx(self, uri: str) -> Int16:
-        try:
-            return self._ns_uri_idx[uri]
-        except KeyError:
-            raise ValueError(f"Unknown namespace URI: {uri!r}") from None
+    def on_is_ready_changed(self, handler: SessionIsReadyChangedHandler):
+        self._is_ready_changed_handler.add(handler)
 
-    def namespace_uri(self, idx: int) -> str:
-        try:
-            return self._namespaces[idx]
-        except ValueError:
-            raise ValueError(f"Unknown namespace index: {idx}") from None
+    def off_is_ready_changed(self, handler: SessionIsReadyChangedHandler):
+        self._is_ready_changed_handler.discard(handler)
 
     def get_session_data(self) -> OPCSessionData:
         return self._session_data

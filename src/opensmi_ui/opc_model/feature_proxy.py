@@ -18,6 +18,7 @@ from opensmi_ui.opc_model.features.variable_container_feature import (
     VariableContainerFeatureNode,
 )
 from opensmi_ui.opc_model.opc_node import OPCNode
+from opensmi_ui.opc_session.namespace import OPCNamespace
 
 logger = get_module_logger("opc_model.feature")
 
@@ -31,7 +32,7 @@ class FeatureNotKnownError(ValueError):
 
 
 def create_features_for_node(
-    opc_node: OPCNode, parent_component_node: ComponentNode
+    opc_node: OPCNode, opc_namespace: OPCNamespace, parent_component_node: ComponentNode
 ) -> list[FeatureNode]:
     node_name = opc_node.browse_name.Name
 
@@ -47,42 +48,56 @@ def create_features_for_node(
         ):
             feature_list = [
                 VariableContainerFeatureNode(
-                    opc_node=opc_node, parent_component_node=parent_component_node
+                    opc_node=opc_node,
+                    opc_namespace=opc_namespace,
+                    parent_component_node=parent_component_node,
                 )
             ]
         case "Notification":
             feature_list = [
                 NotificationFeatureNode(
-                    opc_node=opc_node, parent_component_node=parent_component_node
+                    opc_node=opc_node,
+                    opc_namespace=opc_namespace,
+                    parent_component_node=parent_component_node,
                 )
             ]
         case "Lock":
             feature_list = [
                 LockFeatureNode(
-                    opc_node=opc_node, parent_component_node=parent_component_node
+                    opc_node=opc_node,
+                    opc_namespace=opc_namespace,
+                    parent_component_node=parent_component_node,
                 )
             ]
         case "Resources":
             feature_list = [
                 ResourceContainerFeatureNode(
-                    opc_node=opc_node, parent_component_node=parent_component_node
+                    opc_node=opc_node,
+                    opc_namespace=opc_namespace,
+                    parent_component_node=parent_component_node,
                 )
             ]
         case "MachineryBuildingBlocks":
             feature_list = create_machinery_building_block_features(
-                opc_node=opc_node, parent_component_node=parent_component_node
+                opc_node=opc_node,
+                opc_namespace=opc_namespace,
+                parent_component_node=parent_component_node,
             )
 
         case "MethodSet":
             feature_list = [
                 MethodContainerFeatureNode(
-                    opc_node=opc_node, parent_component_node=parent_component_node
+                    opc_node=opc_node,
+                    opc_namespace=opc_namespace,
+                    parent_component_node=parent_component_node,
                 )
             ]
         case "SkillSet":
             feature_list = [
                 SkillGroupContainerFeatureNode(
-                    opc_node=opc_node, parent_component_node=parent_component_node
+                    opc_node=opc_node,
+                    opc_namespace=opc_namespace,
+                    parent_component_node=parent_component_node,
                 )
             ]
 

@@ -19,6 +19,7 @@ from opensmi_ui.messages.receiver import MessageReceiver
 from opensmi_ui.metrics.metrics import Metrics
 from opensmi_ui.opc_model.browser import OPCBrowser
 from opensmi_ui.opc_model.opc_model import OPCModel
+from opensmi_ui.opc_session.namespace import OPCNamespace
 from opensmi_ui.opc_session.session import OPCSession, OPCSessionSettings
 from opensmi_ui.opc_subscriber.subscriber import OPCSubscriber
 from opensmi_ui.pin_guard.pin_guard import PinGuard, PinGuardConfig
@@ -91,7 +92,9 @@ class Composer:
             # session
             opc_session = OPCSession(settings=OPCSessionSettings())
 
-            opc_session.on_connection_session_changed(msg_receiver.receive_server_session)
+            opc_session.on_connection_session_changed(
+                msg_receiver.receive_server_session
+            )
             opc_session.on_time_changed(msg_receiver.receive_server_time)
 
             self.startables.append(opc_session)

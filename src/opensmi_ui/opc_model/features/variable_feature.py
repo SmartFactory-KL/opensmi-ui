@@ -1,4 +1,3 @@
-from random import random
 from typing import Any
 from uuid import UUID
 
@@ -27,6 +26,7 @@ from opensmi_ui.opc_model.value_read import (
     VariantNormalizationFailedError,
     normalize_to_variant,
 )
+from opensmi_ui.opc_session.namespace import OPCNamespace
 
 logger = get_module_logger("opc_model.features.variable")
 
@@ -82,12 +82,33 @@ class VariableFeatureNode(FeatureNode):
     def __init__(
         self,
         opc_node: OPCNode,
+        opc_namespace: OPCNamespace,
         parent_component_node: ComponentNode,
         parent_feature_node: FeatureNode | None = None,
     ):
-        super().__init__(opc_node, parent_component_node, parent_feature_node)
+        super().__init__(
+            opc_node=opc_node,
+            opc_namespace=opc_namespace,
+            parent_component_node=parent_component_node,
+            parent_feature_node=parent_feature_node,
+        )
         self._init_step = 0
         self.entity_type = "Variable"
+
+        for child in self.opc_node.children:
+            ref = child.reference_type
+            if (
+                ref is not None
+                and ref.Identifier == ua.object_ids.ObjectIds.HasComponent
+            ):
+                self.features.append(
+                    VariableFeatureNode(
+                        opc_node=child,
+                        opc_namespace=opc_namespace,
+                        parent_component_node=parent_component_node,
+                        parent_feature_node=self,
+                    )
+                )
 
         self.properties_to_read = []
 
@@ -110,14 +131,16 @@ class VariableFeatureNode(FeatureNode):
     def _request_subscription(self) -> FeatureSubscribeRequest | None:
         req = FeatureSubscribeRequest(subscriptions=[])
 
-        req.subscriptions.append(
-            FeatureSubscribeDataRequest(
-                attr=ua.attribute_ids.AttributeIds.Value,
-                feature=self,
-                handler=self.on_value_update,
-                node_id=self.opc_node.node_id,
+        value_attr = self.opc_node.attributes.get("Value", None)
+        if value_attr is not None:
+            req.subscriptions.append(
+                FeatureSubscribeDataRequest(
+                    attr=ua.attribute_ids.AttributeIds.Value,
+                    feature=self,
+                    handler=self.on_value_update,
+                    node_id=self.opc_node.node_id,
+                )
             )
-        )
 
         return req
 

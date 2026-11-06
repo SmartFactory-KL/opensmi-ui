@@ -55,6 +55,11 @@ onMounted(() => {
         <div v-for="notification in notifications" class="mb-1">
             {{ notification.time }} [{{ notification.sourceNode.identifier }}]:
             {{ notification.message.text }}
+            <span
+                v-if="notification.errorCode"
+                class="bg-red-50 text-slate-500 px-2 py-0.5 text-xs rounded-full"
+                >{{ notification.errorCode }}</span
+            >
         </div>
 
         <div v-show="!notifications.length" class="text-gray-400 font-mono">
@@ -71,7 +76,6 @@ onMounted(() => {
         >
             <i class="fa fa-arrow-down"></i> Show latest
         </button>
-
 
         <!-- Always add some spacing for that funky on-screen-display on the touchscreens -->
         <div class="on-screen-placeholder" style="height: 25vh"></div>

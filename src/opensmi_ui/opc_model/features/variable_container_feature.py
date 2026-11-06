@@ -16,6 +16,7 @@ from opensmi_ui.opc_model.feature_node import (
 )
 from opensmi_ui.opc_model.features.variable_feature import VariableFeatureNode
 from opensmi_ui.opc_model.opc_node import OPCNode
+from opensmi_ui.opc_session.namespace import OPCNamespace
 
 logger = get_module_logger("opc_model.features.variable_container")
 
@@ -30,10 +31,16 @@ class VariableContainerFeatureNode(FeatureNode):
     def __init__(
         self,
         opc_node: OPCNode,
+        opc_namespace: OPCNamespace,
         parent_component_node: ComponentNode,
         parent_feature_node: FeatureNode | None = None,
     ):
-        super().__init__(opc_node, parent_component_node, parent_feature_node)
+        super().__init__(
+            opc_node=opc_node,
+            opc_namespace=opc_namespace,
+            parent_component_node=parent_component_node,
+            parent_feature_node=parent_feature_node,
+        )
         self.entity_type = "VariableContainer"
 
         # handle all variables
@@ -61,6 +68,7 @@ class VariableContainerFeatureNode(FeatureNode):
 
             variable_feature = VariableFeatureNode(
                 opc_node=next_item.opc_node,
+                opc_namespace=opc_namespace,
                 parent_component_node=parent_component_node,
                 parent_feature_node=next_item.parent_feature,
             )

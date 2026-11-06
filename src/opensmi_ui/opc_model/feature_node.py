@@ -18,6 +18,7 @@ from opensmi_ui.model.json import JsonOutModel
 from opensmi_ui.opc_model.entities.component_entity import ComponentEntity
 from opensmi_ui.opc_model.entities.entity import FeatureNodeEntity
 from opensmi_ui.opc_model.opc_node import OPCNode, OPCNodeData
+from opensmi_ui.opc_session.namespace import OPCNamespace
 
 
 @dataclass
@@ -114,6 +115,7 @@ class ComponentNodeData(EntityNodeData):
 
 class FeatureNode:
     opc_node: OPCNode
+    opc_namespace: OPCNamespace
 
     parent_component_node: "ComponentNode"
     parent_feature_node: Union["FeatureNode", None]
@@ -132,10 +134,13 @@ class FeatureNode:
     def __init__(
         self,
         opc_node: OPCNode,
+        opc_namespace: OPCNamespace,
         parent_component_node: "ComponentNode",
         parent_feature_node: Union["FeatureNode", None] = None,
     ):
         self.opc_node = opc_node
+        self.opc_namespace = opc_namespace
+
         self.entity = None
         self.entity_id = uuid.uuid4()
         self.entity_type = None
@@ -198,7 +203,9 @@ class FeatureNode:
     def handle_subscription_failure(self, status: ua.StatusCode) -> None:
         """This method will be called when the creation of the subscription failed"""
         self.init_state = FeatureInitState.ERROR
-        self.init_error = f"Failed to initialize subscriptions. StatusCode: {status.name}"
+        self.init_error = (
+            f"Failed to initialize subscriptions. StatusCode: {status.name}"
+        )
 
     ## VALUE READ
     @abstractmethod
@@ -264,6 +271,7 @@ class FeatureNode:
 
 class ComponentNode:
     opc_node: OPCNode
+    opc_namespace: OPCNamespace
 
     entity: ComponentEntity | None
     entity_id: uuid.UUID
@@ -281,9 +289,11 @@ class ComponentNode:
     def __init__(
         self,
         opc_node: OPCNode,
+        opc_namespace: OPCNamespace,
         parent_component_node: Union["ComponentNode", None] = None,
     ):
         self.opc_node = opc_node
+        self.opc_namespace = opc_namespace
         self.entity = None
         self.entity_id = uuid.uuid4()
         self.entity_type = "Component"

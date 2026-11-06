@@ -6,7 +6,7 @@ from time import perf_counter
 
 from asyncua import ua
 from asyncua.client.ua_client import UaClientState
-from asyncua.common.events import Event
+from asyncua.common.events import Event, get_filter_from_event_type
 from asyncua.common.node import Node
 from asyncua.common.subscription import (
     DataChangeEvent,
@@ -19,7 +19,7 @@ from asyncua.ua.attribute_ids import AttributeIds
 from opensmi_ui.logger import get_module_logger
 from opensmi_ui.opc_session.session import OPCSession
 from opensmi_ui.opc_session.task import StoppableTask
-from opensmi_ui.opc_subscriber.notification import read_notification
+from opensmi_ui.opc_subscriber.notification import SFKL_ALERT_TYPE, read_notification
 
 logger = get_module_logger("opc_subscriber")
 
@@ -59,8 +59,8 @@ class OPCSubscriber:
 
     handler_task: StoppableTask
 
-    data_handlers: dict[ua.NodeId, Callable[[Node, DataChangeEvent], None]]
-    event_handlers: dict[ua.NodeId, Callable[[Event], None]]
+    data_handlers: dict[int, Callable[[Node, DataChangeEvent], None]]
+    event_handlers: dict[int, Callable[[Event], None]]
 
     def __init__(self, opc_session: OPCSession):
         self.opc_session = opc_session
@@ -119,7 +119,7 @@ class OPCSubscriber:
                 )
 
                 # check results and add handler it status code is ok
-                for req, result in zip(reqs, results):
+                for req, result in zip(reqs, results, strict=True):
                     if isinstance(result, ua.StatusCode):
                         logger.warning(
                             "Data subscription for %s (%s) failed: %s",
@@ -133,20 +133,35 @@ class OPCSubscriber:
                     else:
                         # only keep track of subscriptions that actually worked
                         handles.data_change_handles.append(result)
-                        self.data_handlers[req.node_id] = req.handler
+                        self.data_handlers[result] = req.handler
 
             # events do not seem to be batchable at this time without going to monitored items
+            evt_filter = await get_filter_from_event_type(
+                [
+                    self.opc_session.opc_client.get_node(
+                        ua.NodeId(ua.Int32(ua.object_ids.ObjectIds.BaseEventType))
+                    ),
+                    self.opc_session.opc_client.get_node(
+                        self.opc_session.namespace.to_node_id(SFKL_ALERT_TYPE)
+                    ),
+                ]
+            )
+
             for req in event_requests:
                 try:
                     evt_handle = await self.subscription.subscribe_events(
-                        sourcenode=self.opc_session.opc_client.get_node(req.node_id)
+                        sourcenode=self.opc_session.opc_client.get_node(req.node_id),
+                        evfilter=evt_filter,
                     )
                     logger.debug(f"Added Event Subscription with handler {evt_handle}")
                     handles.event_handles.append(evt_handle)
                 except Exception:
                     logger.exception("Event subscription for %s failed", req.node_id)
+                    req.on_fail(
+                        ua.StatusCode(value=ua.UInt32(ua.status_codes.StatusCodes.Bad))
+                    )
                 else:
-                    self.event_handlers[req.node_id] = req.handler
+                    self.event_handlers[evt_handle] = req.handler
 
             logger.info(
                 "Created subscriptions %d-%d of %d in %.6f seconds",
@@ -172,6 +187,11 @@ class OPCSubscriber:
                 all_handles[idx : idx + SUBSCRIPTION_REMOVE_CHUNK_SIZE]
             )
 
+        for h in handles.data_change_handles:
+            self.data_handlers.pop(h, None)
+        for h in handles.event_handles:
+            self.event_handlers.pop(h, None)
+
     # react to server states
     def receive_server_state(self, new_state: UaClientState) -> None:
         match new_state:
@@ -191,59 +211,79 @@ class OPCSubscriber:
 
         logger.info("Creating Subscription Worker")
 
-        async with await self.opc_session.opc_client.create_subscription(
-            period=DEFAULT_SUBSCRIPTION_PERIOD_MS, handler=None
-        ) as subscription:
-            self.subscription = subscription
+        try:
+            async with await self.opc_session.opc_client.create_subscription(
+                period=DEFAULT_SUBSCRIPTION_PERIOD_MS, handler=None
+            ) as subscription:
+                self.subscription = subscription
 
-            async for item in subscription:
-                match item:
-                    case DataChangeEvent(node=source_node):
-                        if source_node.nodeid in self.data_handlers:
-                            try:
-                                self.data_handlers[source_node.nodeid](
-                                    source_node, item
-                                )
-                            except Exception:
-                                logger.exception("failed to handle data change event")
-                    case OpcEvent(event=event_data):
-                        # TODO: As of now, only notifications are expected as events.
-                        # TODO: Check whether other events are also possible
-                        # TODO: Because right now I would need to deserialize it twice
-                        # TODO: once here to read SourceNode (emitting_node is always the server)
-                        # TODO: and once in the handler because that is set to receive an Event,
-                        # TODO: not a notification.
-                        try:
-                            notification = read_notification(event_data)
-                            if notification is None:
-                                continue
-
-                            source_node = notification.source_node.to_ua()
-
-                            if source_node in self.event_handlers:
+                async for item in subscription:
+                    match item:
+                        case DataChangeEvent(node=source_node):
+                            data_handle = item.data.subscription_data.server_handle
+                            if (
+                                data_handle is not None
+                                and data_handle in self.data_handlers
+                            ):
                                 try:
-                                    self.event_handlers[source_node](event_data)
+                                    self.data_handlers[data_handle](source_node, item)
+                                except Exception:
+                                    logger.exception(
+                                        "failed to handle data change event"
+                                    )
+                            else:
+                                logger.warning(
+                                    f"Received Data Change that was either None or not in data handlers: {data_handle}"
+                                )
+                                logger.warning(self.data_handlers)
+                        case OpcEvent(event=event_data):
+                            # TODO: As of now, only notifications are expected as events.
+                            # TODO: Check whether other events are also possible
+                            # TODO: Because right now I would need to deserialize it twice
+                            # TODO: once here to read SourceNode (emitting_node is always the server)
+                            # TODO: and once in the handler because that is set to receive an Event,
+                            # TODO: not a notification.
+                            try:
+                                evt_handle = item.event.server_handle
+                                if (
+                                    evt_handle is None
+                                    or evt_handle not in self.event_handlers
+                                ):
+                                    logger.warning(
+                                        f"Received Event handle that was either None or not in event handlers: {evt_handle}"
+                                    )
+                                    continue
+
+                                notification = read_notification(
+                                    self.opc_session.namespace, event_data
+                                )
+
+                                if notification is None:
+                                    continue
+
+                                try:
+                                    self.event_handlers[evt_handle](event_data)
                                 except Exception:
                                     logger.exception(
                                         "failed to handle opc event with dedicated handler"
                                     )
-                            else:
-                                logger.info("Received unhandled notification")
-                                logger.info(notification)
-                        except Exception:
-                            logger.exception(
-                                "Failed to convert OpcEvent to Notification"
+
+                            except Exception:
+                                logger.exception(
+                                    "Failed to convert OpcEvent to Notification"
+                                )
+                        case StatusChangeEvent(notification=notification):
+                            logger.warning(
+                                "Status of Subscription in Worker changed: %s",
+                                notification.Status,
                             )
-                    case StatusChangeEvent(notification=notification):
-                        logger.warning(
-                            "Status of Subscription in Worker changed: %s",
-                            notification.Status,
-                        )
 
-                        if notification.Status.is_bad():
-                            break
-                    case _:
-                        logger.info("Unexpected Event: %s", item)
-
-        self.subscription = None
-        logger.info("Stopping Subscription Worker")
+                            if notification.Status.is_bad():
+                                break
+                        case _:
+                            logger.info("Unexpected Event: %s", item)
+        finally:
+            self.subscription = None
+            self.data_handlers.clear()
+            self.event_handlers.clear()
+            logger.info("Stopping Subscription Worker")

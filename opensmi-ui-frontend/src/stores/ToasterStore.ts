@@ -16,6 +16,7 @@ export const useToasterStore = defineStore("toaster", {
     addToast(
       toastClass: ToastClass,
       msg: string,
+      errorCode: string | null,
       settings: ToastSettings,
     ) {
       this.nextId++
@@ -24,6 +25,7 @@ export const useToasterStore = defineStore("toaster", {
         id: this.nextId,
         toastClass,
         msg,
+        errorCode,
         settings,
       } as ToastMessage);
     },

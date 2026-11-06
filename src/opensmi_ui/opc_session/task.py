@@ -6,6 +6,8 @@ from opensmi_ui.logger import get_module_logger
 
 logger = get_module_logger("opc_session.stoppable_task")
 
+__all__ = ["StoppableTask"]
+
 
 class StoppableTask:
     def __init__(self, worker: Callable[[], Coroutine[Any, Any, None]]):
