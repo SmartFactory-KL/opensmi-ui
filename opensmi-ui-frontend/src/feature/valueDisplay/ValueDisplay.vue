@@ -17,6 +17,7 @@ import ValueDisplayArray from "./ValueDisplayArray.vue";
 
 const props = defineProps<{
     variableValue: VariantData | null;
+    variableDataType: string | null;
 }>();
 
 const displayComponent = computed(() => {
@@ -74,8 +75,14 @@ const displayComponent = computed(() => {
         v-else-if="variableValue.isArray"
         :type="variableValue.type"
         :value="variableValue.value"
+        :variable-data-type="variableDataType"
     />
     <!-- null scalars (e.g. an empty String) are shown as "null" -->
     <ValueDisplayNull v-else-if="variableValue.value === null" :value="null" />
-    <component v-else :is="displayComponent" :value="variableValue.value" />
+    <component
+        v-else
+        :is="displayComponent"
+        :value="variableValue.value"
+        :data-type="variableDataType"
+    />
 </template>

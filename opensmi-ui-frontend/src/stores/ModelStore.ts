@@ -1,4 +1,5 @@
 import { simplyGetToText, simplyGetToJSON } from "@/fetch/simplyFetch";
+import PlotBuffer from "@/plotting/PlotBuffer";
 import type SocketClient from "@/socket/SocketClient";
 import Toaster from "@/toast/Toaster";
 import type {
@@ -247,6 +248,8 @@ export const useModelStore = defineStore("model", {
             const typedUpdate = update.updateContent as VariableValueUpdate;
             const typedEntity = targetFeature.entity as VariableEntityData;
             typedEntity.value = typedUpdate.newValue;
+
+            // PlotBuffer.handleVariableUpdate(update)
           }
           break;
 

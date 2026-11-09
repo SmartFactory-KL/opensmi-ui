@@ -3,9 +3,31 @@ import { computed } from "vue";
 
 const props = defineProps<{
     value: string; // Base64
+    dataType?: string;
 }>();
 
 const PREVIEW_BYTES = 16;
+
+const IMAGE_B64_PREFIX: Record<string, string> = {
+    ImageJPG: "data:image/jpeg;base64, ",
+    ImagePNG: "data:image/png;base64, ",
+    ImageBMP: "data:image/bmp;base64, ",
+    ImageGIF: "data:image/gif;base64, ",
+};
+
+const isImageType = computed(() => {
+    if (props.dataType && props.dataType.length) {
+        switch (props.dataType) {
+            case "ImageJPG":
+            case "ImagePNG":
+            case "ImageBMP":
+            case "ImageGIF":
+                return true;
+        }
+    }
+
+    return false;
+});
 
 const bytes = computed<number[] | null>(() => {
     try {
@@ -33,7 +55,10 @@ const preview = computed(() => {
         (empty)
     </span>
     <span v-else class="inline-flex flex-wrap items-baseline gap-x-2">
-        <span class="font-mono text-xs break-all" :title="value">
+        <div v-if="isImageType">
+            <img :src="IMAGE_B64_PREFIX[dataType!] + value" />
+        </div>
+        <span v-show="!isImageType" class="font-mono text-xs break-all" :title="value">
             {{ preview }}
         </span>
         <span v-if="bytes" class="text-xs text-slate-400">

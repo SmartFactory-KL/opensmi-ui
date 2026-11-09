@@ -82,6 +82,7 @@ async function setValue() {
 
                 <ValueDisplay
                     :variableValue="entity.value"
+                    :variableDataType="entity.dataType"
                     :modifiers="entity.modifiers"
                     class="min-w-0"
                 ></ValueDisplay>
@@ -90,6 +91,7 @@ async function setValue() {
             <div v-else class="growbg-stone-200">
                 <ValueDisplay
                     :variableValue="entity.value"
+                    :variableDataType="entity.dataType"
                     :modifiers="entity.modifiers"
                     class="grow"
                 ></ValueDisplay>

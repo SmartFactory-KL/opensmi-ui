@@ -1,4 +1,5 @@
-from typing import Any
+from datetime import datetime
+from typing import Any, cast
 from uuid import UUID
 
 from asyncua import ua
@@ -67,6 +68,7 @@ class VariableValueWriteAction(JsonInModel):
 
 class VariableValueUpdate(JsonOutModel):
     entity_id: UUID
+    timestamp: datetime
     new_value: VariantData
 
 
@@ -174,6 +176,10 @@ class VariableFeatureNode(FeatureNode):
             return
 
         try:
+            timestamp = datetime.now().astimezone()
+            if isinstance(evt.data.monitored_item.Value, ua.DataValue):
+                timestamp = cast(datetime, evt.data.monitored_item.Value.SourceTimestamp)
+
             value = normalize_to_variant(evt.data.monitored_item.Value)
 
             if not isinstance(value, ua.Variant) or value is None:
@@ -191,6 +197,7 @@ class VariableFeatureNode(FeatureNode):
                 self.event_bus.publish(
                     VariableValueUpdate(
                         entity_id=self.entity_id,
+                        timestamp=timestamp,
                         new_value=data,
                     )
                 )

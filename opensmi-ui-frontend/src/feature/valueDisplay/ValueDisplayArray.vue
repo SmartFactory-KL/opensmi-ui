@@ -5,6 +5,7 @@ import ValueDisplay from "./ValueDisplay.vue"; // your dispatcher
 defineProps<{
     type: VariantTypeName;
     value: unknown[]; // nested for multi-dimensional arrays
+    variableDataType: string | null;
 }>();
 
 // Rebuilds a Variant for one element, so the dispatcher can pick the component.
@@ -35,7 +36,10 @@ function asVariant(type: VariantTypeName, item: unknown): VariantData {
             <span class="w-6 shrink-0 text-right text-xs text-slate-400">
                 {{ index }}
             </span>
-            <ValueDisplay :variable-value="asVariant(type, item)" />
+            <ValueDisplay
+                :variable-value="asVariant(type, item)"
+                :variableDataType="variableDataType"
+            />
         </li>
     </ol>
 </template>
