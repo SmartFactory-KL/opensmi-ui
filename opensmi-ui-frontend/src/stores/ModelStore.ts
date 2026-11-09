@@ -1,5 +1,5 @@
 import { simplyGetToText, simplyGetToJSON } from "@/fetch/simplyFetch";
-import PlotBuffer from "@/plotting/PlotBuffer";
+// import PlotBuffer from "@/plotting/PlotBuffer";
 import type SocketClient from "@/socket/SocketClient";
 import Toaster from "@/toast/Toaster";
 import type {
