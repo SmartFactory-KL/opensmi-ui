@@ -29,6 +29,6 @@ COPY --from=frontend /app/dist public/
 ENV PATH="/app/.venv/bin:$PATH"
 
 ARG INFO_IMAGE_TAG=undefined
-ENV APP_VERSION=$INFO_IMAGE_TAG
+ENV OPENSMI_UI_APP_VERSION=$INFO_IMAGE_TAG
 
 CMD ["fastapi", "run", "--port", "8080"]
