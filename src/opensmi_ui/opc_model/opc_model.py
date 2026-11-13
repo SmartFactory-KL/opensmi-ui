@@ -1,11 +1,14 @@
+from enum import StrEnum
 from time import perf_counter
 from uuid import UUID
 
 from asyncua import ua
+from asyncua.client.ua_client import UaClientState
 
 from opensmi_ui.event.bus import EventBus
 from opensmi_ui.logger import get_module_logger
 from opensmi_ui.model.action import GenericAction
+from opensmi_ui.model.json import JsonOutModel
 from opensmi_ui.opc_model.browser import OPCBrowser
 from opensmi_ui.opc_model.feature_node import (
     ComponentNode,
@@ -18,6 +21,7 @@ from opensmi_ui.opc_model.feature_node import (
     FeatureValueReadResult,
     visit_tree_features,
 )
+from opensmi_ui.opc_session.session import OPCSessionNotReadyError
 from opensmi_ui.opc_subscriber.subscriber import (
     OPCSubscriber,
     SubscribeDataRequest,
@@ -28,8 +32,24 @@ from opensmi_ui.opc_subscriber.subscriber import (
 logger = get_module_logger("opc_model.model")
 
 
+class OPCModelState(StrEnum):
+    OPEN = "open"
+    BROWSING_CLEANUP = "browsing_cleanup"
+    BROWSING_MODEL = "browsing_model"
+    BROWSING_SUBSCRIPTIONS = "browsing_subscriptions"
+    BROWSING_VALUE_READ = "browsing_value_read"
+    READY = "ready"
+    ERROR = "error"
+
+
+class OPCModelStateUpdate(JsonOutModel):
+    new_state: OPCModelState
+
+
 class OPCModel:
     opc_browser: OPCBrowser
+
+    state: OPCModelState
 
     last_subscription_handles: SubscriptionHandles
     event_bus: EventBus
@@ -44,11 +64,67 @@ class OPCModel:
         )
         self.event_bus = EventBus()
 
+        self.state = OPCModelState.OPEN
+
         self.root_component_nodes = []
         self.entity_id_feature_map = {}
 
-    async def browse_model(self):
+    async def read_all_model_information(self, opc_subscriber: OPCSubscriber):
+        match self.state:
+            case OPCModelState.OPEN | OPCModelState.ERROR | OPCModelState.READY:
+                pass
+            case _:
+                raise OPCSessionNotReadyError(
+                    f"Cannot read model while being in state {self.state}."
+                )
+
+        try:
+            await self._discard_old_subscriptions(opc_subscriber=opc_subscriber)
+            await self._browse_model()
+            await self._attach_subscriptions(opc_subscriber=opc_subscriber)
+            await self._attach_values()
+
+            self.state = OPCModelState.READY
+            self.broadcast_state()
+        except:
+            self.state = OPCModelState.ERROR
+            self.broadcast_state()
+            raise
+
+    def broadcast_state(self):
+        if self.event_bus:
+            self.event_bus.publish(OPCModelStateUpdate(new_state=self.state))
+
+    def get_state(self):
+        return self.state
+
+    def wipe_model(self):
         self.entity_id_feature_map.clear()
+        self.root_component_nodes = []
+
+        self.state = OPCModelState.OPEN
+        self.broadcast_state()
+
+    def get_model(self):
+        # convert to serializables
+        root_node_list: list[ComponentNodeData] = []
+        for root_node in self.root_component_nodes:
+            root_node_list.append(root_node.get_data())
+
+        return root_node_list
+
+    def receive_connection_state_change(self, new_state: UaClientState) -> None:
+        match new_state:
+            case UaClientState.DISCONNECTED:
+                self.wipe_model()
+            case _:
+                pass
+
+    async def _browse_model(self):
+        self.wipe_model()
+
+        self.state = OPCModelState.BROWSING_MODEL
+        self.broadcast_state()
 
         result = await self.opc_browser.read_model()
 
@@ -60,7 +136,10 @@ class OPCModel:
 
         self.root_component_nodes = result
 
-    async def discard_old_subscriptions(self, opc_subscriber: OPCSubscriber):
+    async def _discard_old_subscriptions(self, opc_subscriber: OPCSubscriber):
+        self.state = OPCModelState.BROWSING_CLEANUP
+        self.broadcast_state()
+
         if len(self.last_subscription_handles.data_change_handles) > 0 or (
             len(self.last_subscription_handles.event_handles) > 0
         ):
@@ -77,7 +156,10 @@ class OPCModel:
             except RuntimeError as e:
                 logger.warning("Failed to clear old subscriptions: %s", str(e))
 
-    async def attach_subscriptions(self, opc_subscriber: OPCSubscriber):
+    async def _attach_subscriptions(self, opc_subscriber: OPCSubscriber):
+        self.state = OPCModelState.BROWSING_SUBSCRIPTIONS
+        self.broadcast_state()
+
         # create subscriptions
         sub_init_start = perf_counter()
         sub_requests: list[FeatureSubscribeRequest] = []
@@ -119,7 +201,10 @@ class OPCModel:
         sub_init_duration = perf_counter() - sub_init_start
         logger.info("Subscription Requesting took %.6f seconds", sub_init_duration)
 
-    async def attach_values(self):
+    async def _attach_values(self):
+        self.state = OPCModelState.BROWSING_VALUE_READ
+        self.broadcast_state()
+
         # final attribute read run
         val_read_start = perf_counter()
         feat_val_read_requests: list[FeatureValueReadRequest] = []
@@ -163,11 +248,3 @@ class OPCModel:
             raise KeyError(f"No Feature found for entityId {target_entity_id}")
 
         await target_feature.handle_action(action)
-
-    def get_data(self):
-        # convert to serializables
-        root_node_list: list[ComponentNodeData] = []
-        for root_node in self.root_component_nodes:
-            root_node_list.append(root_node.get_data())
-
-        return root_node_list

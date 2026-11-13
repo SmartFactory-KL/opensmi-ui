@@ -30,6 +30,19 @@ export interface ModelUpdateMessage {
   updateContent: any;
 }
 
+export type OPCModelState =
+  | "open"
+  | "browsing_cleanup"
+  | "browsing_model"
+  | "browsing_subscriptions"
+  | "browsing_value_read"
+  | "ready"
+  | "error";
+
+export interface OPCModelStateUpdate {
+  newState: OPCModelState;
+}
+
 export const useModelStore = defineStore("model", {
   state: (): {
     requestData: {
@@ -38,6 +51,7 @@ export const useModelStore = defineStore("model", {
     };
 
     isWorking: boolean;
+    state: OPCModelState;
 
     isDropdownVisible: boolean;
     currentMachine: ComponentNode | null;
@@ -53,6 +67,7 @@ export const useModelStore = defineStore("model", {
       },
 
       isWorking: false,
+      state: "open",
 
       isDropdownVisible: false,
       currentMachine: null,
@@ -66,6 +81,10 @@ export const useModelStore = defineStore("model", {
   actions: {
     attachToSocketClient(socketClient: SocketClient) {
       socketClient.addChannelListener("Model", this.handleModelUpdate);
+      socketClient.addChannelListener(
+        "ModelState",
+        this.handleModelStateUpdate,
+      );
     },
     showDropdown() {
       this.isDropdownVisible = true;
@@ -76,23 +95,62 @@ export const useModelStore = defineStore("model", {
     closeDropdown() {
       this.isDropdownVisible = false;
     },
-    async requestBrowsing() {
+    async requestStateAndLoadModel() {
       if (this.requestData.isPending == true || this.isWorking == true) {
+        console.warn("already pending...");
         return;
       }
 
-      Toaster.info("Loading Model ...");
+      Toaster.info("Loading Model State ...");
+
+      this.state = "open";
 
       this.requestData.isPending = true;
       this.requestData.error = null;
       this.isWorking = true;
 
       try {
+        const result = await simplyGetToJSON("/api/opc-model/state");
+        this.state = result.state as OPCModelState;
+        this.isWorking = false;
+        this.requestData.isPending = false;
+
+        if (this.state == "ready") {
+          await this.loadModel();
+        }
+      } catch (e) {
+        console.error(e);
+        this.requestData.error = `Failed to browse: ${e}`;
+        Toaster.error(this.requestData.error);
+      } finally {
+        this.requestData.isPending = false;
+        this.isWorking = false;
+      }
+    },
+    async requestBrowsing() {
+      if (this.requestData.isPending == true || this.isWorking == true) {
+        return;
+      }
+
+      this.state = "open";
+
+      Toaster.info("Browsing Model ...");
+
+      this.requestData.isPending = true;
+      this.requestData.error = null;
+      this.isWorking = true;
+
+      try {
+        this.wipeModel();
+
         await simplyGetToText("/api/opc-model/browse");
 
         Toaster.success(`Browsing successful!`);
 
         this.isWorking = false;
+        this.requestData.isPending = false;
+
+        await this.loadModel();
       } catch (e) {
         console.error(e);
         this.requestData.error = `Failed to browse: ${e}`;
@@ -234,6 +292,9 @@ export const useModelStore = defineStore("model", {
       }
 
       return null;
+    },
+    handleModelStateUpdate(update: OPCModelStateUpdate) {
+      this.state = update.newState;
     },
     handleModelUpdate(update: ModelUpdateMessage) {
       const targetFeature = this.getFeatureForEntity(update.entityId);

@@ -3,11 +3,16 @@ from starlette import status
 
 from opensmi_ui.logger import get_module_logger
 from opensmi_ui.model.action import GenericAction
-from opensmi_ui.opc_model.opc_model import OPCModel
+from opensmi_ui.model.json import JsonOutModel
+from opensmi_ui.opc_model.opc_model import OPCModel, OPCModelState
 from opensmi_ui.opc_session.session import OPCSessionNotReadyError
 from opensmi_ui.opc_subscriber.subscriber import OPCSubscriber
 
 logger = get_module_logger("opc_model_api")
+
+
+class CurrentModelState(JsonOutModel):
+    state: OPCModelState
 
 
 def create_opc_model_api(
@@ -16,23 +21,28 @@ def create_opc_model_api(
     router = APIRouter(prefix="/api/opc-model", tags=["opc-model"])
 
     @router.get(
+        "/state",
+        summary="Get the model state. This determines whether or not data is available",
+    )
+    async def request_state() -> CurrentModelState:
+        result = CurrentModelState(state=opc_model.get_state())
+        return result
+
+    @router.get(
         "/", summary="Get the current model. Remember to browse first if this is empty."
     )
     async def request_data():
-        result = opc_model.get_data()
+        result = opc_model.get_model()
         return result
 
     @router.get("/browse", summary="Request to (re-)browse the server")
     async def request_browse():
         try:
-            await opc_model.discard_old_subscriptions(opc_subscriber=opc_subscriber)
-            await opc_model.browse_model()
-            await opc_model.attach_subscriptions(opc_subscriber=opc_subscriber)
-            await opc_model.attach_values()
-        except OPCSessionNotReadyError:
+            await opc_model.read_all_model_information(opc_subscriber=opc_subscriber)
+        except OPCSessionNotReadyError as e:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="Not ready to browse. Make sure a session is connected and ready",
+                detail=f"Not ready to browse. Make sure a session is connected and ready. Error: {e!s}",
             )
         except Exception:
             raise

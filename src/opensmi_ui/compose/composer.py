@@ -19,7 +19,6 @@ from opensmi_ui.messages.receiver import MessageReceiver
 from opensmi_ui.metrics.metrics import Metrics
 from opensmi_ui.opc_model.browser import OPCBrowser
 from opensmi_ui.opc_model.opc_model import OPCModel
-from opensmi_ui.opc_session.namespace import OPCNamespace
 from opensmi_ui.opc_session.session import OPCSession, OPCSessionSettings
 from opensmi_ui.opc_subscriber.subscriber import OPCSubscriber
 from opensmi_ui.pin_guard.pin_guard import PinGuard, PinGuardConfig
@@ -117,6 +116,8 @@ class Composer:
             opc_model.event_bus.subscribe(
                 "msg_receiver", msg_receiver.receive_event_bus_update
             )
+
+            opc_session.on_connection_state_changed(opc_model.receive_connection_state_change)
 
             # opc model api
             opc_model_api = create_opc_model_api(

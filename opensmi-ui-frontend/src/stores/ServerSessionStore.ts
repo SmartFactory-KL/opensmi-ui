@@ -132,7 +132,7 @@ export const useServerStore = defineStore("server", {
       console.log(this.sessionData);
       if (this.sessionData.state == "connected") {
         // signal for machine refresh
-        useModelStore().loadModel();
+        useModelStore().requestStateAndLoadModel();
       } else if (this.sessionData.state == "disconnected") {
         // signal for machine wiping maybe?
         useModelStore().wipeModel();

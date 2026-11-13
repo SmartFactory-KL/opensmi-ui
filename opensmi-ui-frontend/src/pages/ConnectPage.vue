@@ -20,6 +20,7 @@ import IconButton from "@/components/IconButton.vue";
 import { useServerStore } from "@/stores/ServerSessionStore";
 import { usePageStore } from "@/stores/PageStore";
 import ServerStateIndicator from "@/navigation/ServerStateIndicator.vue";
+import { useModelStore } from "@/stores/ModelStore";
 
 const serverStore = useServerStore();
 const pinGuardStore = usePinGuardStore();
@@ -255,6 +256,9 @@ function requestDisconnect() {
                             class="p-5"
                         ></ServerStateIndicator>
                     </section>
+
+                    <!-- Model State -->
+                    Model State: {{ useModelStore().state }}
 
                     <!-- Local data -->
                     <section

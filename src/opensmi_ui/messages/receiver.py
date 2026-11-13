@@ -3,6 +3,7 @@ from datetime import UTC, datetime
 from typing import Protocol, TypeGuard
 from uuid import UUID
 
+from opensmi_ui.opc_model.opc_model import OPCModelStateUpdate
 from pydantic import BaseModel
 
 from opensmi_ui.logger import get_module_logger
@@ -71,6 +72,8 @@ class MessageReceiver:
         # handle notifications differently
         if isinstance(update, NotificationEvent):
             msg = ChanneledMessage(channel=Channel.NOTIFICATION, data=update)
+        elif isinstance(update, OPCModelStateUpdate):
+            msg = ChanneledMessage(channel=Channel.MODEL_STATE, data=update)
         else:
             if not has_entity_id(update):
                 return

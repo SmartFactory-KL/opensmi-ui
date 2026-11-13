@@ -45,6 +45,9 @@ async function compose() {
   const modelStore = useModelStore();
   modelStore.attachToSocketClient(socketClient);
 
+  // This is usually handled via Socket going into Connected state
+  // modelStore.requestStateAndLoadModel()
+
   pageStore.writeDefaultsToServerStore(serverStore);
 }
 
