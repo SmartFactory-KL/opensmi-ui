@@ -12,8 +12,10 @@ Create a `config.yaml` and copy the content of [Config YAML Example](docs/config
 Run the docker container:
 
 ```bash
-docker run -v ./config.yaml:/app/config.yaml:ro -p 8080:8080 smartfactorykl/opensmi-ui:latest
+docker run -v ./config.yaml:/app/config.yaml:ro -p 8000:8000 smartfactorykl/opensmi-ui:latest
 ```
 
 Open the Connect Page by clicking on the Logo and then `Establish Connection`. 
 After you connected, remember to `Browse`. Use `Load Model` to reload from server.
+
+As of now, the default is Port 8000.
