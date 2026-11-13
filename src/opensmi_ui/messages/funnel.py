@@ -189,7 +189,7 @@ class MessageFunnel:
                 for used_delay in self._batch_tick_stats:
                     if used_delay < 0:
                         logger.warning(
-                            f"MessageFunnel: batching took longer than tick, delta time was {used_delay:.4f}"
+                            f"MessageFunnel: batching took longer than tick {20 * MESSAGE_FUNNEL_BATCH_DELAY_SECONDS}, delta time was {used_delay:.4f}"
                         )
                         break
 

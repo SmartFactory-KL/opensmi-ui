@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DashboardLink from "./DashboardLink.vue";
 import ModelStateIndicator from "./ModelStateIndicator.vue";
 import ServerDropdownButton from "./ServerDropdownButton.vue";
 import ServerState from "./ServerState.vue";
@@ -12,5 +13,7 @@ const modelStore = useModelStore();
         <ServerState></ServerState>
         <ModelStateIndicator :state="modelStore.state"></ModelStateIndicator>
         <ServerDropdownButton></ServerDropdownButton>
+
+        <DashboardLink></DashboardLink>
     </div>
 </template>

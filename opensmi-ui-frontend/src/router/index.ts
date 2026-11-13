@@ -1,5 +1,7 @@
 import ComponentPage from "@/pages/ComponentPage.vue";
 import ConnectPage from "@/pages/ConnectPage.vue";
+import DashboardOverviewPage from "@/pages/DashboardOverviewPage.vue";
+import DashboardPage from "@/pages/DashboardPage.vue";
 import GenericEntityPage from "@/pages/GenericEntityPage.vue";
 import HomePage from "@/pages/HomePage.vue";
 import MethodPage from "@/pages/MethodPage.vue";
@@ -37,6 +39,14 @@ const router = createRouter({
     {
       path: "/method/:entityId",
       component: MethodPage,
+    },
+    {
+      path: "/dashboard",
+      component: DashboardPage,
+    },
+    {
+      path: "/dashboard/:dashboardId",
+      component: DashboardPage,
     },
   ],
 });
