@@ -7,12 +7,20 @@ This is the python based backend for OpenSMI
 
 ## Quick Start
 
+Run the docker container:
+
+```bash
+docker run -it -p 8000:8000 smartfactorykl/opensmi-ui:0.1.0-alpha.2
+```
+
+### With config.yaml
+
 Create a `config.yaml` and copy the content of [Config YAML Example](docs/config/config.example.yaml) and set settings as you like.
 
 Run the docker container:
 
 ```bash
-docker run -v ./config.yaml:/app/config.yaml:ro -p 8000:8000 smartfactorykl/opensmi-ui:latest
+docker run -it -v ./config.yaml:/app/config.yaml:ro -p 8000:8000 smartfactorykl/opensmi-ui:0.1.0-alpha.2
 ```
 
 Open the Connect Page by clicking on the Logo and then `Establish Connection`. 
