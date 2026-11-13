@@ -7,10 +7,10 @@ import HomePage from "@/pages/HomePage.vue";
 import MethodPage from "@/pages/MethodPage.vue";
 import NotificationPage from "@/pages/NotificationPage.vue";
 import SkillPage from "@/pages/SkillPage.vue";
-import { createRouter, createWebHistory } from "vue-router";
+import { createRouter, createWebHashHistory } from "vue-router";
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHashHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: "/",
