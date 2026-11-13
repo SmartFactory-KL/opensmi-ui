@@ -16,7 +16,7 @@ try:
     load_dotenv()
 
     cfg = appysetty.read_configuration(
-        AppConfig, [appysetty.YamlSource(), appysetty.EnvSource()]
+        AppConfig, [appysetty.YamlSource(required=False), appysetty.EnvSource()]
     )
 
     validate_config(cfg)
